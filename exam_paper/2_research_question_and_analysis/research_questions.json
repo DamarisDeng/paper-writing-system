@@ -1,0 +1,148 @@
+{
+  "primary_question": {
+    "question": "Among U.S. states, did the implementation of state-level healthcare worker (HCW) COVID-19 vaccine mandates during August 2021 lead to a reduction in state-level COVID-19 mortality rates compared to states without such mandates?",
+    "population": "U.S. states (50 states plus District of Columbia) during the period July-October 2021",
+    "exposure_or_intervention": "Implementation of a state-level HCW vaccine mandate (derived from State in hcw_mandates_table.csv; binary indicator: 1 if state announced mandate between July 26 - August 26, 2021, 0 otherwise)",
+    "comparator": "States that did not implement HCW vaccine mandates during the study period (serving as control group in an ecological study design)",
+    "outcome": "State-level COVID-19 mortality rate (deaths per 100,000 population), calculated from downloaded COVID-19 death totals divided by state population estimates",
+    "study_design": "Ecological study with difference-in-differences design; comparing pre-mandate (July 2021) vs. post-mandate (September-October 2021) mortality trends between states with mandates vs. states without mandates",
+    "rationale": "This question is directly answerable because (1) the exposure (state HCW mandates) is clearly defined with known implementation dates in the data, (2) the outcome (COVID-19 deaths) is accessible via the Archive Link URLs in the COVID-19 archive dataset, (3) population denominators for rate calculations are available in the population estimates dataset, and (4) the natural variation in mandate timing across states provides a quasi-experimental setup for causal inference. The question is clinically relevant to healthcare policy and pandemic response."
+  },
+  "secondary_questions": [
+    {
+      "question": "Among states that implemented HCW vaccine mandates, did strict mandates (without test-out options) result in greater reductions in COVID-19 mortality rates compared to mandates with test-out options?",
+      "variables_involved": ["Test-out option", "State"],
+      "analysis_type": "Subgroup analysis comparing effect modification by mandate strictness",
+      "rationale": "The mandates table includes a Test-out option variable indicating whether states allowed alternatives to vaccination; comparing outcomes between strict vs. lenient mandates can inform policy design."
+    },
+    {
+      "question": "Was there a dose-response relationship between the timing of mandate implementation (earlier vs. later in August 2021) and the magnitude of COVID-19 mortality reduction?",
+      "variables_involved": ["Date of announcement", "State"],
+      "analysis_type": "Time-to-event analysis using mandate announcement date as exposure intensity",
+      "rationale": "Mandates announced earlier may have had more time to affect transmission; examining the timing gradient can strengthen causal inference."
+    },
+    {
+      "question": "Did the association between HCW vaccine mandates and COVID-19 mortality differ after adjusting for state population size as a potential confounder?",
+      "variables_involved": ["Population Estimate (as of July 1) 2021", "Geographic Area"],
+      "analysis_type": "Sensitivity analysis with population as a covariate to assess confounding",
+      "rationale": "Larger states may have different healthcare system capacities and COVID-19 trajectories; adjusting for population assesses robustness of the mandate effect."
+    }
+  ],
+  "data_acquisition_requirements": [
+    {
+      "variable": "State-level COVID-19 deaths",
+      "source_column": "Archive Link",
+      "target_file": "exam_paper/2_research_question_and_analysis/downloaded/covid_deaths_timeseries.csv",
+      "fallback_urls": [
+        "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
+        "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports_us.csv"
+      ],
+      "action": "Download COVID-19 death time series data from the Archive Link URLs in United_States_COVID-19_Cases_and_Deaths_by_State_over_Time_-_hiyb-zgc2_-_Archive_Repository.csv. Subset to dates from July 1, 2021 through October 31, 2021 to capture pre- and post-mandate periods. Extract state-level death totals for aggregation to monthly mortality rates. Primary Archive Link URLs may be deprecated; use NY Times GitHub as primary fallback for cumulative state-level deaths by date, or JHU CSSE daily reports as secondary fallback."
+    },
+    {
+      "variable": "State-level COVID-19 cases",
+      "source_column": "Archive Link",
+      "target_file": "exam_paper/2_research_question_and_analysis/downloaded/covid_cases_timeseries.csv",
+      "fallback_urls": [
+        "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
+        "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports_us.csv"
+      ],
+      "action": "Download COVID-19 case time series data from the same Archive Link URLs for the same period (July-October 2021). Cases can serve as a secondary outcome or for calculating case fatality rates. NY Times us-states.csv contains both cases and deaths columns and serves as primary fallback if Archive Link URLs are deprecated."
+    }
+  ],
+  "feasibility_assessment": {
+    "strengths": [
+      "Clear exposure definition: 16 states with well-documented HCW mandate implementation dates (July 26 - August 26, 2021) from official policy records",
+      "Accessible outcome data: COVID-19 deaths and cases are available through Archive Link URLs (524 daily snapshots archived August 2021-April 2022), enabling reconstruction of state-level mortality trends",
+      "Population denominators available: State-level population estimates for 2020-2024 allow calculation of per-capita mortality rates",
+      "Natural experiment design: Variation in mandate timing and existence (16 states with mandates vs. 34 without) supports difference-in-differences analysis",
+      "Minimal missing data: Mandates table has 0% missing values; population data has only 9.5% missing (regional aggregates only)",
+      "Clinical and policy relevance: HCW vaccine mandates were controversial but widely implemented; evidence on their population-level impact is needed"
+    ],
+    "limitations": [
+      "Ecological study design: Analysis is at state level, not individual level; cannot attribute causality at individual patient level and ecological fallacy is a risk",
+      "Outcome not directly profiled: COVID-19 death/case counts must be downloaded from Archive URLs rather than being pre-profiled columns; data quality and completeness of downloaded data is TBD",
+      "Incomplete state coverage in mandates table: Only 16 states are listed as having mandates; unclear whether remaining 34 states truly had no mandates or are missing from the dataset—this could introduce selection bias if omitted states had unmeasured policies",
+      "Confounding by unmeasured state policies: States implementing mandates may have differed in other COVID-19 mitigation measures (masking, capacity limits, vaccination campaigns) that are not captured in the data",
+      "Limited temporal window: mandates were announced July-August 2021; analysis window is constrained to pre/post period around this timing, potentially missing longer-term effects",
+      "Potential lag effects: Mortality changes may lag policy implementation by weeks; the August-October window may not fully capture causal effects",
+      "No individual-level covariates: Data lacks age, race/ethnicity, comorbidity, or vaccination coverage—important effect modifiers that cannot be adjusted for",
+      "Population estimates are annual (July 1), not monthly: Using 2021 estimate as denominator for all months assumes static population, ignoring seasonal migration or COVID-19 deaths affecting population size",
+      "Small N for subgroup analyses: Only 5 states have test-out options vs. 11 without, limiting statistical power for mandate strictness comparisons"
+    ],
+    "required_assumptions": [
+      "Parallel trends assumption: In the absence of mandates, COVID-19 mortality trends would have evolved similarly in states with vs. without mandates during the study period",
+      "No unmeasured confounding: Differences in mortality between mandate and non-mandate states are attributable to mandates rather than other concurrent state-level policies or characteristics",
+      "Data completeness: Downloaded COVID-19 time series data is complete and accurately reported by states for the study period",
+      "Mandate classification accuracy: States not appearing in hcw_mandates_table.csv truly did not implement HCW vaccine mandates during the study period (or are correctly classified as non-exposed)",
+      "Stable unit treatment value assumption (SUTVA): One state's mandate implementation does not affect another state's mortality outcomes (no spillover effects across state borders)",
+      "Missing at random: Any missing data in downloaded COVID-19 outcomes is missing at random conditional on observed covariates",
+      "Population denominator validity: Using 2021 July 1 population estimate as denominator for mortality rate calculations is sufficiently accurate for the July-October 2021 period"
+    ]
+  },
+  "variable_roles": {
+    "outcome_variables": [
+      "State-level COVID-19 deaths",
+      "State-level COVID-19 cases"
+    ],
+    "exposure_variables": [
+      "Test-out option",
+      "Date of announcement"
+    ],
+    "covariates": [
+      "Geographic Area",
+      "Population Estimate (as of July 1) 2020",
+      "Population Estimate (as of July 1) 2021",
+      "Population Estimate (as of July 1) 2022",
+      "Population Estimate (as of July 1) 2023",
+      "Population Estimate (as of July 1) 2024",
+      "April 1, 2020 Estimates Base",
+      "State"
+    ],
+    "stratification_variables": [
+      "Main scope"
+    ],
+    "excluded_variables": {
+      "Update Date": "Metadata column in COVID-19 archive file; not relevant to analysis",
+      "Days Since Update": "Administrative metadata in archive file; not relevant to analysis",
+      "User": "Administrative metadata (single value: 'Tyler Service Account - HHS'); not relevant to analysis",
+      "Metadata Published": "JSON metadata string describing dataset; not an analyzable variable",
+      "Metadata Updates": "JSON metadata string tracking dataset updates; not an analyzable variable",
+      "Column Level Metadata": "Empty JSON array; not an analyzable variable",
+      "Column Level Metadata Updates": "Empty JSON array; not an analyzable variable",
+      "Archive Link": "URL column pointing to downloadable outcome data; used for data acquisition but not as an analysis variable"
+    },
+    "derived_variables": [
+      {
+        "name": "mandate_indicator",
+        "derivation": "Binary variable: 1 if state appears in hcw_mandates_table.csv (indicating HCW vaccine mandate implementation), 0 otherwise. Used as primary exposure in difference-in-differences analysis.",
+        "source_columns": ["State"]
+      },
+      {
+        "name": "mortality_rate",
+        "derivation": "COVID-19 deaths per 100,000 population = (total_deaths / Population Estimate (as of July 1) 2021) * 100000. Calculated separately for pre-mandate period (July 2021) and post-mandate periods (September-October 2021). Source: total_deaths downloaded from Archive Link URLs.",
+        "source_columns": ["Population Estimate (as of July 1) 2021"]
+      },
+      {
+        "name": "case_rate",
+        "derivation": "COVID-19 cases per 100,000 population = (total_cases / Population Estimate (as of July 1) 2021) * 100000. Calculated for same periods as mortality_rate. Source: total_cases downloaded from Archive Link URLs.",
+        "source_columns": ["Population Estimate (as of July 1) 2021"]
+      },
+      {
+        "name": "mandate_earliness",
+        "derivation": "Days from earliest mandate announcement (July 26, 2021) to state's announcement date. Range 0-31 days. Used to assess dose-response by mandate timing.",
+        "source_columns": ["Date of announcement"]
+      },
+      {
+        "name": "strict_mandate_indicator",
+        "derivation": "Binary variable: 1 if state's mandate has 'Test-out option' = 'No' (strict mandate), 0 if 'Yes' (lenient mandate with testing alternative). Only defined for states with mandates.",
+        "source_columns": ["Test-out option"]
+      },
+      {
+        "name": "pre_period",
+        "derivation": "Time indicator for difference-in-differences: 1 for dates before state's mandate announcement (July 2021), 0 for dates after. May vary by state based on announcement date.",
+        "source_columns": ["Date of announcement"]
+      }
+    ]
+  }
+}
