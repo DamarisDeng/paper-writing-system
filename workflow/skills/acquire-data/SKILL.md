@@ -18,7 +18,7 @@ Download external data files specified in `data_acquisition_requirements` to sup
 /acquire-data <output_folder>
 ```
 
-Reads from `<output_folder>/2_research_question_and_analysis/research_questions.json` and writes downloaded files to `<output_folder>/2_research_question_and_analysis/downloaded/`.
+Reads from `<output_folder>/2_research_question/research_questions.json` and writes downloaded files to `<output_folder>/2_research_question/downloaded/`.
 
 ## Instructions
 
@@ -26,13 +26,13 @@ You are responsible for acquiring the data needed for the research analysis. Fol
 
 ### Step 1: Load Research Questions
 
-Read `<output_folder>/2_research_question_and_analysis/research_questions.json` and extract the `data_acquisition_requirements` array.
+Read `<output_folder>/2_research_question/research_questions.json` and extract the `data_acquisition_requirements` array.
 
 If `data_acquisition_requirements` is empty or missing, report that no data acquisition is needed and exit successfully.
 
 ### Step 2: Create Download Directory
 
-Create the directory `<output_folder>/2_research_question_and_analysis/downloaded/` if it doesn't exist.
+Create the directory `<output_folder>/2_research_question/downloaded/` if it doesn't exist.
 
 ### Step 3: For Each Requirement — Use Fallback Strategy
 
@@ -163,7 +163,7 @@ def download_with_fallback(variable_name: str, target_file: Path, study_start: s
 
 ## Output Contract
 
-Creates files in `<output_folder>/2_research_question_and_analysis/downloaded/`:
+Creates files in `<output_folder>/2_research_question/downloaded/`:
 
 - The data files specified in `data_acquisition_requirements`
 - `README.md` documenting sources used and data characteristics

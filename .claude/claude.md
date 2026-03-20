@@ -37,23 +37,22 @@ repo/
 │   └── references/
 │       └── base_references.bib  # Pre-loaded common public health references (optional)
 ├── exam_paper/                # ALL runtime outputs for a specific dataset run
-│   ├── data/                  # Raw input data (copied here at start)
 │   ├── 1_data_profile/        # Stage 1 outputs
 │   │   ├── profile.json
 │   │   └── variable_types.json
-│   ├── 2_research_question_and_analysis/  # Stage 2-3 outputs
+│   ├── 2_research_question/   # Stage 2-3 outputs
 │   │   ├── research_questions.json
 │   │   └── downloaded/        # External data from acquire-data
-│   ├── 4_analysis/            # Stage 4 outputs
+│   ├── 3_analysis/            # Stage 4 outputs
 │   │   ├── analysis_results.json
 │   │   ├── models/            # Saved model summaries
 │   │   └── scripts/           # Analysis scripts used
-│   ├── 5_figures/             # Stage 5 outputs
+│   ├── 4_figures/             # Stage 5 outputs
 │   │   ├── figures/           # .png/.pdf figure files
 │   │   └── tables/            # .tex or .csv formatted tables
-│   ├── 6_references/          # Stage 6 outputs
+│   ├── 5_references/          # Stage 6 outputs
 │   │   └── references.bib
-│   ├── 7_paper/               # Stage 7 outputs
+│   ├── 6_paper/               # Stage 7 outputs
 │   │   ├── paper.tex
 │   │   └── supplementary.tex  # Optional
 │   └── paper.pdf              # FINAL deliverable
@@ -72,14 +71,14 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 
 | Stage | Skill | Input | Output | Validates |
 |-------|-------|-------|--------|-----------|
-| 1 | load-and-profile | `exam_paper/data/` | `exam_paper/1_data_profile/` | profile.json exists, >0 columns detected |
-| 2 | generate-research-questions | `exam_paper/1_data_profile/` | `exam_paper/2_research_question_and_analysis/` | research_questions.json has PICO fields |
-| 3 | acquire-data | `exam_paper/2_research_question_and_analysis/` | `exam_paper/2_research_question_and_analysis/downloaded/` | Downloaded files exist (or skip if none needed) |
-| 4 | statistical-analysis | `exam_paper/1_data_profile/` + `exam_paper/2_research_question_and_analysis/` | `exam_paper/4_analysis/` | analysis_results.json exists with p-values, effect sizes |
-| 5 | generate-figures | `exam_paper/4_analysis/` | `exam_paper/5_figures/` | At least 2 figures and 1 table generated |
-| 6 | literature-review | `exam_paper/2_research_question_and_analysis/` | `exam_paper/6_references/` | references.bib has ≥10 entries |
-| 7 | write-paper | All upstream outputs + `workflow/templates/template.tex` | `exam_paper/7_paper/` | paper.tex compiles without fatal errors |
-| 8 | compile-and-review | `exam_paper/7_paper/` | `exam_paper/paper.pdf` | paper.pdf exists, is ≤10 pages (excl. refs + supplement) |
+| 1 | load-and-profile | `<data_folder>/` | `exam_paper/1_data_profile/` | profile.json exists, >0 columns detected |
+| 2 | generate-research-questions | `exam_paper/1_data_profile/` | `exam_paper/2_research_question/` | research_questions.json has PICO fields |
+| 3 | acquire-data | `exam_paper/2_research_question/` | `exam_paper/2_research_question/downloaded/` | Downloaded files exist (or skip if none needed) |
+| 4 | statistical-analysis | `exam_paper/1_data_profile/` + `exam_paper/2_research_question/` | `exam_paper/3_analysis/` | analysis_results.json exists with p-values, effect sizes |
+| 5 | generate-figures | `exam_paper/3_analysis/` | `exam_paper/4_figures/` | At least 2 figures and 1 table generated |
+| 6 | literature-review | `exam_paper/2_research_question/` | `exam_paper/5_references/` | references.bib has ≥10 entries |
+| 7 | write-paper | All upstream outputs + `workflow/templates/template.tex` | `exam_paper/6_paper/` | paper.tex compiles without fatal errors |
+| 8 | compile-and-review | `exam_paper/6_paper/` | `exam_paper/paper.pdf` | paper.pdf exists, is ≤10 pages (excl. refs + supplement) |
 
 ## Critical Rules for Claude Code
 
@@ -89,9 +88,9 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 - If data is ambiguous, pick the most reasonable interpretation and document the assumption in the paper's Limitations section.
 
 ### Data Handling
-- Copy raw data into `exam_paper/data/` at the start. Never modify the original source files.
+- Original data files are never modified. All skills read from original paths stored in `profile.json`.
 - All intermediate outputs go into the appropriate `exam_paper/` subdirectory.
-- All scripts used during analysis must be saved in `exam_paper/4_analysis/scripts/`.
+- All scripts used during analysis must be saved in `exam_paper/3_analysis/scripts/`.
 
 ### Statistical Analysis (Stage 4)
 - Read `research_questions.json` to determine outcome, exposure, and covariates.

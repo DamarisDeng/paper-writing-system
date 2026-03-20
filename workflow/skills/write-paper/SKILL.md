@@ -20,7 +20,7 @@ Draft a complete JAMA Network Open research paper in LaTeX, integrating all upst
 /write-paper <output_folder>
 ```
 
-Reads from all upstream stage outputs in `<output_folder>/` and the template at `sample/tex/template.tex`. Writes to `<output_folder>/7_paper/`.
+Reads from all upstream stage outputs in `<output_folder>/` and the template at `sample/tex/template.tex`. Writes to `<output_folder>/6_paper/`.
 
 ## Instructions
 
@@ -30,22 +30,22 @@ You are a medical writer experienced in drafting JAMA Network Open research arti
 
 Read these files:
 
-1. **`<output_folder>/2_research_question_and_analysis/research_questions.json`** — Research questions, variable roles, study design.
-2. **`<output_folder>/4_analysis/analysis_results.json`** — All statistical results.
-3. **`<output_folder>/5_figures/manifest.json`** — List of figures and tables with titles and file paths.
-4. **`<output_folder>/6_references/references.bib`** — Bibliography entries.
+1. **`<output_folder>/2_research_question/research_questions.json`** — Research questions, variable roles, study design.
+2. **`<output_folder>/3_analysis/analysis_results.json`** — All statistical results.
+3. **`<output_folder>/4_figures/manifest.json`** — List of figures and tables with titles and file paths.
+4. **`<output_folder>/5_references/references.bib`** — Bibliography entries.
 5. **`sample/tex/template.tex`** — The JAMA Network Open LaTeX template.
 6. **`<output_folder>/1_data_profile/profile.json`** — Dataset context for data description.
 
 ### Step 2: Copy Assets
 
-1. Copy `references.bib` to `<output_folder>/7_paper/references.bib`.
-2. Copy all figure files (`.png` and `.pdf`) from `<output_folder>/5_figures/figures/` to `<output_folder>/7_paper/figures/`.
-3. Copy all table `.tex` files from `<output_folder>/5_figures/tables/` to `<output_folder>/7_paper/tables/`.
+1. Copy `references.bib` to `<output_folder>/6_paper/references.bib`.
+2. Copy all figure files (`.png` and `.pdf`) from `<output_folder>/4_figures/figures/` to `<output_folder>/6_paper/figures/`.
+3. Copy all table `.tex` files from `<output_folder>/4_figures/tables/` to `<output_folder>/6_paper/tables/`.
 
 ### Step 3: Draft the Paper
 
-Using the template structure from `sample/tex/template.tex`, write `<output_folder>/7_paper/paper.tex` with these sections:
+Using the template structure from `sample/tex/template.tex`, write `<output_folder>/6_paper/paper.tex` with these sections:
 
 #### 3.1 Preamble and Metadata
 
@@ -181,20 +181,20 @@ Before saving, verify:
 
 - [ ] `paper.tex` is valid LaTeX (balanced braces, environments, commands)
 - [ ] All `\cite{}` keys match entries in `references.bib`
-- [ ] All `\includegraphics{}` paths point to files that exist in `7_paper/figures/`
-- [ ] All `\input{}` paths point to files that exist in `7_paper/tables/`
+- [ ] All `\includegraphics{}` paths point to files that exist in `6_paper/figures/`
+- [ ] All `\input{}` paths point to files that exist in `6_paper/tables/`
 - [ ] Abstract contains all 7 required subsections
 - [ ] Key Points box has Question, Findings, and Meaning
 - [ ] Statistical results in text match `analysis_results.json` values exactly
 - [ ] No placeholder text remains (search for "TODO", "XXX", "PLACEHOLDER")
-- [ ] `references.bib` is copied to `<output_folder>/7_paper/`
+- [ ] `references.bib` is copied to `<output_folder>/6_paper/`
 
 ## Output Contract
 
-**`<output_folder>/7_paper/paper.tex`** — Complete LaTeX source file.
+**`<output_folder>/6_paper/paper.tex`** — Complete LaTeX source file.
 
-**`<output_folder>/7_paper/references.bib`** — Copy of bibliography.
+**`<output_folder>/6_paper/references.bib`** — Copy of bibliography.
 
-**`<output_folder>/7_paper/figures/`** — Copies of all figure files (.png, .pdf).
+**`<output_folder>/6_paper/figures/`** — Copies of all figure files (.png, .pdf).
 
-**`<output_folder>/7_paper/tables/`** — Copies of all LaTeX table files (.tex).
+**`<output_folder>/6_paper/tables/`** — Copies of all LaTeX table files (.tex).

@@ -20,7 +20,7 @@ Run descriptive and inferential statistical analyses driven by `research_questio
 /statistical-analysis <output_folder>
 ```
 
-Reads from `<output_folder>/1_data_profile/`, `<output_folder>/2_research_question_and_analysis/`, and raw data in `<output_folder>/data/`. Writes to `<output_folder>/4_analysis/`.
+Reads from `<output_folder>/1_data_profile/`, `<output_folder>/2_research_question/`, and original raw data (paths from `profile.json`). Writes to `<output_folder>/3_analysis/`.
 
 ## Instructions
 
@@ -30,15 +30,15 @@ You are a biostatistician conducting analyses for a JAMA Network Open paper. Eve
 
 Read these files:
 
-1. **`<output_folder>/2_research_question_and_analysis/research_questions.json`** — Primary question, variable roles, derived variables, study design.
-2. **`<output_folder>/1_data_profile/profile.json`** — Dataset metadata and column statistics.
+1. **`<output_folder>/2_research_question/research_questions.json`** — Primary question, variable roles, derived variables, study design.
+2. **`<output_folder>/1_data_profile/profile.json`** — Dataset metadata and column statistics (includes original file paths).
 3. **`<output_folder>/1_data_profile/variable_types.json`** — Semantic variable types.
-4. **Raw data files** referenced in `profile.json` (from `<output_folder>/data/`).
-5. **Downloaded data** from `<output_folder>/2_research_question_and_analysis/downloaded/` (if any).
+4. **Raw data files** — read from original paths stored in `profile.json` file_path fields.
+5. **Downloaded data** from `<output_folder>/2_research_question/downloaded/` (if any).
 
 ### Step 2: Prepare the Analytic Dataset
 
-Write a Python script (`<output_folder>/4_analysis/scripts/prepare_data.py`) that:
+Write a Python script (`<output_folder>/3_analysis/scripts/prepare_data.py`) that:
 
 1. **Loads all required datasets** using pandas.
 2. **Merges/joins datasets** as needed based on `profile.json` → `data_context.dataset_relationships` and shared key columns.
@@ -51,12 +51,12 @@ Write a Python script (`<output_folder>/4_analysis/scripts/prepare_data.py`) tha
    - For variables with 5-20% missing: use multiple imputation or note as limitation.
    - For variables with >20% missing: exclude from primary analysis; include in sensitivity analysis if possible.
 5. **Applies exclusion criteria** based on the research question's population definition.
-6. **Saves the analytic dataset** to `<output_folder>/4_analysis/analytic_dataset.csv`.
+6. **Saves the analytic dataset** to `<output_folder>/3_analysis/analytic_dataset.csv`.
 7. **Prints a summary**: N observations, N excluded, missingness per variable.
 
 ### Step 3: Descriptive Statistics (Table 1 Data)
 
-Write a script (`<output_folder>/4_analysis/scripts/descriptive_stats.py`) that produces baseline characteristics stratified by the exposure variable:
+Write a script (`<output_folder>/3_analysis/scripts/descriptive_stats.py`) that produces baseline characteristics stratified by the exposure variable:
 
 - **Continuous variables**: Report mean (SD) or median (IQR) depending on distribution. Use Shapiro-Wilk or visual inspection to assess normality.
 - **Categorical variables**: Report N (%).
@@ -82,7 +82,7 @@ Select the statistical method based on the outcome variable type and study desig
 | Time-to-event | Cohort | Cox proportional hazards | `lifelines.CoxPHFitter` |
 | Count | Cross-sectional | Poisson or negative binomial | `statsmodels.Poisson` / `NegativeBinomial` |
 
-Write the primary analysis script (`<output_folder>/4_analysis/scripts/primary_analysis.py`):
+Write the primary analysis script (`<output_folder>/3_analysis/scripts/primary_analysis.py`):
 
 1. **Specify the model** with outcome, exposure, and covariates from `variable_roles`.
 2. **Fit the model** and extract:
@@ -95,7 +95,7 @@ Write the primary analysis script (`<output_folder>/4_analysis/scripts/primary_a
    - Logistic regression: Hosmer-Lemeshow goodness-of-fit, ROC-AUC
    - Cox model: Schoenfeld residuals for proportional hazards
    - DiD: parallel trends test (if pre-period data available)
-4. **Save model summary** to `<output_folder>/4_analysis/models/primary_model_summary.txt`.
+4. **Save model summary** to `<output_folder>/3_analysis/models/primary_model_summary.txt`.
 
 ### Step 5: Sensitivity Analyses
 
@@ -106,11 +106,11 @@ Run at least one sensitivity analysis. Common options:
 3. **Robustness check** — Different handling of missing data, outlier exclusion, alternative outcome definition.
 4. **Quantitative bias analysis** — E-value for unmeasured confounding (for observational studies).
 
-Write script(s) to `<output_folder>/4_analysis/scripts/sensitivity_*.py`.
+Write script(s) to `<output_folder>/3_analysis/scripts/sensitivity_*.py`.
 
 ### Step 6: Compile Results
 
-Save all results to `<output_folder>/4_analysis/analysis_results.json`.
+Save all results to `<output_folder>/3_analysis/analysis_results.json`.
 
 ### Step 7: Validate
 
@@ -126,7 +126,7 @@ Before completing, verify:
 
 ## Output Contract
 
-**`<output_folder>/4_analysis/analysis_results.json`**:
+**`<output_folder>/3_analysis/analysis_results.json`**:
 ```json
 {
   "analytic_sample": {
@@ -192,8 +192,8 @@ Before completing, verify:
 }
 ```
 
-**`<output_folder>/4_analysis/analytic_dataset.csv`** — Merged, cleaned dataset used for analysis.
+**`<output_folder>/3_analysis/analytic_dataset.csv`** — Merged, cleaned dataset used for analysis.
 
-**`<output_folder>/4_analysis/scripts/`** — All Python scripts (must be independently runnable).
+**`<output_folder>/3_analysis/scripts/`** — All Python scripts (must be independently runnable).
 
-**`<output_folder>/4_analysis/models/`** — Saved model summaries as text files.
+**`<output_folder>/3_analysis/models/`** — Saved model summaries as text files.

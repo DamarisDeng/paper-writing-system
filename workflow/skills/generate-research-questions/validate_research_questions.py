@@ -92,8 +92,8 @@ def check_schema(rq: dict) -> list[tuple[str, str]]:
                         issues.append(("ERROR", f"data_acquisition_requirements[{i}] missing field: {field}"))
                 # Check target_file path format
                 target = item.get("target_file", "")
-                if target and "/2_research_question_and_analysis/downloaded/" not in target:
-                    issues.append(("WARN", f"data_acquisition_requirements[{i}].target_file should use <output_folder>/2_research_question_and_analysis/downloaded/ convention"))
+                if target and "/2_research_question/downloaded/" not in target:
+                    issues.append(("WARN", f"data_acquisition_requirements[{i}].target_file should use <output_folder>/2_research_question/downloaded/ convention"))
 
     # feasibility_assessment
     fa = rq.get("feasibility_assessment")
@@ -356,7 +356,7 @@ def main():
 
     # Load files
     paths = {
-        "research_questions": os.path.join(output_folder, "2_research_question_and_analysis", "research_questions.json"),
+        "research_questions": os.path.join(output_folder, "2_research_question", "research_questions.json"),
         "profile": os.path.join(output_folder, "1_data_profile", "profile.json"),
         "variable_types": os.path.join(output_folder, "1_data_profile", "variable_types.json"),
     }

@@ -23,7 +23,7 @@ Given profiled dataset outputs (`profile.json` + `variable_types.json`), generat
 /generate-research-questions <output_folder>
 ```
 
-Where `<output_folder>` is the base directory (e.g., `exam_paper`). The skill reads from `<output_folder>/1_data_profile/` and writes to `<output_folder>/2_research_question_and_analysis/`.
+Where `<output_folder>` is the base directory (e.g., `exam_paper`). The skill reads from `<output_folder>/1_data_profile/` and writes to `<output_folder>/2_research_question/`.
 
 ## Instructions
 
@@ -136,13 +136,13 @@ Write an honest assessment covering:
 - Missing at random (for missing data handling)
 - Stable unit treatment value assumption (for causal inference)
 
-**Data acquisition requirements** (if applicable): If the primary outcome or exposure is not directly present as an analyzable column but is accessible through URL columns in the data (e.g., Archive Link columns), document what needs to be downloaded. Specify the target file path as `<output_folder>/2_research_question_and_analysis/downloaded/<filename>`. Include fallback sources in case primary URLs are deprecated. Example:
+**Data acquisition requirements** (if applicable): If the primary outcome or exposure is not directly present as an analyzable column but is accessible through URL columns in the data (e.g., Archive Link columns), document what needs to be downloaded. Specify the target file path as `<output_folder>/2_research_question/downloaded/<filename>`. Include fallback sources in case primary URLs are deprecated. Example:
 ```json
 "data_acquisition_requirements": [
   {
     "variable": "State-level COVID-19 deaths",
     "source_column": "Archive Link",
-    "target_file": "exam_paper/2_research_question_and_analysis/downloaded/covid_deaths_timeseries.csv",
+    "target_file": "exam_paper/2_research_question/downloaded/covid_deaths_timeseries.csv",
     "fallback_urls": [
       "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
       "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports_us.csv"
@@ -154,7 +154,7 @@ Write an honest assessment covering:
 
 ### Step 7: Save and Validate Output
 
-Write the final output to `<output_folder>/2_research_question_and_analysis/research_questions.json` with this exact structure:
+Write the final output to `<output_folder>/2_research_question/research_questions.json` with this exact structure:
 
 ```json
 {
@@ -213,7 +213,7 @@ After saving the file, **run the validation script**:
 python workflow/skills/generate-research-questions/validate_research_questions.py <output_folder>
 ```
 
-This script checks for schema completeness, column coverage, semantic validity, and that downloaded data paths use the `<output_folder>/2_research_question_and_analysis/downloaded/` convention.
+This script checks for schema completeness, column coverage, semantic validity, and that downloaded data paths use the `<output_folder>/2_research_question/downloaded/` convention.
 
 This script checks:
 - Schema completeness (all required fields present)

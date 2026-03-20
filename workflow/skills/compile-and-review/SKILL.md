@@ -19,7 +19,7 @@ Compile `paper.tex` to PDF, fix any errors, run a self-review checklist, revise,
 /compile-and-review <output_folder>
 ```
 
-Reads from `<output_folder>/7_paper/`. Writes final PDF to `<output_folder>/paper.pdf`.
+Reads from `<output_folder>/6_paper/`. Writes final PDF to `<output_folder>/paper.pdf`.
 
 ## Instructions
 
@@ -27,10 +27,10 @@ You are a LaTeX typesetting expert and manuscript reviewer. Your job is to compi
 
 ### Step 1: Initial Compilation
 
-Run the full LaTeX compilation sequence from the `<output_folder>/7_paper/` directory:
+Run the full LaTeX compilation sequence from the `<output_folder>/6_paper/` directory:
 
 ```bash
-cd <output_folder>/7_paper && \
+cd <output_folder>/6_paper && \
 pdflatex -interaction=nonstopmode paper.tex && \
 bibtex paper && \
 pdflatex -interaction=nonstopmode paper.tex && \
@@ -45,7 +45,7 @@ If compilation fails, follow this diagnostic process:
 
 #### 2.1 Read the Log File
 
-Read `<output_folder>/7_paper/paper.log` and identify errors. Focus on lines starting with `!` (fatal errors) and `LaTeX Warning` (non-fatal but important).
+Read `<output_folder>/6_paper/paper.log` and identify errors. Focus on lines starting with `!` (fatal errors) and `LaTeX Warning` (non-fatal but important).
 
 #### 2.2 Common Errors and Fixes
 
@@ -128,10 +128,10 @@ Common revision tasks:
 
 1. **Copy the final PDF** to the output root:
    ```bash
-   cp <output_folder>/7_paper/paper.pdf <output_folder>/paper.pdf
+   cp <output_folder>/6_paper/paper.pdf <output_folder>/paper.pdf
    ```
 
-2. **Create a compilation report** at `<output_folder>/7_paper/compilation_report.json`:
+2. **Create a compilation report** at `<output_folder>/6_paper/compilation_report.json`:
    ```json
    {
      "compilation_attempts": 2,
@@ -163,7 +163,7 @@ Common revision tasks:
 \end{thebibliography}
 ```
 
-**Figures missing**: If figure files are missing from `7_paper/figures/`, attempt to copy them from `5_figures/figures/`. If still missing, comment out the `\includegraphics` line and add a placeholder note.
+**Figures missing**: If figure files are missing from `6_paper/figures/`, attempt to copy them from `4_figures/figures/`. If still missing, comment out the `\includegraphics` line and add a placeholder note.
 
 **Package not installed**: If a LaTeX package is missing, either install it via `tlmgr install <package>` or remove the dependency and use a simpler alternative.
 
@@ -171,9 +171,9 @@ Common revision tasks:
 
 **`<output_folder>/paper.pdf`** — The final compiled paper. This is the primary deliverable of the entire pipeline.
 
-**`<output_folder>/7_paper/paper.pdf`** — Same PDF in the stage directory.
+**`<output_folder>/6_paper/paper.pdf`** — Same PDF in the stage directory.
 
-**`<output_folder>/7_paper/compilation_report.json`** — Compilation and review report:
+**`<output_folder>/6_paper/compilation_report.json`** — Compilation and review report:
 ```json
 {
   "compilation_attempts": 1,

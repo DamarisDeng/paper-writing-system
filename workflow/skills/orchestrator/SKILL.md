@@ -29,22 +29,19 @@ You are a senior research automation engineer. Your job is to execute the entire
 
 1. **Create the output directory structure:**
    ```bash
-   mkdir -p <output_folder>/data
    mkdir -p <output_folder>/1_data_profile
-   mkdir -p <output_folder>/2_research_question_and_analysis/downloaded
-   mkdir -p <output_folder>/4_analysis/scripts
-   mkdir -p <output_folder>/4_analysis/models
-   mkdir -p <output_folder>/5_figures/figures
-   mkdir -p <output_folder>/5_figures/tables
-   mkdir -p <output_folder>/6_references
-   mkdir -p <output_folder>/7_paper
+   mkdir -p <output_folder>/2_research_question/downloaded
+   mkdir -p <output_folder>/3_analysis/scripts
+   mkdir -p <output_folder>/3_analysis/models
+   mkdir -p <output_folder>/4_figures/figures
+   mkdir -p <output_folder>/4_figures/tables
+   mkdir -p <output_folder>/5_references
+   mkdir -p <output_folder>/6_paper
    ```
 
-2. **Copy raw data** from `<data_folder>` into `<output_folder>/data/`. Never modify the original source files.
+2. **Record start time** for time budgeting. The entire pipeline should target completion within 60 minutes.
 
-3. **Record start time** for time budgeting. The entire pipeline should target completion within 60 minutes.
-
-4. **Create a pipeline log** at `<output_folder>/pipeline_log.json`:
+3. **Create a pipeline log** at `<output_folder>/pipeline_log.json`:
    ```json
    {
      "started_at": "ISO-8601 timestamp",
@@ -103,13 +100,13 @@ Stage 1 → profile.json, variable_types.json
   ↓
 Stage 2 → research_questions.json (reads profile + variable_types)
   ↓
-Stage 3 → downloaded/ files (reads research_questions)
+Stage 3 → downloaded/ files (reads 2_research_question/research_questions)
   ↓
-Stage 4 → analysis_results.json (reads profile + variable_types + research_questions + downloaded data)
+Stage 4 → analysis_results.json (reads profile + variable_types + 2_research_question/research_questions + downloaded data)
   ↓
-Stage 5 → figures/*.png, tables/*.tex (reads analysis_results)
+Stage 5 → figures/*.png, tables/*.tex (reads 3_analysis/analysis_results)
   ↓
-Stage 6 → references.bib (reads research_questions for topic context)
+Stage 6 → references.bib (reads 2_research_question/research_questions for topic context)
   ↓
 Stage 7 → paper.tex (reads ALL upstream outputs + template)
   ↓

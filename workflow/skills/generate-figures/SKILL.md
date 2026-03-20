@@ -20,7 +20,7 @@ Create publication-quality JAMA Network Open-style figures and tables from stati
 /generate-figures <output_folder>
 ```
 
-Reads from `<output_folder>/4_analysis/analysis_results.json` and `<output_folder>/2_research_question_and_analysis/research_questions.json`. Writes to `<output_folder>/5_figures/`.
+Reads from `<output_folder>/3_analysis/analysis_results.json` and `<output_folder>/2_research_question/research_questions.json`. Writes to `<output_folder>/4_figures/`.
 
 ## Instructions
 
@@ -28,13 +28,13 @@ You are a data visualization specialist producing figures for a JAMA Network Ope
 
 ### Step 1: Load Inputs
 
-1. Read `<output_folder>/4_analysis/analysis_results.json` for all statistical results.
-2. Read `<output_folder>/2_research_question_and_analysis/research_questions.json` for variable context and study design.
-3. Read `<output_folder>/4_analysis/analytic_dataset.csv` if raw data is needed for plots.
+1. Read `<output_folder>/3_analysis/analysis_results.json` for all statistical results.
+2. Read `<output_folder>/2_research_question/research_questions.json` for variable context and study design.
+3. Read `<output_folder>/3_analysis/analytic_dataset.csv` if raw data is needed for plots.
 
 ### Step 2: Set Up JAMA Matplotlib Style
 
-Create a style setup script (`<output_folder>/5_figures/jama_style.py`) that all figure scripts import:
+Create a style setup script (`<output_folder>/4_figures/jama_style.py`) that all figure scripts import:
 
 ```python
 import matplotlib.pyplot as plt
@@ -94,7 +94,7 @@ def save_figure(fig, filepath_stem):
 
 ### Step 3: Generate Table 1 (Required)
 
-Create `<output_folder>/5_figures/tables/table1.tex` — baseline characteristics table.
+Create `<output_folder>/4_figures/tables/table1.tex` — baseline characteristics table.
 
 Use the JAMA table style from the template (booktabs, no vertical rules, `tabularx`):
 
@@ -140,7 +140,7 @@ Choose the most appropriate visualization for the primary analysis:
 | Time series | Line plot with confidence bands |
 | Subgroup analysis | Forest plot with subgroup estimates |
 
-Write a script (`<output_folder>/5_figures/scripts/figure1.py`) to generate the figure.
+Write a script (`<output_folder>/4_figures/scripts/figure1.py`) to generate the figure.
 
 Figure requirements:
 - **Title**: Descriptive, placed below figure via LaTeX `\caption{}` (not in the image)
@@ -159,7 +159,7 @@ Create at least one additional figure from:
 2. **Figure 3**: Distribution plots (histogram, density), correlation heatmap, or geographic map.
 3. **eFigure 1** (supplement): Model diagnostic plots, DAG, or study flow diagram.
 
-Each figure gets its own script in `<output_folder>/5_figures/scripts/`.
+Each figure gets its own script in `<output_folder>/4_figures/scripts/`.
 
 ### Step 6: Generate Additional Tables (As Needed)
 
@@ -168,11 +168,11 @@ Beyond Table 1, generate as applicable:
 - **Table 2**: Primary regression results (estimates, CIs, p-values per covariate).
 - **eTable 1** (supplement): Sensitivity analysis results, full model output, or missingness summary.
 
-Save all tables as `.tex` files in `<output_folder>/5_figures/tables/`.
+Save all tables as `.tex` files in `<output_folder>/4_figures/tables/`.
 
 ### Step 7: Create Figure/Table Manifest
 
-Save `<output_folder>/5_figures/manifest.json`:
+Save `<output_folder>/4_figures/manifest.json`:
 
 ```json
 {
@@ -202,8 +202,8 @@ Save `<output_folder>/5_figures/manifest.json`:
 
 ### Step 8: Validate
 
-- [ ] At least 2 figure files exist in `<output_folder>/5_figures/figures/` (both `.png` and `.pdf`)
-- [ ] At least 1 table file exists in `<output_folder>/5_figures/tables/` (`.tex`)
+- [ ] At least 2 figure files exist in `<output_folder>/4_figures/figures/` (both `.png` and `.pdf`)
+- [ ] At least 1 table file exists in `<output_folder>/4_figures/tables/` (`.tex`)
 - [ ] All `.png` files are ≥300 DPI
 - [ ] All `.tex` table files compile without errors (test with a minimal LaTeX document)
 - [ ] `manifest.json` exists and lists all figures and tables
@@ -212,18 +212,18 @@ Save `<output_folder>/5_figures/manifest.json`:
 
 ## Output Contract
 
-**`<output_folder>/5_figures/figures/`** — Figure image files:
+**`<output_folder>/4_figures/figures/`** — Figure image files:
 - `figure1.png`, `figure1.pdf` (primary results)
 - `figure2.png`, `figure2.pdf` (secondary/supplementary)
 - Additional as needed
 
-**`<output_folder>/5_figures/tables/`** — LaTeX table files:
+**`<output_folder>/4_figures/tables/`** — LaTeX table files:
 - `table1.tex` (baseline characteristics — always required)
 - `table2.tex` (regression results — if applicable)
 - Additional as needed
 
-**`<output_folder>/5_figures/scripts/`** — Python scripts that generated each figure.
+**`<output_folder>/4_figures/scripts/`** — Python scripts that generated each figure.
 
-**`<output_folder>/5_figures/jama_style.py`** — Reusable JAMA style configuration.
+**`<output_folder>/4_figures/jama_style.py`** — Reusable JAMA style configuration.
 
-**`<output_folder>/5_figures/manifest.json`** — Manifest listing all generated figures and tables with metadata.
+**`<output_folder>/4_figures/manifest.json`** — Manifest listing all generated figures and tables with metadata.

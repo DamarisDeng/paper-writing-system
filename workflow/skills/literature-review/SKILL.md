@@ -20,7 +20,7 @@ Conduct a focused literature search and produce a BibTeX bibliography (`referenc
 /literature-review <output_folder>
 ```
 
-Reads from `<output_folder>/2_research_question_and_analysis/research_questions.json`. Writes to `<output_folder>/6_references/`.
+Reads from `<output_folder>/2_research_question/research_questions.json`. Writes to `<output_folder>/5_references/`.
 
 ## Instructions
 
@@ -28,7 +28,7 @@ You are a research librarian and systematic reviewer. Your task is to build a fo
 
 ### Step 1: Extract Search Context
 
-Read `<output_folder>/2_research_question_and_analysis/research_questions.json` and identify:
+Read `<output_folder>/2_research_question/research_questions.json` and identify:
 
 1. **Topic keywords**: From the primary question's population, exposure, and outcome.
 2. **Methodological terms**: From the study design and analysis type.
@@ -127,9 +127,9 @@ If the search yields fewer than 10 verified references, supplement with foundati
 
 ### Step 7: Save Output
 
-Write the complete bibliography to `<output_folder>/6_references/references.bib`.
+Write the complete bibliography to `<output_folder>/5_references/references.bib`.
 
-Also create `<output_folder>/6_references/search_log.json`:
+Also create `<output_folder>/5_references/search_log.json`:
 
 ```json
 {
@@ -159,7 +159,7 @@ Also create `<output_folder>/6_references/search_log.json`:
 
 ## Output Contract
 
-**`<output_folder>/6_references/references.bib`** — BibTeX bibliography with ≥10 entries:
+**`<output_folder>/5_references/references.bib`** — BibTeX bibliography with ≥10 entries:
 ```bibtex
 @article{Smith2023,
   author  = {Smith, John A. and Doe, Jane B.},
@@ -174,4 +174,4 @@ Also create `<output_folder>/6_references/search_log.json`:
 % ... at least 9 more entries
 ```
 
-**`<output_folder>/6_references/search_log.json`** — Search process documentation.
+**`<output_folder>/5_references/search_log.json`** — Search process documentation.
