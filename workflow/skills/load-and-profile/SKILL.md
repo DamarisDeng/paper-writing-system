@@ -28,14 +28,14 @@ You are an expert data scientist. Follow these steps exactly:
 Run the Python profiling script:
 
 ```bash
-python workflow/skills/load-and-profile/load_and_profile.py <data_folder> exam_paper
+python workflow/skills/load-and-profile/load_and_profile.py <data_folder> <output_folder>/1_data_profile
 ```
 
-This produces `exam_paper/profile.json` and `exam_paper/variable_types.json` with mechanical profiling.
+This produces `<output_folder>/1_data_profile/profile.json` and `<output_folder>/1_data_profile/variable_types.json` with mechanical profiling.
 
 ### Step 4: Review & Enrich the Output
 
-Read the generated `exam_paper/profile.json` and `exam_paper/variable_types.json`. Use your judgment to:
+Read the generated `<output_folder>/1_data_profile/profile.json` and `<output_folder>/1_data_profile/variable_types.json`. Use your judgment to:
 
 1. **Fix misclassified variable types** in `variable_types.json`:
    - Zip codes, FIPS codes, phone numbers detected as `numeric` → change to `categorical` or `identifier`
@@ -64,8 +64,8 @@ Read the generated `exam_paper/profile.json` and `exam_paper/variable_types.json
 ### Step 5: Save Final Outputs
 
 Write the corrected files back to:
-- `exam_paper/profile.json` (with `data_context` added and any fixes)
-- `exam_paper/variable_types.json` (with any type corrections)
+- `<output_folder>/1_data_profile/profile.json` (with `data_context` added and any fixes)
+- `<output_folder>/1_data_profile/variable_types.json` (with any type corrections)
 
 Confirm both files are valid JSON.
 
