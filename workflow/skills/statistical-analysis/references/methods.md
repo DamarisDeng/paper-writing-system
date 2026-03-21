@@ -111,35 +111,40 @@ Quick-reference for implementation details, known pitfalls, and decision guidanc
 
 ## 4. Causal Inference
 
+Import:
+```python
+from causal import propensity_score_match, ipw_estimate, did_regression, its_analysis, compute_evalue
+```
+
 ### Propensity Score Matching (PSM)
-- Use `helpers.propensity_score_match()`.
+- Use `causal.propensity_score_match()`.
 - Check covariate balance after matching: SMD < 0.1 for all covariates.
 - Default caliper: 0.2 × SD of the logit propensity score.
 - Report: N matched pairs, balance diagnostics, ATT.
 - **Pitfall**: Matching discards unmatched units — report how many were lost.
 
 ### Inverse Probability Weighting (IPW)
-- Use `helpers.ipw_estimate()`.
+- Use `causal.ipw_estimate()`.
 - Advantages over PSM: retains full sample, can estimate ATE (not just ATT).
 - **Pitfall**: Extreme weights (from PS near 0 or 1) inflate variance. Clip PS to [0.01, 0.99] or use stabilized weights.
 - Always check weight distribution: if max weight > 20, results may be unreliable.
 
 ### Difference-in-Differences (DiD)
-- Use `helpers.did_regression()`.
+- Use `causal.did_regression()`.
 - Requires: treatment group, control group, pre-period, post-period.
 - **Critical assumption**: parallel trends — treatment and control groups would have had the same trend absent the intervention.
 - Test parallel trends if you have multiple pre-periods.
 - The DiD estimate is the coefficient on the treatment × post interaction.
 
 ### Interrupted Time Series (ITS)
-- Use `helpers.its_analysis()`.
+- Use `causal.its_analysis()`.
 - Good for single-group policy evaluations with time-series data.
 - Reports both level change (immediate) and slope change (gradual).
 - Needs ≥8 time points pre- and post-intervention for reliable estimates.
 - Use Newey-West or HC3 standard errors for autocorrelation.
 
 ### E-Value
-- Use `helpers.compute_evalue()` for observational studies.
+- Use `causal.compute_evalue()` for observational studies.
 - Reports the minimum strength of association an unmeasured confounder would need to explain away the result.
 - E-value > 2 is moderately robust to confounding.
 

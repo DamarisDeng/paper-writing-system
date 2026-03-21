@@ -50,20 +50,23 @@ If `progress.json` does not exist, start from Step 1.
 
 ## Before You Start
 
-1. **Copy the helper modules** from this skill's `scripts/` directory into `<output_folder>/3_analysis/scripts/`. The modules are:
+1. **Copy the always-required helper modules** from this skill's `scripts/` directory into `<output_folder>/3_analysis/scripts/`:
 
-   | Module | What it provides | When you need it |
-   |---|---|---|
-   | `utils.py` | p-value formatting, JSON I/O | Always (imported by all others) |
-   | `data_utils.py` | Loading, merging, derived vars, missingness, exclusions | Always (Step 2) |
-   | `descriptive.py` | Table 1 generation | Always (Step 3) |
-   | `regression.py` | OLS, logit, Poisson, NegBin, mixed-effects, Cox | If method is traditional regression |
-   | `penalized.py` | LASSO, Ridge, Elastic Net with CV | If method is penalized regression |
-   | `ml.py` | Random Forest, XGBoost, SVM, KNN with tuning | If method is ML prediction |
-   | `causal.py` | PSM, IPW, DiD, ITS, E-value | If method is causal inference |
-   | `validation.py` | Assumption checks, result validation, compilation | Always (Steps 6–7) |
+   ```
+   utils.py        — p-value formatting, JSON I/O (imported by all others)
+   data_utils.py   — loading, merging, derived vars, missingness, exclusions
+   descriptive.py  — Table 1 generation
+   validation.py   — assumption checks, result validation, compilation
+   ```
 
-   Copy **only the modules you need** for the chosen analysis method, plus `utils.py`, `data_utils.py`, `descriptive.py`, and `validation.py` which are always required.
+   Copy the method-specific module **after Step 3b**, once `analysis_plan.json` has been written and the method is known:
+
+   | Module | Copy when `model_selection.selected_method` is... |
+   |---|---|
+   | `regression.py` | OLS, logistic, Poisson, NegBin, mixed-effects, Cox |
+   | `penalized.py` | LASSO, Ridge, Elastic Net |
+   | `ml.py` | Random Forest, XGBoost, SVM, KNN |
+   | `causal.py` | PSM, IPW, DiD, ITS |
 
 2. **Read the method reference**: If the analysis method is non-trivial (anything beyond OLS), read `references/methods.md` from this skill's directory for implementation guidance and known pitfalls.
 
@@ -71,6 +74,15 @@ If `progress.json` does not exist, start from Step 1.
    ```bash
    pip install --break-system-packages pandas numpy scipy statsmodels scikit-learn lifelines xgboost tableone
    ```
+
+## JAMA Formatting Helpers
+
+`utils.py` provides `jama_p(p)`, `jama_ci(lo, hi)`, `jama_effect(estimate, ci_lo, ci_hi, p, metric="OR")`,
+and `jama_fig(nrows, ncols)` for JAMA-style display strings and figures.
+
+```python
+from utils import jama_p, jama_ci, jama_effect, jama_fig, JAMA_BLUE, JAMA_ORANGE
+```
 
 ## Instructions
 
@@ -104,9 +116,9 @@ from data_utils import load_and_merge, create_derived_variables, document_missin
 
 The script should:
 
-1. **Load all required datasets** using `helpers.load_and_merge()`, which handles CSV/Excel detection, encoding issues, and merge validation.
-2. **Create derived variables** from `research_questions.json → variable_roles.derived_variables`. Use `helpers.create_derived_variables()` which logs each derivation and validates output.
-3. **Document missingness** with `helpers.document_missingness()`:
+1. **Load all required datasets** using `load_and_merge()`, which handles CSV/Excel detection, encoding issues, and merge validation.
+2. **Create derived variables** from `research_questions.json → variable_roles.derived_variables`. Use `create_derived_variables()` which logs each derivation and validates output.
+3. **Document missingness** with `document_missingness()`:
    - <5% missing → complete-case is fine
    - 5–20% missing → flag for sensitivity analysis with imputation
    - \>20% missing → exclude from primary analysis
@@ -133,6 +145,21 @@ Write `<output_folder>/3_analysis/scripts/descriptive_stats.py`. Use the helper:
 ```python
 from descriptive import generate_table1
 from utils import update_json_section
+```
+
+Derive variable lists from `variable_types.json` and call `generate_table1` with all required arguments:
+
+```python
+# Derive variable lists from variable_types.json
+continuous_vars = [col for col, info in variable_types.items()
+                   if info.get("type") in ("continuous", "numeric")]
+categorical_vars = [col for col, info in variable_types.items()
+                    if info.get("type") in ("categorical", "binary", "ordinal")]
+group_col = research_questions["variable_roles"]["exposure"]
+
+table1 = generate_table1(df, group_col=group_col,
+                         continuous_vars=continuous_vars,
+                         categorical_vars=categorical_vars)
 ```
 
 `generate_table1()` handles:
@@ -246,6 +273,8 @@ The remaining steps (4, 5, 6) execute this plan. If context compacts
 at any point after this step, re-read `analysis_plan.json` and
 continue from the next incomplete step per `progress.json`.
 
+**Copy the method-specific module now.** Look up `model_selection.selected_method` in `analysis_plan.json` and copy the corresponding script from this skill's `scripts/` directory into `<output_folder>/3_analysis/scripts/` (see the table in "Before You Start").
+
 **Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
 ```json
 {
@@ -296,6 +325,21 @@ Walk through these checks **in order**. Stop at the first matching terminal node
      (`statsmodels.ZeroInflatedPoisson`).
    - Otherwise: **Poisson** (`statsmodels.Poisson`).
    - → Go to 5.
+
+**After resolving the method from `analysis_plan.json`, call the corresponding helper:**
+
+| Method | Import + Call |
+|--------|--------------|
+| OLS / logit / Poisson / NegBin / mixed / Cox | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method=..., cluster_col=...)` |
+| LASSO / Ridge / Elastic Net | `from penalized import fit_penalized`<br>`results = fit_penalized(df, outcome, predictors, method=..., task="auto")` |
+| Random Forest / XGBoost / SVM / KNN | `from ml import fit_ml_model`<br>`results = fit_ml_model(df, outcome, predictors, method=..., task="auto")` |
+| PSM | `from causal import propensity_score_match`<br>`results = propensity_score_match(df, treatment_col, covariates, outcome_col)` |
+| IPW | `from causal import ipw_estimate`<br>`results = ipw_estimate(df, treatment_col, covariates, outcome_col)` |
+| DiD | `from causal import did_regression`<br>`results = did_regression(df, outcome, treatment_col, time_col, covariates)` |
+| ITS | `from causal import its_analysis`<br>`results = its_analysis(df, outcome, time_col, intervention_point)` |
+
+Do NOT re-implement these from scratch — the helpers handle clustering, SE correction,
+output formatting, and JSON-ready results.
 
 5. **Record the decision.**
    Save to `<output_folder>/3_analysis/model_selection.json`:
@@ -355,17 +399,24 @@ In the primary analysis output, include both raw and formatted values in `exposu
 
 ### Step 4b: Assumption Checks (method-specific)
 
-| Method | Required Checks | Python Implementation |
-|--------|----------------|----------------------|
-| OLS | VIF < 10 for all covariates; Breusch-Pagan for heteroscedasticity; Q-Q plot of residuals | `statsmodels.stats.outliers_influence.variance_inflation_factor`; `statsmodels.stats.diagnostic.het_breuschpagan` |
-| Logistic | Hosmer-Lemeshow; VIF on design matrix; ROC-AUC ≥ 0.6 | `statsmodels.stats.diagnostic` |
-| Cox PH | Schoenfeld residuals p > 0.05; log-log plot | `lifelines.statistics.proportional_hazard_test` |
-| Mixed-effects | ICC > 0.05 (otherwise clustering is ignorable) | Null model ICC = var_random / (var_random + var_residual) |
-| Poisson/NB | Dispersion ratio; observed vs. expected zero counts | deviance / df_resid |
+Call `check_assumptions()` from `validation.py`:
 
-Save results to `<output_folder>/3_analysis/assumption_checks.json`.
-If a critical assumption fails (VIF > 10, PH violated), document it and
-try an alternative specification as a sensitivity analysis.
+```python
+from validation import check_assumptions
+assumption_results = check_assumptions(
+    model_result=result,   # the dict returned by fit_regression / fit_ml_model / etc.
+    method="ols",          # same method string passed to fit_regression
+    df=df,
+    outcome=outcome_col,
+    predictors=covariates
+)
+```
+
+Returns `{check_name: {"passed": bool, "details": str}}`. If a check fails, document it
+and add a sensitivity analysis (Step 5). Save to `assumption_checks.json`.
+
+Supported methods: `"ols"`, `"logit"`, `"cox"`. For penalized/ML/causal, skip
+`check_assumptions` and run method-specific diagnostics per `references/methods.md`.
 ---
 
 ### Step 5: Sensitivity Analyses
@@ -407,6 +458,29 @@ The output schema is documented in `references/methods.md` under "Output Contrac
   "last_updated": "ISO-8601",
   "notes": ""
 }
+```
+
+After writing `analysis_results.json`, also write `<output_folder>/3_analysis/results_summary.md`. This is prose Stage 7 can copy directly into the paper. Structure:
+
+```markdown
+## Study Sample
+- Total analytic sample: N = {total_n} ({group_1_name}: n = {n1}; {group_2_name}: n = {n2})
+- {key demographic line from table1_formatted, e.g. "Mean age 45.2 (SD 12.1) years"}
+- {one line per additional demographic worth flagging}
+
+## Primary Result
+{primary_analysis.results.exposure_effect.formatted.jama_sentence}
+
+## Sensitivity Analyses
+- {sensitivity_name}: {jama-formatted sentence from sensitivity results}
+- (repeat for each sensitivity analysis)
+
+## Figure Captions
+**Figure 1.** {What is shown}. {Method used}. {Covariates adjusted for, if any}. {Sample, N=...}.
+(repeat for each figure)
+
+## Statistical Methods Note
+All analyses were conducted in Python (version X.X) using statsmodels (version X.X), scipy (version X.X), and pandas (version X.X). Statistical significance was defined as a 2-sided P < .05. {Model-specific sentence, e.g. "Logistic regression was used to estimate odds ratios with 95% confidence intervals."} {Sensitivity analysis description sentence.}
 ```
 
 ---
@@ -556,3 +630,5 @@ If the primary analysis uses ML prediction, `ml_performance` replaces `model_fit
 **`<output_folder>/3_analysis/analysis_plan.json`** — Written at Step 3b. Contains model selection reasoning (method, covariates, clustering strategy) and planned sensitivity analyses. Used to resume mid-stage after context compaction without re-deriving the analysis strategy.
 
 **`<output_folder>/3_analysis/progress.json`** — Updated after each sub-step (Steps 2, 3, 3b, 4, 5, 6). Tracks `current_step`, `completed_steps`, `last_updated`, and `notes`. Read at the start of a resumed session to find the next incomplete step.
+
+**`<output_folder>/3_analysis/results_summary.md`** — Written at Step 6. Prose summary (study sample, primary result sentence, sensitivity sentences, figure captions, statistical methods note) ready for Stage 7 to paste into the paper without recomputation.
