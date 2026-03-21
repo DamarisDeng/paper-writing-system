@@ -1,0 +1,501 @@
+%% =============================================================================
+%% LaTeX Template — JAMA Network Open Published-PDF Style
+%% =============================================================================
+%% Approximates the visual layout of JAMA Network Open research articles.
+%% NOTE: JAMA Network Open has no official LaTeX class. This template
+%% replicates the published PDF appearance for drafting / preprint use.
+%% For submission, follow: https://jamanetwork.com/journals/jamanetworkopen/
+%%                         pages/instructions-for-authors
+%% =============================================================================
+
+\documentclass[10pt, letterpaper]{article}
+
+%% --- Packages ----------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% --- Fonts (approximating JAMA Network Open) ----------------------------------
+% Body: serif (Times-like); Headings/sidebar: sans-serif (Helvetica-like)
+\usepackage{mathptmx}          % Times serif for body
+\usepackage[scaled=0.92]{helvet} % Helvetica for sans-serif elements
+\usepackage{courier}           % Monospace fallback
+
+\usepackage[
+  top=1.1in, bottom=0.85in,
+  left=0.75in, right=0.75in,
+  headheight=30pt
+]{geometry}
+
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{colortbl}          % for \arrayrulecolor
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[numbers,super,comma,sort&compress]{natbib}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lineno}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{ragged2e}
+\usepackage{tikz}
+\usepackage{wrapfig}
+\usepackage{mdframed}
+\usepackage{changepage}        % for adjustwidth
+\usepackage{lastpage}
+\usepackage[colorlinks=true,
+  linkcolor=jamacrimson,
+  citecolor=jamacrimson,
+  urlcolor=jamacrimson]{hyperref}
+
+%% === COLOR PALETTE (from published PDF) ======================================
+\definecolor{jamacrimson}{RGB}{175, 30, 55}    % Deep red for "Original Investigation", links
+\definecolor{jamagold}{RGB}{195, 155, 50}      % Accent gold (JAMA Open icon)
+\definecolor{jamagray}{RGB}{90, 90, 90}        % Body gray
+\definecolor{jamalightgray}{RGB}{200, 200, 200}% Rule lines
+\definecolor{jamadarkgray}{RGB}{50, 50, 50}    % Headings, title
+
+%% === PAGE STYLE ==============================================================
+\setstretch{1.08}              % Tight leading like published PDF
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+%% --- Running header: crimson bar + journal/subject + paper title -------------
+%% Store paper title and subject for headers
+\newcommand{\jamashorttitle}{Running Title of the Article}
+\newcommand{\jamasubject}{Public Health}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+% Running header on continuation pages: colored bar + journal | subject + title
+\fancyhead[L]{%
+  \smash{\makebox[0pt][l]{%
+    \raisebox{10pt}{\textcolor{jamacrimson}{\rule{0.25\textwidth}{4pt}}%
+      \textcolor{jamadarkgray}{\rule{0.75\textwidth}{4pt}}}}}%
+  \vspace{6pt}\\
+  {\sffamily\bfseries\fontsize{8}{10}\selectfont
+    \textcolor{jamadarkgray}{JAMA Network Open\enspace|\enspace}%
+    \textcolor{jamacrimson}{\jamasubject}}%
+  \hfill
+  {\sffamily\fontsize{7.5}{9.5}\selectfont\color{jamagray}\jamashorttitle}%
+}
+\fancyfoot[L]{%
+  \footnotesize\textit{JAMA Network Open.}
+  20XX;X(X):eXXXXXXX.
+  doi:10.1001/jamanetworkopen.20XX.XXXXXXX}
+\fancyfoot[R]{%
+  \footnotesize Month Day, 20XX\qquad\thepage/\pageref*{LastPage}}
+
+% First-page style (no header, special footer)
+\fancypagestyle{firstpage}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \fancyfoot[L]{%
+    \footnotesize\textit{JAMA Network Open.}
+    20XX;X(X):eXXXXXXX.
+    doi:10.1001/jamanetworkopen.20XX.XXXXXXX
+    \hfill (Reprinted)\hfill
+    Month Day, 20XX\quad\thepage/\pageref*{LastPage}}
+}
+
+%% === SECTION FORMATTING ======================================================
+% JAMA uses bold sans-serif headings in crimson
+\titleformat{\section}
+  {\sffamily\bfseries\fontsize{11}{13}\selectfont\color{jamacrimson}}
+  {}{0em}{}
+\titleformat{\subsection}
+  {\sffamily\bfseries\fontsize{10}{12}\selectfont\color{jamacrimson}}
+  {}{0em}{}
+\titleformat{\subsubsection}
+  {\sffamily\itshape\fontsize{10}{12}\selectfont\color{jamacrimson}}
+  {}{0em}{}
+
+\titlespacing*{\section}{0pt}{14pt}{4pt}
+\titlespacing*{\subsection}{0pt}{10pt}{3pt}
+\titlespacing*{\subsubsection}{0pt}{8pt}{2pt}
+
+%% === CAPTION FORMATTING ======================================================
+\captionsetup{
+  font={small,sf},
+  labelfont={bf},
+  labelsep=period,
+  justification=justified,
+  singlelinecheck=false,
+  skip=6pt,
+  textfont={color=jamadarkgray}
+}
+
+%% === KEY POINTS BOX STYLE ====================================================
+\mdfdefinestyle{keypointsbox}{%
+  linewidth=0pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  leftline=false, rightline=false,
+  topline=true, bottomline=true,
+  linecolor=jamalightgray,
+  backgroundcolor=white
+}
+
+%% === ABSTRACT LABEL STYLE ====================================================
+\newcommand{\abslabel}[1]{%
+  {\vspace{4pt}\noindent\sffamily\fontseries{b}\selectfont\fontsize{8.5}{10}\selectfont #1\enspace}%
+}
+\newcommand{\absrule}{%
+  \vspace{3pt}\noindent{\color{jamacrimson}\rule{0.62\textwidth}{0.4pt}}\vspace{3pt}%
+}
+
+%% === JAMA NETWORK OPEN LOGO PLACEHOLDER ======================================
+\newcommand{\jamastyletopbar}{%
+  \noindent
+  \begin{minipage}[t]{0.55\textwidth}
+    {\sffamily\bfseries\fontsize{16}{18}\selectfont
+      \textcolor{jamadarkgray}{JAMA}\,|\,%
+      \textcolor{jamadarkgray}{\fontseries{l}\selectfont Network}\,|\,%
+      {\fontsize{20}{22}\selectfont\textcolor{jamadarkgray}{Open}}%
+      \textcolor{jamagold}{\raisebox{2pt}{\tiny\texttrademark}}}
+  \end{minipage}%
+  \hfill
+  \begin{minipage}[t]{0.1\textwidth}
+    \raggedleft
+    \textcolor{jamagold}{\scriptsize\sffamily\raisebox{0pt}{\fbox{\tiny OA}}}
+  \end{minipage}
+  \vspace{2pt}
+
+  \noindent{\color{jamalightgray}\rule{\textwidth}{0.6pt}}
+  \vspace{6pt}
+}
+
+%% =============================================================================
+%%  DOCUMENT BEGINS
+%% =============================================================================
+\begin{document}
+\thispagestyle{firstpage}
+\sloppy
+
+
+%% --- Article Type + Subject --------------------------------------------------
+{\sffamily\bfseries\fontsize{9}{11}\selectfont
+  \textcolor{jamacrimson}{Original Investigation}%
+  \textcolor{jamadarkgray}{\enspace|\enspace Public Health}%
+}
+
+\vspace{8pt}
+
+%% --- Title -------------------------------------------------------------------
+{\sffamily\bfseries\fontsize{18}{21}\selectfont\color{jamadarkgray}
+Title of the Article\par}
+
+\vspace{8pt}
+
+%% --- Authors -----------------------------------------------------------------
+{\fontsize{9.5}{11.5}\selectfont\color{jamadarkgray}
+Author Name; Author Name; Author Name; AI Author Name\par}
+%% List the AI models like Claude, Gemini you used into the author list
+
+\vspace{12pt}
+
+%% =============================================================================
+%%  ABSTRACT  +  KEY POINTS  (side-by-side layout)
+%% =============================================================================
+
+\noindent{\color{jamalightgray}\rule{\textwidth}{0.5pt}}
+\vspace{6pt}
+
+\noindent
+\begin{minipage}[t]{0.62\textwidth}
+%% --- Abstract (left column, ~62% width) --------------------------------------
+{\sffamily\bfseries\fontsize{11}{13}\selectfont\color{jamacrimson} Abstract\par}
+\vspace{4pt}
+
+\abslabel{IMPORTANCE}
+{\fontsize{9}{11.5}\selectfont
+Provide the rationale for the study and why it adds to current knowledge.
+This section should be 1--2~sentences.\par}
+
+\absrule
+
+\abslabel{OBJECTIVE}
+{\fontsize{9}{11.5}\selectfont
+State the precise objective or research question. Begin with an infinitive
+phrase such as ``To determine whether\ldots'' or ``To compare\ldots''\par}
+
+\absrule
+
+\abslabel{DESIGN, SETTING, AND PARTICIPANTS}
+{\fontsize{9}{11.5}\selectfont
+Describe the basic study design, setting, and participant eligibility
+criteria. State the dates of the study and the dates analyses were
+conducted.\par}
+
+\absrule
+
+\abslabel{EXPOSURE}
+{\fontsize{9}{11.5}\selectfont
+Describe the primary exposure(s) or intervention(s).\par}
+
+\absrule
+
+\abslabel{MAIN OUTCOMES AND MEASURES}
+{\fontsize{9}{11.5}\selectfont
+State the primary outcome(s) and how they were measured. Describe the
+analytic approach.\par}
+
+\absrule
+
+\abslabel{RESULTS}
+{\fontsize{9}{11.5}\selectfont
+Begin with key demographics of the study sample (N, mean age, sex).
+Then summarise the main quantitative findings with effect sizes and
+confidence intervals.\par}
+
+\absrule
+
+\abslabel{CONCLUSIONS AND RELEVANCE}
+{\fontsize{9}{11.5}\selectfont
+Provide a brief interpretation of the results and their implications
+for clinical practice, policy, or future research.\par}
+
+\vspace{4pt}
+\noindent{\color{jamalightgray}\rule{0.62\textwidth}{0.4pt}}
+
+
+\end{minipage}%
+\hfill
+%% --- Key Points (right column, ~33% width) -----------------------------------
+\begin{minipage}[t]{0.33\textwidth}
+\begin{mdframed}[style=keypointsbox]
+{\sffamily\bfseries\fontsize{10}{12}\selectfont\color{jamacrimson}
+Key Points\par}
+\vspace{4pt}
+
+{\sffamily\bfseries\fontsize{8.5}{10.5}\selectfont Question\enspace}%
+{\fontsize{8.5}{10.5}\selectfont
+State the research question clearly and concisely.\par}
+
+\vspace{6pt}
+
+{\sffamily\bfseries\fontsize{8.5}{10.5}\selectfont Findings\enspace}%
+{\fontsize{8.5}{10.5}\selectfont
+Summarise the main findings of the study.\par}
+
+\vspace{6pt}
+
+{\sffamily\bfseries\fontsize{8.5}{10.5}\selectfont Meaning\enspace}%
+{\fontsize{8.5}{10.5}\selectfont
+State the implications of the findings.\par}
+\end{mdframed}
+
+
+
+\end{minipage}
+
+\newpage
+
+%% =============================================================================
+%%  INTRODUCTION
+%% =============================================================================
+\section*{Introduction}
+
+Provide background and context for the study. Discuss the significance of the
+problem, summarise relevant prior work, identify gaps in the literature, and
+state the study objective. The introduction should be concise (typically 3--5
+paragraphs) and end with a clear statement of the study's aim.
+
+Example citation format: Prior work has examined this
+topic.\textsuperscript{1,2}
+
+
+%% =============================================================================
+%%  METHODS
+%% =============================================================================
+\section*{Methods}
+
+\subsection*{Data}
+Describe the data source(s), study population, and sample selection criteria.
+Mention institutional review board approval status. State that the study
+followed the STROBE, CONSORT, or other appropriate reporting guideline.
+
+\subsection*{Outcome Measures}
+Define the primary and secondary outcome variables and how they were measured.
+
+\subsection*{Statistical Analysis}
+Describe the statistical methods in sufficient detail for a knowledgeable
+reader to replicate the analysis. Specify the software used. State the
+significance threshold and whether tests were 1- or 2-sided.
+
+
+%% =============================================================================
+%%  RESULTS
+%% =============================================================================
+\section*{Results}
+
+Begin with a description of the study sample (Table).
+Then present the main findings organised by research question or hypothesis.
+Include effect estimates, confidence intervals, and \textit{P}~values.
+
+\vspace{6pt}
+
+%% --- Table Template (JAMA style: no vertical rules, thin horizontal rules) ------------
+\begin{table}[H]
+\centering
+\sffamily\fontsize{8.5}{11}\selectfont
+\captionsetup{font={small,sf,bf}, textfont={normalfont,sf,color=jamadarkgray}}
+\caption{Descriptive Statistics of Sampled Health Care Workers}
+\label{tab:descriptive}
+
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{3.8cm}
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X @{}}
+
+\arrayrulecolor{jamadarkgray}
+\toprule[0.8pt]
+
+\textbf{Characteristic}
+  & \textbf{All\newline(N~=~31\,142)}
+  & \textbf{Mandate states\newline(n~=~12\,431)\textsuperscript{a}}
+  & \textbf{Nonmandate states\newline(n~=~18\,711)\textsuperscript{b}} \\
+
+\midrule[0.5pt]
+
+\multicolumn{4}{@{}l}{\textbf{Sex}} \\
+\quad Female           & 24\,294 (72.1) & 9554 (71.2) & 14\,740 (72.8) \\
+\quad Male             & 6848 (27.9)    & 2877 (28.8) & 3971 (27.2) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Marital status}} \\
+\quad Unmarried        & 11\,845 (39.3) & 5052 (41.7) & 6793 (37.4) \\
+\quad Married          & 19\,297 (60.7) & 7379 (58.3) & 11\,918 (62.6) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Race}} \\
+\quad Black            & 2927 (15.3) & 1210 (14.3) & 1717 (16.1) \\
+\quad White            & 24\,951 (71.7) & 9401 (66.5) & 15\,550 (75.7) \\
+\quad Other\textsuperscript{c} & 3264 (13.0) & 1820 (19.2) & 1444 (8.2) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Ethnicity}} \\
+\quad Hispanic         & 2555 (12.8) & 1326 (15.8) & 1229 (10.5) \\
+\quad Non-Hispanic     & 28\,587 (87.2) & 11\,105 (84.2) & 17\,482 (89.5) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Age, y}} \\
+\quad 25--34           & 5700 (28.6) & 2300 (29.0) & 3400 (28.4) \\
+\quad 35--49           & 13\,547 (39.3) & 5327 (38.5) & 8220 (39.9) \\
+\quad 50--64           & 11\,895 (32.0) & 4804 (32.5) & 7091 (31.7) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Educational level}} \\
+\quad Less than college degree & 10\,999 (51.3) & 4169 (49.5) & 6830 (52.6) \\
+\quad College degree or higher & 20\,143 (48.7) & 8262 (50.5) & 11\,881 (47.4) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Annual household income, \$}} \\
+\quad $<$35\,000       & 2831 (12.4) & 1020 (11.1) & 1811 (13.4) \\
+\quad 35\,000--100\,000 & 9778 (32.0) & 3583 (29.4) & 6195 (34.0) \\
+\quad $>$100\,000      & 12\,439 (32.3) & 5353 (35.4) & 7086 (29.9) \\
+\quad Income unknown   & 6094 (23.3) & 2475 (24.0) & 3619 (22.7) \\[4pt]
+
+\multicolumn{4}{@{}l}{\textbf{Vaccine uptake outcomes}} \\
+\quad Ever vaccinated in premandate period\textsuperscript{d}
+  & 12\,172 (84.2) & 5147 (87.5) & 7025 (81.6) \\
+\quad Ever vaccinated in postmandate period\textsuperscript{e}
+  & 16\,038 (89.9) & 6449 (93.4) & 9589 (87.2) \\
+\quad Primary series completed in premandate period\textsuperscript{f}
+  & 11\,978 (82.5) & 5067 (86.1) & 6911 (79.7) \\
+\quad Primary series completed in postmandate period
+  & 15\,944 (89.3) & 6411 (92.8) & 9533 (86.7) \\
+
+\bottomrule[0.8pt]
+\end{tabularx}
+
+\vspace{4pt}
+\begin{flushleft}
+\fontsize{7.5}{9.5}\selectfont\rmfamily\color{jamagray}
+Percentage estimates were weighted using survey weights.\\[1pt]
+\textsuperscript{a}\,California, Colorado, Connecticut, Delaware, Illinois,
+  Maine, Maryland, Massachusetts, New Jersey, New Mexico, New York, Oregon,
+  Pennsylvania, Rhode Island, Washington, and Washington, DC.\\[1pt]
+\textsuperscript{b}\,Alabama, Alaska, Arizona, Arkansas, Florida, Georgia,
+  Indiana, Iowa, Kansas, Louisiana, Michigan, Missouri, Montana, Nebraska,
+  New Hampshire, North Carolina, North Dakota, Ohio, Oklahoma, South Carolina,
+  South Dakota, Tennessee, Texas, Utah, Vermont, Virginia, West Virginia,
+  Wisconsin, and Wyoming.\\[1pt]
+\textsuperscript{c}\,The Household Pulse Survey categorises race as Asian,
+  Black, White, multiracial, and any other race. This study grouped Asian,
+  multiracial, and any other race as ``other'' because of small sample sizes.\\[1pt]
+\textsuperscript{d}\,Premandate period included survey weeks 31 to 33.\\[1pt]
+\textsuperscript{e}\,Postmandate period included survey weeks 34 to 39.\\[1pt]
+\textsuperscript{f}\,HCWs who completed or intended to complete the primary
+  series of COVID-19 vaccination.
+\end{flushleft}
+
+\end{table}
+
+
+%% =============================================================================
+%%  DISCUSSION
+%% =============================================================================
+\section*{Discussion}
+
+Interpret the main findings in context of prior literature. Discuss mechanisms,
+clinical or policy implications, and how results compare with existing evidence.
+
+\subsection*{Limitations}
+Acknowledge study limitations candidly.
+
+
+%% =============================================================================
+%%  CONCLUSIONS
+%% =============================================================================
+\section*{Conclusions}
+
+Provide a concise summary of the main findings and their relevance.
+
+
+%% =============================================================================
+%%  ARTICLE INFORMATION
+%% =============================================================================
+\vspace{6pt}
+\noindent{\color{jamalightgray}\rule{\textwidth}{0.4pt}}
+\vspace{4pt}
+
+
+
+
+
+%% =============================================================================
+%%  REFERENCES
+%% =============================================================================
+
+{\fontsize{8.5}{10.5}\selectfont
+\bibliographystyle{vancouver}
+\bibliography{references}
+}
+
+
+%% =============================================================================
+%%  SUPPLEMENT (optional, starts on new page)
+%% =============================================================================
+\clearpage
+\section*{Supplement 1}
+
+\subsection*{eAppendix 1. Statistical Models and Methods Details}
+Provide supplemental methodological details here, including the statistical models and methods used in the study.
+
+\subsection*{eTable 1. Supplementary Table Title}
+% Insert supplementary table here.
+
+\subsection*{eFigure 1. Supplementary Figure Title}
+% Insert supplementary figure here.
+
+
+\end{document}

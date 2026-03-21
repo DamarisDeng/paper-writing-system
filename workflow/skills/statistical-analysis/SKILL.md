@@ -29,29 +29,40 @@ Run descriptive and inferential statistical analyses driven by `research_questio
 
 Reads from `<output_folder>/1_data_profile/`, `<output_folder>/2_research_question/`, and original raw data. Writes to `<output_folder>/3_analysis/`.
 
-## Resume Protocol
+## Progress Tracking
 
-If you are resuming after context compaction or picking up mid-stage:
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/3_analysis/progress.json`.
 
-1. Read `<output_folder>/3_analysis/progress.json` (if it exists).
-2. Find the last completed step.
-3. Read `analysis_plan.json` (if it exists) to restore the analysis strategy.
-4. Continue from the next incomplete step. **Never re-run a completed step.**
+**Steps tracked:**
+- `step_1_load_inputs`: Load all input files
+- `step_2_prepare_data`: Prepare analytic dataset
+- `step_3_descriptive_stats`: Generate Table 1
+- `step_3b_analysis_plan`: Write analysis plan
+- `step_4_primary_analysis`: Run primary analysis
+- `step_5_sensitivity`: Run sensitivity analyses
+- `step_6_compile`: Compile and validate results
 
-**Progress tracking utility:** This skill uses `workflow/scripts/progress_utils.py` for consistent progress tracking. Import it at the start:
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
 
+**Initialize progress tracker at start:**
 ```python
 import sys; sys.path.insert(0, "workflow/scripts")
 from progress_utils import create_stage_tracker, update_step, complete_stage, get_resume_point
 
 # Check for resume point
 resume_point = get_resume_point(output_folder, "statistical_analysis")
-if resume_point != "start":
+if resume_point == "start":
+    tracker = create_stage_tracker(output_folder, "statistical_analysis",
+        ["step_1_load_inputs", "step_2_prepare_data", "step_3_descriptive_stats",
+         "step_3b_analysis_plan", "step_4_primary_analysis", "step_5_sensitivity",
+         "step_6_compile"])
+else:
     print(f"Resuming from: {resume_point}")
 ```
 
 | If `progress.json` says last completed is... | Resume at |
 |----------------------------------------------|-----------|
+| `step_1_load_inputs` | Step 2: Prepare data |
 | `step_2_prepare_data` | Step 3: Descriptive stats |
 | `step_3_descriptive_stats` | Step 3b: Write analysis plan |
 | `step_3b_analysis_plan` | Step 4: Primary analysis (read plan first) |
@@ -138,14 +149,10 @@ The script should:
 5. **Save** to `<output_folder>/3_analysis/analytic_dataset.csv`.
 6. **Print summary**: N total, N excluded (with reasons), missingness per variable.
 
-**Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
-```json
-{
-  "current_step": "step_2_prepare_data",
-  "completed_steps": ["step_2_prepare_data"],
-  "last_updated": "ISO-8601",
-  "notes": ""
-}
+**Progress checkpoint:**
+```python
+update_step(output_folder, "statistical_analysis", "step_2_prepare_data", "completed",
+             outputs=["3_analysis/analytic_dataset.csv"])
 ```
 
 ---
@@ -211,14 +218,10 @@ Include a pre-formatted Table 1 array in `analysis_results.json` under `descript
 
 This follows JAMA Table 1 conventions and can be consumed by Stage 5 (generate-figures) without recomputation.
 
-**Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
-```json
-{
-  "current_step": "step_3_descriptive_stats",
-  "completed_steps": ["step_2_prepare_data", "step_3_descriptive_stats"],
-  "last_updated": "ISO-8601",
-  "notes": ""
-}
+**Progress checkpoint:**
+```python
+update_step(output_folder, "statistical_analysis", "step_3_descriptive_stats", "completed",
+             outputs=["3_analysis/analysis_results.json"])  # Partial results with descriptive stats
 ```
 
 ---
@@ -293,14 +296,11 @@ continue from the next incomplete step per `progress.json`.
 
 **Copy the method-specific module now.** Look up `model_selection.selected_method` in `analysis_plan.json` and copy the corresponding script from this skill's `scripts/` directory into `<output_folder>/3_analysis/scripts/` (see the table in "Before You Start").
 
-**Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
-```json
-{
-  "current_step": "step_3b_analysis_plan",
-  "completed_steps": ["step_2_prepare_data", "step_3_descriptive_stats", "step_3b_analysis_plan"],
-  "last_updated": "ISO-8601",
-  "notes": "Logistic regression selected; binary outcome, no clustering"
-}
+**Progress checkpoint:**
+```python
+update_step(output_folder, "statistical_analysis", "step_3b_analysis_plan", "completed",
+             outputs=["3_analysis/analysis_plan.json"],
+             notes="Logistic regression selected; binary outcome, no clustering")
 ```
 
 ---
@@ -550,14 +550,10 @@ In the primary analysis output, include both raw and formatted values in `exposu
 - .01 ≤ p ≤ 1 → 2 decimal places (e.g., ".03")
 - No leading zero (`.03` not `0.03`)
 
-**Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
-```json
-{
-  "current_step": "step_4_primary_analysis",
-  "completed_steps": ["step_2_prepare_data", "step_3_descriptive_stats", "step_3b_analysis_plan", "step_4_primary_analysis"],
-  "last_updated": "ISO-8601",
-  "notes": ""
-}
+**Progress checkpoint:**
+```python
+update_step(output_folder, "statistical_analysis", "step_4_primary_analysis", "completed",
+             outputs=["3_analysis/analysis_results.json"])  # Updated with primary analysis results
 ```
 
 ### Step 4b: Assumption Checks (method-specific)
@@ -629,14 +625,9 @@ Run **at least two** of the following. Write each as a separate script in `scrip
 16. **Competing risks sensitivity** — If competing risks are present but not modeled in primary, run Fine-Gray as sensitivity.
 17. **Landmark analysis** — Re-run survival analysis starting from a landmark time to address immortal-time bias if applicable.
 
-**Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
-```json
-{
-  "current_step": "step_5_sensitivity",
-  "completed_steps": ["step_2_prepare_data", "step_3_descriptive_stats", "step_3b_analysis_plan", "step_4_primary_analysis", "step_5_sensitivity"],
-  "last_updated": "ISO-8601",
-  "notes": ""
-}
+**Progress checkpoint:**
+```python
+update_step(output_folder, "statistical_analysis", "step_5_sensitivity", "completed")
 ```
 
 ---
@@ -647,14 +638,16 @@ Save all results to `<output_folder>/3_analysis/analysis_results.json` using `va
 
 The output schema is documented in `references/methods.md` under "Output Contract."
 
-**Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
-```json
-{
-  "current_step": "step_6_compile",
-  "completed_steps": ["step_2_prepare_data", "step_3_descriptive_stats", "step_3b_analysis_plan", "step_4_primary_analysis", "step_5_sensitivity", "step_6_compile"],
-  "last_updated": "ISO-8601",
-  "notes": ""
-}
+**Progress checkpoint - Mark stage complete:**
+```python
+update_step(output_folder, "statistical_analysis", "step_6_compile", "completed")
+
+# Mark stage complete with validation
+complete_stage(output_folder, "statistical_analysis",
+               expected_outputs=["3_analysis/analysis_results.json",
+                                 "3_analysis/analytic_dataset.csv",
+                                 "3_analysis/analysis_plan.json",
+                                 "3_analysis/results_summary.md"])
 ```
 
 After writing `analysis_results.json`, also write `<output_folder>/3_analysis/results_summary.md`. This is prose Stage 7 can copy directly into the paper. Structure:

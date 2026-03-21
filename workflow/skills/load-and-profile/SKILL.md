@@ -60,6 +60,11 @@ update_step(output_folder, "load_and_profile", "step_1_read_description", "compl
 - Verify alignment with the description.
 - Note any structural issues: multi-row headers in XLSX, metadata rows, encoding issues, etc.
 
+**Progress checkpoint:**
+```python
+update_step(output_folder, "load_and_profile", "step_2_inspect_files", "completed")
+```
+
 ### Step 3: Run the Profiling Script
 
 Run the Python profiling script:
@@ -103,6 +108,11 @@ Read the generated `<output_folder>/1_data_profile/profile.json` and `<output_fo
    - Columns with >50% missing values
    - Unexpected value ranges
    - Datasets that may need filtering (e.g., metadata rows in what should be data)
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "load_and_profile", "step_4_enrich_output", "completed")
+```
 
 ### Step 5: Save Final Outputs
 

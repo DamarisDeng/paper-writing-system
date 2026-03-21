@@ -69,6 +69,12 @@ Read both files from `<output_folder>/1_data_profile/`:
 
 Also check whether the original data folder (referenced in `profile.json` file paths) has a `Data_Description.md` or any `.md` files. If so, read them for additional domain context.
 
+**Progress checkpoint:**
+```python
+from progress_utils import update_step
+update_step(output_folder, "generate_research_questions", "step_1_load_inputs", "completed")
+```
+
 ---
 
 ### Step 2: Understand the Data Landscape
@@ -86,6 +92,11 @@ Before generating any questions, build a structured mental model:
   - Metadata-only files (e.g., archive indexes) that don't contain analyzable data
   - Ecological (aggregate) vs. individual-level data — this constrains causal claims
   - Temporal misalignment between datasets
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "generate_research_questions", "step_2_understand_data", "completed")
+```
 
 ---
 
@@ -129,6 +140,11 @@ For each promising outcome–exposure pair, write a full PICO/PECO question spec
 - **Trivial descriptive**: "What is the mean `Age` in the dataset?" — not a research question.
 - **Requires external data**: The question needs variables not present in or derivable from the provided datasets.
 
+**Progress checkpoint:**
+```python
+update_step(output_folder, "generate_research_questions", "step_3_identify_pairings", "completed")
+```
+
 ---
 
 ### Step 4: Rank and Select
@@ -149,6 +165,11 @@ Also match each question to the study design the data supports:
 - Repeated measures / time series → before-after, interrupted time series, difference-in-differences
 - Ecological (state-level) data → ecological study (cannot make individual-level claims)
 - Individual-level data with exposure timing → cohort-style analysis
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "generate_research_questions", "step_4_rank_select", "completed")
+```
 
 ---
 
@@ -181,6 +202,11 @@ Optionally:
 
 **Every raw column must appear in exactly one of the five raw-column categories.** This mapping drives downstream study design and analysis.
 
+**Progress checkpoint:**
+```python
+update_step(output_folder, "generate_research_questions", "step_5_assign_variables", "completed")
+```
+
 ---
 
 ### Step 6: Assess Feasibility
@@ -200,6 +226,11 @@ Write an honest assessment:
 **Required assumptions**: What must hold for the analysis to be valid? (e.g., parallel trends for diff-in-diff, no unmeasured confounding, missing at random)
 
 **Data acquisition requirements** (if applicable): If the primary outcome or exposure is accessible through URL columns in the data (e.g., Archive Link), document what needs downloading. Specify the target file path as `<output_folder>/2_research_question/downloaded/<filename>`. Include fallback sources if primary URLs may be deprecated.
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "generate_research_questions", "step_6_assess_feasibility", "completed")
+```
 
 ---
 

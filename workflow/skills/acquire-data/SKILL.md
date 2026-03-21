@@ -54,9 +54,19 @@ Read `<output_folder>/2_research_question/research_questions.json` and extract t
 
 If `data_acquisition_requirements` is empty or missing, report that no data acquisition is needed and exit successfully.
 
+**Progress checkpoint:**
+```python
+update_step(output_folder, "acquire_data", "step_1_load_requirements", "completed")
+```
+
 ### Step 2: Create Download Directory
 
 Create the directory `<output_folder>/2_research_question/downloaded/` if it doesn't exist.
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "acquire_data", "step_2_create_directory", "completed")
+```
 
 ### Step 3: For Each Requirement — Use Fallback Strategy
 
@@ -103,6 +113,12 @@ For each successful download:
 4. Save to the exact `target_file` path
 5. Record the actual source used (primary vs fallback) in a README
 
+**Progress checkpoint:**
+```python
+update_step(output_folder, "acquire_data", "step_3_download_data", "completed",
+             outputs=["2_research_question/downloaded/" + f for f in downloaded_files])
+```
+
 ### Step 4: Handle Common Failure Modes
 
 **404 errors:** Dataset deprecated → immediately try fallback source
@@ -122,7 +138,12 @@ For each downloaded file:
    - Number of rows/states
    - Any data quality notes
 
-### Step 6: Report Summary
+**Progress checkpoint:**
+```python
+update_step(output_folder, "acquire_data", "step_4_verify_document", "completed")
+```
+
+### Step 5: Report Summary
 
 Output:
 - Files downloaded and their sizes
@@ -131,6 +152,11 @@ Output:
 - Any warnings or issues
 
 **Progress checkpoint - Mark stage complete:**
+```python
+update_step(output_folder, "acquire_data", "step_5_report_summary", "completed")
+
+# Then mark stage complete with validation
+```
 ```python
 # After all downloads complete
 outputs = ["2_research_question/downloaded/" + f for f in downloaded_files]
