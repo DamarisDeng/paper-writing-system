@@ -1,5 +1,6 @@
 ---
 name: literature-review
+model: low
 description: >
   Conduct a time-boxed literature search and produce a references.bib file
   with ≥10 BibTeX entries. Searches across 4 categories: similar studies,

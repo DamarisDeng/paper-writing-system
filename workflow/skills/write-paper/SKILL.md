@@ -1,5 +1,6 @@
 ---
 name: write-paper
+model: high
 description: >
   Draft a complete JAMA Network Open paper in LaTeX using the template and
   all upstream outputs. Produces paper.tex with structured abstract (7

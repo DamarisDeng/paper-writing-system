@@ -1,5 +1,6 @@
 ---
 name: generate-figures
+model: medium
 description: >
   Generate publication-quality JAMA-style figures and LaTeX tables from
   analysis_results.json. Produces at least 2 figures (.png + .pdf) and

@@ -1,5 +1,6 @@
 ---
 name: generate-research-questions
+model: high
 description: >
   Generate tentative research questions from profiled dataset outputs.
   Takes profile.json and variable_types.json (produced by /load-and-profile)

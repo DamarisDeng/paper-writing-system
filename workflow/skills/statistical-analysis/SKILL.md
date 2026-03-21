@@ -1,5 +1,6 @@
 ---
 name: statistical-analysis
+model: medium
 description: >
   Run statistical analyses based on research_questions.json. Produces descriptive
   statistics (Table 1 data), primary regression analysis, and sensitivity analyses.

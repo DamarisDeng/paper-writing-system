@@ -1,5 +1,6 @@
 ---
 name: compile-and-review
+model: low
 description: >
   Compile the LaTeX paper to PDF using pdflatex + bibtex, fix compilation
   errors (up to 3 retries), run a self-review checklist, apply revisions,

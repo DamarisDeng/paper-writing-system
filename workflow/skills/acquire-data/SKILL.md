@@ -1,5 +1,6 @@
 ---
 name: acquire-data
+model: low
 description: >
   Download external data files specified in research_questions.json data_acquisition_requirements.
   Reads the output from /generate-research-questions and downloads required datasets

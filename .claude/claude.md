@@ -130,3 +130,32 @@ When the user says anything like:
 - "Generate paper"
 
 Execute the orchestrator skill which runs stages 1–8 in sequence.
+
+---
+
+## Setup: Model Mapping Configuration
+
+**IMPORTANT**: Before running the pipeline, ensure `~/.claude/settings.json` has the model level mappings. If not present, add them:
+
+```json
+{
+  "modelLevels": {
+    "high": "opus[1m]",
+    "medium": "sonnet",
+    "low": "haiku"
+  }
+}
+```
+
+Each skill specifies its required model level in its SKILL.md frontmatter (`model: high|medium|low`). The orchestrator uses this mapping to select the appropriate model for each stage:
+
+| Stage | Model Level | Model | Rationale |
+|-------|-------------|-------|-----------|
+| 1. Load & Profile | medium | sonnet | Data inspection, profiling |
+| 2. Research Questions | high | opus[1m] | Deep reasoning for PICO formulation |
+| 3. Acquire Data | low | haiku | Simple downloads |
+| 4. Statistical Analysis | medium | sonnet | Code generation, models |
+| 5. Generate Figures | medium | sonnet | Visualization code |
+| 6. Literature Review | low | haiku | Search and format |
+| 7. Write Paper | high | opus[1m] | Complex synthesis and writing |
+| 8. Compile & Review | low | haiku | Compilation, error handling |

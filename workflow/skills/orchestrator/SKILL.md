@@ -1,5 +1,6 @@
 ---
 name: orchestrator
+model: medium
 description: >
   Master orchestrator that runs the full paper-generation pipeline (stages 1-8)
   sequentially. Handles initialization, stage execution with validation,

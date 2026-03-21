@@ -1,3 +1,13 @@
+---
+name: load-and-profile
+model: medium
+description: >
+  Load and profile any dataset folder. Clean data, inspect structure,
+  and produce profile.json and variable_types.json for downstream stages.
+  Use this skill at the start of the pipeline to understand available data.
+argument-hint: <data_folder>
+---
+
 # Load and Profile Data
 
 Load any dataset folder, clean it, and produce `profile.json` + `variable_types.json` for downstream pipeline stages.
