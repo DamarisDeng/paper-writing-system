@@ -44,6 +44,31 @@ Quick-reference for implementation details, known pitfalls, and decision guidanc
 - Use `statsmodels.miscmodels.ordinal_model.OrderedModel` with `distr='logit'`.
 - Check proportional odds assumption: the effect should be consistent across cut-points.
 
+### Survey Weights
+- Use when analyzing survey data with sampling weights or observational data with inverse probability weights.
+- For OLS: Use `sm.WLS(y, X, weights=weights)` for weighted least squares.
+- For logistic: Use `sklearn.linear_model.LogisticRegression` with `sample_weight` parameter.
+- For descriptive statistics (Table 1): Use weighted means, SDs, and proportions.
+- Weighted analyses produce population-average estimates; unweighted analyses produce sample-average estimates.
+```python
+from regression import fit_regression
+from descriptive import generate_table1
+
+# Weighted regression
+results = fit_regression(
+    df, outcome="health_outcome", exposure="treatment",
+    covariates=["age", "sex"], method="ols", weights_col="sample_weight"
+)
+
+# Weighted Table 1
+table1 = generate_table1(
+    df, group_col="treatment",
+    continuous_vars=["age", "bmi"],
+    categorical_vars=["sex", "race"],
+    weights_col="sample_weight"
+)
+```
+
 ---
 
 ## 2. Penalized Regression
@@ -158,6 +183,34 @@ from causal import propensity_score_match, ipw_estimate, did_regression, its_ana
 - Check proportional hazards assumption: `cph.check_assumptions(df)` runs Schoenfeld residual tests.
 - If PH violated: stratify by the offending variable, or use time-varying coefficients.
 - Report hazard ratios with 95% CI, concordance index.
+
+### Age-as-Time-Scale Cox Models
+- Use when age is the primary time scale (common in epidemiology).
+- Requires: entry age column (e.g., `age_entry`, `entry_age`, `baseline_age`) for left-truncation.
+- Outcome should be age at event or censoring.
+- Implementation uses `entry_col` parameter in `CoxPHFitter.fit()`.
+- The hazard ratio is interpreted per unit of age, accounting for delayed entry.
+```python
+from regression import fit_regression
+results = fit_regression(
+    df, outcome="age_at_event", exposure="treatment",
+    covariates=["sex", "comorbidity"], method="cox", time_scale="age"
+)
+```
+
+### Fine-Gray Competing Risks Models
+- Use when competing events prevent the event of interest (e.g., death from other causes).
+- Event coding: 0=censored, 1=event_of_interest, 2=competing_event.
+- Implementation uses cause-specific Cox models as a practical approximation.
+- Returns both cause-specific HR for the event of interest and HR for competing events.
+- Report cumulative incidence functions in addition to hazard ratios.
+```python
+from regression import fit_regression
+results = fit_regression(
+    df, outcome="time_to_event", exposure="treatment",
+    covariates=["sex", "age"], method="fine_gray"
+)
+```
 
 ### Kaplan-Meier
 - Non-parametric survival curves. Good for visualization and log-rank tests.

@@ -3,17 +3,17 @@ name: statistical-analysis
 model: medium
 description: >
   Run statistical analyses based on research_questions.json. Supports a wide
-  range of methods: regression (OLS, logistic, Cox, Poisson, mixed-effects),
-  penalized regression (LASSO, Ridge, Elastic Net), machine learning prediction
-  (Random Forest, XGBoost, SVM), causal inference (DiD, propensity score matching,
-  inverse probability weighting), and survival analysis. Produces descriptive
-  statistics (Table 1 data), primary analysis, sensitivity analyses, and
-  analysis_results.json. Ships with pre-built helper functions for robust execution.
-  Use after /acquire-data when research questions and data are ready.
-  Triggers on: "run analysis", "statistical analysis", "fit model", "regression",
-  "LASSO", "machine learning", "prediction model", "analyze the data",
-  "causal inference", "propensity score", "survival analysis", or any request
-  to go from research questions to results.
+  range of methods: regression (OLS, logistic, Cox, Fine-Gray competing risks,
+  Poisson, mixed-effects), penalized regression (LASSO, Ridge, Elastic Net),
+  machine learning prediction (Random Forest, XGBoost, SVM), causal inference
+  (DiD, propensity score matching, inverse probability weighting), and survival
+  analysis (age-as-time-scale, left-truncation). Produces descriptive statistics
+  (Table 1 data), primary analysis, sensitivity analyses, and analysis_results.json.
+  Ships with pre-built helper functions for robust execution. Use after /acquire-data
+  when research questions and data are ready. Triggers on: "run analysis",
+  "statistical analysis", "fit model", "regression", "LASSO", "machine learning",
+  "prediction model", "analyze the data", "causal inference", "propensity score",
+  "survival analysis", or any request to go from research questions to results.
 argument-hint: <output_folder>
 ---
 
@@ -159,7 +159,8 @@ group_col = research_questions["variable_roles"]["exposure"]
 
 table1 = generate_table1(df, group_col=group_col,
                          continuous_vars=continuous_vars,
-                         categorical_vars=categorical_vars)
+                         categorical_vars=categorical_vars,
+                         weights_col=weights_col)  # Optional: survey weights
 ```
 
 `generate_table1()` handles:
@@ -419,19 +420,41 @@ Goal: estimate an average treatment effect (ATE or ATT) under explicit assumptio
 
 #### Track D — Survival / Time-to-Event
 
+**D0. Data requirements for survival analysis:**
+- `time_col`: Time-to-event or age-at-event column
+- `event_col`: Event indicator (0=censored, 1=event, 2=competing for Fine-Gray)
+- For age-as-time-scale: include entry age column (`age_entry`, `entry_age`, etc.)
+
 **D1. Is the hazard assumption plausible?**
 
 - Standard survival with time-varying or fixed covariates → Candidates: **`[Cox PH, Parametric AFT (Weibull or log-normal)]`**.
   - Use Cox PH as default (semi-parametric, no distributional assumption).
+  - Use `time_scale="age"` for age-as-time-scale analysis (left-truncation).
   - Use parametric AFT if Schoenfeld residuals show PH violation AND the event-time distribution is well-characterized.
-- Competing risks present → Candidates: **`[Fine-Gray subdistribution hazard, Cause-specific Cox]`**.
-  - Use Fine-Gray when the research question is about cumulative incidence in the presence of competing events.
+- Competing risks present → Candidates: **`[Cause-specific Cox, Fine-Gray subdistribution hazard]`**.
   - Use cause-specific Cox when the mechanism for the event of interest is the focus.
+  - Use Fine-Gray (`method="fine_gray"`) when the research question is about cumulative incidence in the presence of competing events.
+  - Event coding: 0=censored, 1=event_of_interest, 2=competing_event.
 
 **D2. All survival analyses must report:**
 - Median survival with 95% CI per group (Kaplan-Meier).
-- Schoenfeld residuals test for proportional hazards.
+- Schoenfeld residuals test for proportional hazards (if Cox used).
 - Censoring summary (% censored, reason if known).
+- For competing risks: cumulative incidence functions.
+
+**Example: Age-as-time-scale Cox model**
+```python
+from regression import fit_regression
+results = fit_regression(
+    df,
+    outcome="age_at_death",      # Age at event/censoring
+    exposure="treatment",
+    covariates=["sex", "comorbidity"],
+    method="cox",
+    time_scale="age",            # Use age as time scale
+    # Requires: age_entry column in df
+)
+```
 
 ---
 
@@ -451,7 +474,7 @@ When multiple candidates qualify, use these rules in order:
 
 | Method | Import + Call |
 |--------|--------------|
-| OLS / logit / Poisson / NegBin / ordinal / mixed / GEE | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method=..., cluster_col=...)` |
+| OLS / logit / Poisson / NegBin / ordinal / mixed / GEE | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method=..., cluster_col=..., weights_col=...)` |
 | LASSO / Ridge / Elastic Net | `from penalized import fit_penalized`<br>`results = fit_penalized(df, outcome, predictors, method=..., task="auto")` |
 | Random Forest / XGBoost / SVM / KNN | `from ml import fit_ml_model`<br>`results = fit_ml_model(df, outcome, predictors, method=..., task="auto")` |
 | PSM | `from causal import propensity_score_match`<br>`results = propensity_score_match(df, treatment_col, covariates, outcome_col)` |
@@ -459,7 +482,7 @@ When multiple candidates qualify, use these rules in order:
 | AIPW | `from causal import aipw_estimate`<br>`results = aipw_estimate(df, treatment_col, covariates, outcome_col)` |
 | DiD | `from causal import did_regression`<br>`results = did_regression(df, outcome, treatment_col, time_col, covariates)` |
 | ITS | `from causal import its_analysis`<br>`results = its_analysis(df, outcome, time_col, intervention_point)` |
-| Cox / AFT / Fine-Gray | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method="cox"|"aft"|"fine_gray", time_col=..., event_col=...)` |
+| Cox / Fine-Gray | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method="cox"|"fine_gray", time_scale="time"|"age", weights_col=...)` |
 
 Do NOT re-implement these from scratch — the helpers handle clustering, SE correction,
 output formatting, and JSON-ready results.
@@ -556,6 +579,8 @@ Supported methods and their key checks:
 | C | DiD | Pre-trend parallel test, no anticipation effects |
 | C | ITS | Autocorrelation (Durbin-Watson), no concurrent interventions |
 | D | `"cox"` | Schoenfeld residuals (PH test), no influential observations |
+| D | `"cox"` | Schoenfeld residuals (PH test), concordance (C-index), no influential observations |
+| D | `"fine_gray"` | Sufficient competing events (n ≥ 10 for each event type), concordance for event of interest |
 | D | `"aft"` | Distribution fit (AIC comparison across Weibull/log-normal/log-logistic) |
 
 For causal and survival tracks, run the track-specific checks documented in `references/methods.md` in addition to calling `check_assumptions()`.

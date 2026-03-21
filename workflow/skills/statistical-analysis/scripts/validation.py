@@ -37,8 +37,9 @@ def check_assumptions(
     if method == "logit":
         return _logistic_checks(model_result)
     if method == "cox":
-        return {"note": {"passed": True,
-                         "details": "Run cph.check_assumptions(df) for Schoenfeld test."}}
+        return _cox_checks(model_result, df, outcome, predictors)
+    if method in ("fine_gray", "fine-gray"):
+        return _fine_gray_checks(model_result, df, outcome)
     return {}
 
 
@@ -126,6 +127,54 @@ def _logistic_checks(result) -> dict:
         }
     except Exception as e:
         checks["hosmer_lemeshow"] = {"passed": None, "details": str(e)}
+
+    return checks
+
+
+def _cox_checks(result, df, outcome, predictors) -> dict:
+    """Proportional hazards assumption checks for Cox models."""
+    checks = {}
+
+    # Basic checks from result dict
+    if "concordance" in result:
+        conc = result["concordance"]
+        checks["discrimination_concordance"] = {
+            "passed": conc > 0.5,
+            "details": f"C-index = {conc:.4f}"
+        }
+
+    # Note: Full Schoenfeld test requires refitting the model
+    # Document that user should run manually if needed
+    checks["proportional_hazards"] = {
+        "passed": None,
+        "details": "Schoenfeld test requires running cph.check_assumptions() manually "
+                   "on the fitted CoxPHFitter object with original data."
+    }
+
+    return checks
+
+
+def _fine_gray_checks(result, df, outcome, event_col=None) -> dict:
+    """Assumption checks for competing risks models."""
+    checks = {}
+
+    # Detect event column if not provided
+    if event_col is None:
+        for name in ("event", "status", "cause", "event_type", f"{outcome}_event"):
+            if name in df.columns:
+                event_col = name
+                break
+
+    # Check sufficient number of competing events
+    if event_col and event_col in df.columns:
+        n_competing = (df[event_col] == 2).sum()
+        n_eoi = (df[event_col] == 1).sum()
+        n_censored = (df[event_col] == 0).sum()
+
+        checks["sufficient_events"] = {
+            "passed": n_competing >= 10 and n_eoi >= 10,
+            "details": f"n_comp={n_competing}, n_eoi={n_eoi}, n_censored={n_censored}"
+        }
 
     return checks
 
