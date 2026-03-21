@@ -23,9 +23,35 @@ Create publication-quality JAMA Network Open-style figures and tables from stati
 
 Reads from `<output_folder>/3_analysis/analysis_results.json` and `<output_folder>/2_research_question/research_questions.json`. Writes to `<output_folder>/4_figures/`.
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/4_figures/progress.json`.
+
+**Steps tracked:**
+- `step_1_load_inputs`: Load analysis results and research questions
+- `step_2_setup_style`: Create JAMA matplotlib style configuration
+- `step_3_table1`: Generate Table 1 (baseline characteristics)
+- `step_4_primary_figure`: Generate primary results figure
+- `step_5_additional_figures`: Generate additional figures
+- `step_6_additional_tables`: Generate additional tables
+- `step_7_manifest`: Create figure/table manifest
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
 You are a data visualization specialist producing figures for a JAMA Network Open paper. Every visual must be clean, informative, and publication-ready.
+
+**Initialize progress tracker at start:**
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker
+
+tracker = create_stage_tracker(output_folder, "generate_figures",
+    ["step_1_load_inputs", "step_2_setup_style", "step_3_table1",
+     "step_4_primary_figure", "step_5_additional_figures",
+     "step_6_additional_tables", "step_7_manifest"])
+```
 
 ### Step 1: Load Inputs
 
@@ -210,6 +236,16 @@ Save `<output_folder>/4_figures/manifest.json`:
 - [ ] `manifest.json` exists and lists all figures and tables
 - [ ] Figures are legible in grayscale (check by converting to grayscale mentally)
 - [ ] No figures contain a title in the image (titles go in LaTeX captions)
+
+**Progress checkpoint - Mark stage complete:**
+```python
+from progress_utils import complete_stage
+
+complete_stage(output_folder, "generate_figures",
+               expected_outputs=["4_figures/manifest.json",
+                                 "4_figures/tables/table1.tex"])
+# Note: individual figure files are too numerous to list all; just check manifest and key files
+```
 
 ## Output Contract
 

@@ -21,9 +21,32 @@ Download external data files specified in `data_acquisition_requirements` to sup
 
 Reads from `<output_folder>/2_research_question/research_questions.json` and writes downloaded files to `<output_folder>/2_research_question/downloaded/`.
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/2_research_question/progress.json` (shared with generate-research-questions stage).
+
+**Steps tracked:**
+- `step_1_load_requirements`: Read research_questions.json
+- `step_2_create_directory`: Create download folder
+- `step_3_download_data`: Download each required file
+- `step_4_verify_document`: Verify and document downloads
+- `step_5_report_summary`: Report download summary
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
 You are responsible for acquiring the data needed for the research analysis. Follow these steps:
+
+**Initialize progress tracker at start:**
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker, update_step, complete_stage
+
+tracker = create_stage_tracker(output_folder, "acquire_data",
+    ["step_1_load_requirements", "step_2_create_directory",
+     "step_3_download_data", "step_4_verify_document", "step_5_report_summary"])
+```
 
 ### Step 1: Load Research Questions
 
@@ -106,6 +129,16 @@ Output:
 - Whether primary or fallback source was used
 - Row counts and date ranges
 - Any warnings or issues
+
+**Progress checkpoint - Mark stage complete:**
+```python
+# After all downloads complete
+outputs = ["2_research_question/downloaded/" + f for f in downloaded_files]
+outputs.append("2_research_question/downloaded/README.md")
+
+complete_stage(output_folder, "acquire_data",
+               expected_outputs=outputs)  # Or skip validation if no downloads were needed
+```
 
 ## Known Working Data Sources
 

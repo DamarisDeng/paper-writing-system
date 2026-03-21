@@ -23,9 +23,30 @@ Draft a complete JAMA Network Open research paper in LaTeX, integrating all upst
 
 Reads from all upstream stage outputs in `<output_folder>/` and the template at `sample/tex/template.tex`. Writes to `<output_folder>/6_paper/`.
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/6_paper/progress.json`.
+
+**Steps tracked:**
+- `step_1_load_inputs`: Load all upstream outputs and template
+- `step_2_copy_assets`: Copy figures, tables, references to stage folder
+- `step_3_draft_paper`: Write complete paper.tex content
+- `step_4_validate`: Validate LaTeX structure and completeness
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
 You are a medical writer experienced in drafting JAMA Network Open research articles. Write a complete, publication-ready manuscript integrating statistical results, figures, tables, and references.
+
+**Initialize progress tracker at start:**
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker
+
+tracker = create_stage_tracker(output_folder, "write_paper",
+    ["step_1_load_inputs", "step_2_copy_assets", "step_3_draft_paper", "step_4_validate"])
+```
 
 ### Step 1: Load All Inputs
 
@@ -189,6 +210,14 @@ Before saving, verify:
 - [ ] Statistical results in text match `analysis_results.json` values exactly
 - [ ] No placeholder text remains (search for "TODO", "XXX", "PLACEHOLDER")
 - [ ] `references.bib` is copied to `<output_folder>/6_paper/`
+
+**Progress checkpoint - Mark stage complete:**
+```python
+from progress_utils import complete_stage
+
+complete_stage(output_folder, "write_paper",
+               expected_outputs=["6_paper/paper.tex", "6_paper/references.bib"])
+```
 
 ## Output Contract
 

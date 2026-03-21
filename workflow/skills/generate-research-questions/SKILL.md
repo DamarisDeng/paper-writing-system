@@ -26,11 +26,38 @@ Given profiled dataset outputs (`profile.json` + `variable_types.json`), generat
 
 Where `<output_folder>` is the base directory (e.g., `exam_paper`). The skill reads from `<output_folder>/1_data_profile/` and writes to `<output_folder>/2_research_question/`.
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/2_research_question/progress.json`.
+
+**Steps tracked:**
+- `step_1_load_inputs`: Load profile and variable_types
+- `step_2_understand_data`: Build mental model of data landscape
+- `step_3_identify_pairings`: Find outcome-exposure pairs
+- `step_4_rank_select`: Select primary and secondary questions
+- `step_5_assign_variables`: Map variables to roles
+- `step_6_assess_feasibility`: Document strengths and limitations
+- `step_7_save_validate`: Write and validate research_questions.json
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
-You are an epidemiologist and biostatistician formulating research questions from available data. Your goal is to identify the single best primary research question the data can answer, along with supporting secondary questions. Every question must be grounded in variables that actually exist in the data — no aspirational questions about data you wish you had.
+You are an epidemiologist and biostatistician formulating research questions from available data. Your goal is to identify the single best primary research question the data can answer, along with supporting secondary questions. Every question must be grounded in variables that actually exist in the data — no aspirational questions about data you wish you have.
 
 ---
+
+### Step 0: Initialize Progress Tracker
+
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker
+
+tracker = create_stage_tracker(output_folder, "generate_research_questions",
+    ["step_1_load_inputs", "step_2_understand_data", "step_3_identify_pairings",
+     "step_4_rank_select", "step_5_assign_variables", "step_6_assess_feasibility",
+     "step_7_save_validate"])
+```
 
 ### Step 1: Load Inputs
 
@@ -278,3 +305,15 @@ python workflow/skills/generate-research-questions/validate_research_questions.p
 The script checks: schema completeness, column coverage (every column assigned to exactly one role), column reference validity, identifier role violations, outcome analyzability (type + missingness), exposure analyzability, denominator-as-outcome heuristic, question specificity (column names referenced), and derived variable structure.
 
 If the script reports **errors (exit code 1)**, fix `research_questions.json` and re-run until all checks pass. Do not proceed to study design with validation errors.
+
+**Progress checkpoint - Mark stage complete:**
+```python
+from progress_utils import update_step, complete_stage
+
+# After validation passes
+update_step(output_folder, "generate_research_questions", "step_7_save_validate", "completed")
+
+# Mark stage complete with validation
+complete_stage(output_folder, "generate_research_questions",
+               expected_outputs=["2_research_question/research_questions.json"])
+```

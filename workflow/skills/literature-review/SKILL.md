@@ -23,9 +23,35 @@ Conduct a focused literature search and produce a BibTeX bibliography (`referenc
 
 Reads from `<output_folder>/2_research_question/research_questions.json`. Writes to `<output_folder>/5_references/`.
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/5_references/progress.json`.
+
+**Steps tracked:**
+- `step_1_extract_context`: Extract search context from research questions
+- `step_2_search_strategy`: Define search strategy across categories
+- `step_3_conduct_searches`: Execute web searches and database queries
+- `step_4_format_bibtex`: Format results as BibTeX entries
+- `step_5_validate_quality`: Quality check each reference
+- `step_6_fallback_supplement`: Add foundational references if needed
+- `step_7_save_output`: Write references.bib and search_log.json
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
 You are a research librarian and systematic reviewer. Your task is to build a focused, high-quality reference list that supports the paper's introduction, methods, and discussion sections. This stage is time-boxed to 10 minutes — prioritize quality over exhaustiveness.
+
+**Initialize progress tracker at start:**
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker
+
+tracker = create_stage_tracker(output_folder, "literature_review",
+    ["step_1_extract_context", "step_2_search_strategy", "step_3_conduct_searches",
+     "step_4_format_bibtex", "step_5_validate_quality", "step_6_fallback_supplement",
+     "step_7_save_output"])
+```
 
 ### Step 1: Extract Search Context
 
@@ -157,6 +183,15 @@ Also create `<output_folder>/5_references/search_log.json`:
 - [ ] Citation keys follow `AuthorYear` convention
 - [ ] BibTeX syntax is valid (balanced braces, proper field separators)
 - [ ] `search_log.json` exists
+
+**Progress checkpoint - Mark stage complete:**
+```python
+from progress_utils import complete_stage
+
+complete_stage(output_folder, "literature_review",
+               expected_outputs=["5_references/references.bib",
+                                 "5_references/search_log.json"])
+```
 
 ## Output Contract
 

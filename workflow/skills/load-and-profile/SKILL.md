@@ -17,6 +17,19 @@ Load any dataset folder, clean it, and produce `profile.json` + `variable_types.
 /load-and-profile <data_folder>
 ```
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/1_data_profile/progress.json`.
+
+**Steps tracked:**
+- `step_1_read_description`: Read data description files
+- `step_2_inspect_files`: Inspect raw file structure
+- `step_3_run_profiling`: Execute profiling script
+- `step_4_enrich_output`: Review and enrich outputs
+- `step_5_save_final`: Save and validate final outputs
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
 You are an expert data scientist. Follow these steps exactly:
@@ -26,6 +39,20 @@ You are an expert data scientist. Follow these steps exactly:
 - Look for `Data_Description.md` or any `.md` files in `<data_folder>`.
 - Read them thoroughly. Understand what each dataset represents, what the variables mean, and how the datasets relate to each other.
 - If no description file exists, note that you will rely solely on inspection.
+
+**Progress checkpoint:** After completing this step, update progress:
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker, update_step
+
+# At stage start
+tracker = create_stage_tracker(output_folder, "load_and_profile",
+    ["step_1_read_description", "step_2_inspect_files",
+     "step_3_run_profiling", "step_4_enrich_output", "step_5_save_final"])
+
+# After step 1
+update_step(output_folder, "load_and_profile", "step_1_read_description", "completed")
+```
 
 ### Step 2: Inspect the Raw Files
 
@@ -42,6 +69,12 @@ python workflow/skills/load-and-profile/load_and_profile.py <data_folder> <outpu
 ```
 
 This produces `<output_folder>/1_data_profile/profile.json` and `<output_folder>/1_data_profile/variable_types.json` with mechanical profiling.
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "load_and_profile", "step_3_run_profiling", "completed",
+             outputs=["1_data_profile/profile.json", "1_data_profile/variable_types.json"])
+```
 
 ### Step 4: Review & Enrich the Output
 
@@ -78,6 +111,15 @@ Write the corrected files back to:
 - `<output_folder>/1_data_profile/variable_types.json` (with any type corrections)
 
 Confirm both files are valid JSON.
+
+**Progress checkpoint - Mark stage complete:**
+```python
+from progress_utils import complete_stage
+
+complete_stage(output_folder, "load_and_profile",
+               expected_outputs=["1_data_profile/profile.json",
+                                 "1_data_profile/variable_types.json"])
+```
 
 ## Output Contract
 

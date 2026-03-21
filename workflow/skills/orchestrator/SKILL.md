@@ -4,8 +4,8 @@ model: medium
 description: >
   Master orchestrator that runs the full paper-generation pipeline (stages 1-8)
   sequentially. Handles initialization, stage execution with validation,
-  failure retries (up to 3 per stage), graceful degradation, and time budgeting
-  (60 min total). Triggers on: "run the pipeline", "generate paper",
+  failure retries (up to 3 per stage), graceful degradation, progress tracking,
+  and time budgeting (60 min total). Triggers on: "run the pipeline", "generate paper",
   "write a paper using the data", or any request to execute the full workflow.
 argument-hint: <data_folder> <output_folder>
 ---
@@ -21,6 +21,20 @@ Run stages 1-8 of the JAMA Network Open paper-generation pipeline sequentially, 
 ```
 
 Where `<data_folder>` contains the raw dataset(s) and `<output_folder>` is the base output directory (e.g., `exam_paper`).
+
+## Progress Tracking
+
+This orchestrator uses `progress_utils.py` for consistent progress tracking across all stages. The utility provides:
+- **PipelineTracker**: Maintains `pipeline_log.json` with overall status
+- **Stage-level tracking**: Each stage creates/updates its own `progress.json`
+- **Task integration**: Tracks Claude Code task statuses for better visibility
+
+### Progress Files
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `pipeline_log.json` | `<output_folder>/pipeline_log.json` | Overall pipeline status, stage timing |
+| `progress.json` | `<output_folder>/N_stage_folder/progress.json` | Stage-level step progress |
 
 ## Instructions
 
@@ -42,25 +56,72 @@ You are a senior research automation engineer. Your job is to execute the entire
 
 2. **Record start time** for time budgeting. The entire pipeline should target completion within 60 minutes.
 
-3. **Create a pipeline log** at `<output_folder>/pipeline_log.json`:
-   ```json
-   {
-     "started_at": "ISO-8601 timestamp",
-     "data_folder": "<data_folder>",
-     "output_folder": "<output_folder>",
-     "stages": {}
-   }
+3. **Initialize progress tracking** using the PipelineTracker from `progress_utils.py`:
+
+   ```python
+   import sys
+   sys.path.insert(0, "workflow/scripts")
+   from progress_utils import PipelineTracker
+
+   tracker = PipelineTracker(output_folder, data_folder)
    ```
+
+   This creates `<output_folder>/pipeline_log.json` automatically.
+
+4. **Create Claude Code tasks** for each stage (optional but recommended for visibility):
+
+   Use `TaskCreate` to create tasks for stages that will be executed:
+   ```
+   - Stage 1: Load and Profile Data
+   - Stage 2: Generate Research Questions
+   - Stage 3: Acquire External Data
+   - Stage 4: Statistical Analysis
+   - Stage 5: Generate Figures
+   - Stage 6: Literature Review
+   - Stage 7: Write Paper
+   - Stage 8: Compile and Review
+   ```
+
+   Store task IDs in a dict for status updates: `task_ids = {}`
 
 ### Step 1: Execute Stages Sequentially
 
 Run each stage in order. For each stage:
 
-1. **Log stage start** in `pipeline_log.json`.
-2. **Execute the stage** by following the corresponding skill instructions.
-3. **Validate outputs** against the stage's output contract.
-4. **On failure**: retry up to 3 times. On each retry, read error logs/messages and attempt a fix. If all 3 retries fail, produce a degraded output (documented below) and continue.
-5. **Log stage completion** with status (`success`, `degraded`, `failed`), duration, and any notes.
+1. **Log stage start** using the PipelineTracker:
+   ```python
+   tracker.start_stage(stage_number, stage_name)
+   ```
+
+2. **Update Claude Code task** to in_progress (if task was created):
+   ```
+   TaskUpdate(task_id, status="in_progress")
+   ```
+
+3. **Execute the stage** by following the corresponding skill instructions.
+   Each skill will manage its own `progress.json` using `progress_utils.py`.
+
+4. **Read stage progress** after execution:
+   ```python
+   from progress_utils import get_progress, is_stage_complete
+   stage_complete = is_stage_complete(output_folder, stage_name)
+   progress = get_progress(output_folder, stage_name)
+   ```
+
+5. **Validate outputs** against the stage's output contract.
+
+6. **Log stage completion**:
+   ```python
+   status = "success" if stage_complete else "degraded"
+   tracker.complete_stage(stage_number, stage_name, status,
+                         outputs=progress.get("outputs", []),
+                         notes=progress.get("notes", ""))
+   ```
+
+7. **Update Claude Code task** to completed (or failed):
+   ```
+   TaskUpdate(task_id, status="completed")
+   ```
 
 #### Stage Execution Table
 
@@ -117,8 +178,18 @@ Stage 8 → paper.pdf (compiles paper.tex)
 ### Step 4: Finalize
 
 1. **Copy final PDF** to `<output_folder>/paper.pdf` (if not already there).
-2. **Update pipeline log** with `completed_at` timestamp and overall status.
-3. **Print summary** listing each stage's status, output files, and any degraded/failed stages.
+
+2. **Mark pipeline complete**:
+   ```python
+   tracker.complete_pipeline(overall_status="success")  # or "degraded" or "failed"
+   ```
+
+3. **Print summary** using the built-in method:
+   ```python
+   tracker.print_summary()
+   ```
+
+   This lists each stage's status, output files, and any degraded/failed stages.
 
 ## Output Contract
 

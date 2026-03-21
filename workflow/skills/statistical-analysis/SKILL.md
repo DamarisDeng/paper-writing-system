@@ -38,6 +38,18 @@ If you are resuming after context compaction or picking up mid-stage:
 3. Read `analysis_plan.json` (if it exists) to restore the analysis strategy.
 4. Continue from the next incomplete step. **Never re-run a completed step.**
 
+**Progress tracking utility:** This skill uses `workflow/scripts/progress_utils.py` for consistent progress tracking. Import it at the start:
+
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker, update_step, complete_stage, get_resume_point
+
+# Check for resume point
+resume_point = get_resume_point(output_folder, "statistical_analysis")
+if resume_point != "start":
+    print(f"Resuming from: {resume_point}")
+```
+
 | If `progress.json` says last completed is... | Resume at |
 |----------------------------------------------|-----------|
 | `step_2_prepare_data` | Step 3: Descriptive stats |

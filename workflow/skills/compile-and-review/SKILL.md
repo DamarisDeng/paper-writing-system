@@ -22,9 +22,32 @@ Compile `paper.tex` to PDF, fix any errors, run a self-review checklist, revise,
 
 Reads from `<output_folder>/6_paper/`. Writes final PDF to `<output_folder>/paper.pdf`.
 
+## Progress Tracking
+
+This skill uses `progress_utils.py` for stage-level progress tracking. Progress is saved to `<output_folder>/6_paper/progress.json`.
+
+**Steps tracked:**
+- `step_1_compile`: Initial LaTeX compilation
+- `step_2_fix_errors`: Handle compilation errors (up to 3 retries)
+- `step_3_self_review`: Run self-review checklist
+- `step_4_apply_revisions`: Apply revisions and recompile
+- `step_5_finalize`: Copy PDF and create compilation report
+
+**Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
 ## Instructions
 
 You are a LaTeX typesetting expert and manuscript reviewer. Your job is to compile the paper, fix any issues, and ensure the final PDF meets JAMA Network Open standards.
+
+**Initialize progress tracker at start:**
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from progress_utils import create_stage_tracker
+
+tracker = create_stage_tracker(output_folder, "compile_and_review",
+    ["step_1_compile", "step_2_fix_errors", "step_3_self_review",
+     "step_4_apply_revisions", "step_5_finalize"])
+```
 
 ### Step 1: Initial Compilation
 
@@ -154,6 +177,14 @@ Common revision tasks:
    ```
 
 3. **Verify the final PDF** exists and is >10KB (a real PDF, not empty/corrupt).
+
+**Progress checkpoint - Mark stage complete:**
+```python
+from progress_utils import complete_stage
+
+complete_stage(output_folder, "compile_and_review",
+               expected_outputs=["paper.pdf"])  # The primary deliverable at root
+```
 
 ### Step 6: Handle Edge Cases
 
