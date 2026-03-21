@@ -15,6 +15,7 @@ Exit codes:
 """
 
 import json
+import re
 import sys
 import os
 
@@ -28,14 +29,29 @@ def load_json(path: str) -> dict:
 
 
 def collect_all_columns(variable_types: dict) -> dict[str, dict]:
-    """Return {col_name: {datasets: [ds1, ds2], type: semantic_type}} for every column."""
+    """Return {col_name: {datasets: [ds1, ds2], type: semantic_type, types_by_dataset: {ds: type}}}
+    for every column. Flags type conflicts across datasets."""
     cols: dict[str, dict] = {}
     for ds_name, ds_cols in variable_types.items():
         for col_name, col_type in ds_cols.items():
             if col_name not in cols:
-                cols[col_name] = {"datasets": [], "type": col_type}
+                cols[col_name] = {"datasets": [], "type": col_type, "types_by_dataset": {}}
             cols[col_name]["datasets"].append(ds_name)
+            cols[col_name]["types_by_dataset"][ds_name] = col_type
     return cols
+
+
+def get_type_conflicts(all_columns: dict[str, dict]) -> list[tuple[str, str]]:
+    """Return warnings for columns that have different types across datasets."""
+    issues = []
+    for col_name, info in all_columns.items():
+        types = set(info["types_by_dataset"].values())
+        if len(types) > 1:
+            detail = ", ".join(f'{ds}={t}' for ds, t in info["types_by_dataset"].items())
+            issues.append(("WARN",
+                f'Column "{col_name}" has conflicting types across datasets: {detail} '
+                f'— type checks will use "{info["type"]}" (from first dataset encountered)'))
+    return issues
 
 
 def get_column_profile(profile: dict, col_name: str) -> dict | None:
@@ -44,6 +60,13 @@ def get_column_profile(profile: dict, col_name: str) -> dict | None:
         if col_name in ds_data.get("columns", {}):
             return ds_data["columns"][col_name]
     return None
+
+
+def get_dataset_row_count(profile: dict, dataset_name: str) -> int | None:
+    """Get the row count for a dataset from its profile."""
+    ds_data = profile.get("datasets", {}).get(dataset_name, {})
+    return ds_data.get("row_count") or ds_data.get("n_rows") or ds_data.get("num_rows")
+
 
 # ---------------------------------------------------------------------------
 # Validation checks — each returns a list of (severity, message) tuples
@@ -71,8 +94,8 @@ def check_schema(rq: dict) -> list[tuple[str, str]]:
     if not isinstance(sqs, list) or len(sqs) == 0:
         issues.append(("ERROR", "secondary_questions is missing or empty"))
     else:
-        if len(sqs) < 2:
-            issues.append(("WARN", f"Only {len(sqs)} secondary question(s); expected 2-3"))
+        if len(sqs) > 3:
+            issues.append(("WARN", f"{len(sqs)} secondary questions; expected 1-3"))
         for i, sq in enumerate(sqs):
             for field in ["question", "variables_involved", "analysis_type", "rationale"]:
                 if field not in sq:
@@ -118,6 +141,19 @@ def check_schema(rq: dict) -> list[tuple[str, str]]:
                 issues.append(("ERROR", f"variable_roles.{role} is missing"))
         if not isinstance(vr.get("excluded_variables"), dict):
             issues.append(("ERROR", "variable_roles.excluded_variables must be an object {col: reason}"))
+
+        # [NEW] Check outcome_variables and exposure_variables are non-empty lists
+        for critical_role in ["outcome_variables", "exposure_variables"]:
+            val = vr.get(critical_role)
+            if isinstance(val, list) and len(val) == 0:
+                issues.append(("ERROR", f"variable_roles.{critical_role} is empty — every research question needs at least one"))
+
+        # [NEW] Check excluded_variables reasons are non-empty strings
+        excl = vr.get("excluded_variables")
+        if isinstance(excl, dict):
+            for col, reason in excl.items():
+                if not reason or not str(reason).strip():
+                    issues.append(("WARN", f'excluded_variables["{col}"] has an empty reason — provide justification for exclusion'))
 
     return issues
 
@@ -169,17 +205,27 @@ def check_column_references(rq: dict, all_columns: dict[str, dict]) -> list[tupl
 
 
 def check_identifier_roles(rq: dict, all_columns: dict[str, dict]) -> list[tuple[str, str]]:
-    """Identifiers should not be classified as outcome or exposure variables."""
+    """Identifiers and text columns should not be classified as outcome or exposure variables."""
     issues = []
     vr = rq.get("variable_roles", {})
 
+    # [EXPANDED] Check both identifier and text types for outcome and exposure
+    forbidden_outcome_types = {"identifier", "text"}
+    forbidden_exposure_types = {"identifier", "text"}
+
     for col in vr.get("outcome_variables", []):
-        if col in all_columns and all_columns[col]["type"] == "identifier":
-            issues.append(("ERROR", f'Outcome variable "{col}" is typed as identifier in variable_types.json — identifiers are join keys, not outcomes'))
+        if col in all_columns and all_columns[col]["type"] in forbidden_outcome_types:
+            col_type = all_columns[col]["type"]
+            issues.append(("ERROR",
+                f'Outcome variable "{col}" is typed as {col_type} in variable_types.json — '
+                f'{col_type} columns cannot be outcomes'))
 
     for col in vr.get("exposure_variables", []):
-        if col in all_columns and all_columns[col]["type"] == "identifier":
-            issues.append(("ERROR", f'Exposure variable "{col}" is typed as identifier in variable_types.json — identifiers are join keys, not exposures'))
+        if col in all_columns and all_columns[col]["type"] in forbidden_exposure_types:
+            col_type = all_columns[col]["type"]
+            issues.append(("ERROR",
+                f'Exposure variable "{col}" is typed as {col_type} in variable_types.json — '
+                f'{col_type} columns cannot be exposures'))
 
     return issues
 
@@ -198,7 +244,7 @@ def check_outcome_is_analyzable(rq: dict, all_columns: dict[str, dict], profile:
 
     for col in vr.get("outcome_variables", []):
         if col in downloadable_outcomes:
-            # This outcome will be downloaded from Archive Links — skip type/missingness checks
+            # This outcome will be downloaded — skip type/missingness checks
             # But verify source_column exists in data
             for req in rq.get("data_acquisition_requirements", []):
                 if req.get("variable") == col:
@@ -226,6 +272,9 @@ def check_outcome_is_analyzable(rq: dict, all_columns: dict[str, dict], profile:
                 issues.append(("WARN",
                     f'Outcome variable "{col}" has {miss_pct}% missing values — risky for a primary outcome'))
 
+            # [NEW] Check outcome variation
+            _check_variation(col, col_type, col_profile, "Outcome", issues)
+
     return issues
 
 
@@ -251,7 +300,65 @@ def check_exposure_is_analyzable(rq: dict, all_columns: dict[str, dict], profile
                 issues.append(("ERROR",
                     f'Exposure variable "{col}" has {miss_pct}% missing values — too high for a primary exposure'))
 
+            # [NEW] Check exposure group sizes for categorical/binary exposures
+            if col_type in {"categorical", "binary"}:
+                _check_group_sizes(col, col_profile, issues)
+
     return issues
+
+
+def _check_variation(col: str, col_type: str, col_profile: dict, role_label: str,
+                     issues: list[tuple[str, str]]) -> None:
+    """[NEW] Check that an outcome variable has sufficient variation for analysis."""
+    if col_type == "numeric":
+        std = col_profile.get("std")
+        if std is not None and std == 0:
+            issues.append(("ERROR",
+                f'{role_label} variable "{col}" has std=0 — no variation, cannot be analyzed'))
+        elif std is not None and std == 0.0:
+            issues.append(("ERROR",
+                f'{role_label} variable "{col}" has std=0.0 — no variation, cannot be analyzed'))
+
+    elif col_type == "binary":
+        top_values = col_profile.get("top_values", {})
+        # top_values is typically {value: count, ...}
+        if isinstance(top_values, dict) and len(top_values) >= 1:
+            counts = list(top_values.values())
+            total = sum(counts)
+            if total > 0:
+                max_pct = max(counts) / total
+                if max_pct > 0.99:
+                    issues.append(("ERROR",
+                        f'{role_label} variable "{col}" has >99% in one category '
+                        f'— insufficient variation for analysis'))
+                elif max_pct > 0.95:
+                    issues.append(("WARN",
+                        f'{role_label} variable "{col}" has >95% in one category '
+                        f'— may have insufficient variation'))
+
+
+def _check_group_sizes(col: str, col_profile: dict, issues: list[tuple[str, str]]) -> None:
+    """[NEW] Check that a categorical/binary exposure has adequate group sizes."""
+    top_values = col_profile.get("top_values", {})
+    if not isinstance(top_values, dict) or len(top_values) < 2:
+        return
+
+    counts = list(top_values.values())
+    total = sum(counts)
+    if total == 0:
+        return
+
+    min_count = min(counts)
+    min_pct = min_count / total
+
+    if min_count < 5:
+        issues.append(("ERROR",
+            f'Exposure variable "{col}" has a group with only {min_count} observations '
+            f'— too small for meaningful comparison'))
+    elif min_pct < 0.05:
+        issues.append(("WARN",
+            f'Exposure variable "{col}" has a group with only {min_pct:.1%} of observations '
+            f'— group imbalance may limit statistical power'))
 
 
 def check_outcome_not_denominator(rq: dict, profile: dict) -> list[tuple[str, str]]:
@@ -259,7 +366,8 @@ def check_outcome_not_denominator(rq: dict, profile: dict) -> list[tuple[str, st
     issues = []
     vr = rq.get("variable_roles", {})
     denominator_keywords = ["population", "estimate", "denominator", "census", "count of total",
-                            "n_total", "sample_size", "base"]
+                            "n_total", "sample_size", "base", "enrolled", "eligible",
+                            "n_subjects", "total_n", "num_total"]
 
     for col in vr.get("outcome_variables", []):
         col_lower = col.lower()
@@ -274,17 +382,86 @@ def check_outcome_not_denominator(rq: dict, profile: dict) -> list[tuple[str, st
 
 
 def check_question_specificity(rq: dict, all_columns: dict[str, dict]) -> list[tuple[str, str]]:
-    """Primary question fields should reference at least some actual column names."""
+    """Primary question fields should reference at least some actual column names.
+    Uses word-boundary matching and backtick-delimited matching to avoid false positives."""
     issues = []
     pq = rq.get("primary_question", {})
 
     # Combine all text fields from primary question
     pq_text = " ".join(str(v) for v in pq.values())
 
-    # Count how many actual column names appear
-    referenced = [col for col in all_columns if col in pq_text]
+    # [FIXED] Use backtick matching first (preferred), fall back to word-boundary regex
+    # Skip very short column names (<=2 chars) for regex matching to avoid false positives
+    referenced = []
+    for col in all_columns:
+        # Check backtick-delimited reference: `column_name`
+        if f"`{col}`" in pq_text:
+            referenced.append(col)
+        # Fall back to word-boundary regex for longer column names
+        elif len(col) > 2 and re.search(r'\b' + re.escape(col) + r'\b', pq_text):
+            referenced.append(col)
+
     if len(referenced) == 0:
-        issues.append(("WARN", "Primary question text does not reference any actual column names from the data — may be too vague for downstream use"))
+        issues.append(("WARN",
+            "Primary question text does not reference any actual column names from the data "
+            "— use backtick-delimited column names (e.g. `column_name`) for traceability"))
+
+    return issues
+
+
+def check_cross_dataset_feasibility(rq: dict, all_columns: dict[str, dict]) -> list[tuple[str, str]]:
+    """[NEW] Check that outcome and exposure variables can plausibly be joined
+    (co-occur in at least one dataset, or share a join key)."""
+    issues = []
+    vr = rq.get("variable_roles", {})
+
+    outcomes = vr.get("outcome_variables", [])
+    exposures = vr.get("exposure_variables", [])
+
+    # Get datasets for each variable
+    outcome_datasets: set[str] = set()
+    for col in outcomes:
+        if col in all_columns:
+            outcome_datasets.update(all_columns[col]["datasets"])
+
+    exposure_datasets: set[str] = set()
+    for col in exposures:
+        if col in all_columns:
+            exposure_datasets.update(all_columns[col]["datasets"])
+
+    if not outcome_datasets or not exposure_datasets:
+        return issues  # nothing to check — missing columns caught elsewhere
+
+    # If they share at least one dataset, they're co-located — no issue
+    if outcome_datasets & exposure_datasets:
+        return issues
+
+    # They're in different datasets — check if there's a plausible join key
+    # A join key is any column that appears in both sets of datasets
+    outcome_cols_in_datasets = set()
+    exposure_cols_in_datasets = set()
+    for col_name, info in all_columns.items():
+        col_ds = set(info["datasets"])
+        if col_ds & outcome_datasets:
+            outcome_cols_in_datasets.add(col_name)
+        if col_ds & exposure_datasets:
+            exposure_cols_in_datasets.add(col_name)
+
+    shared_columns = outcome_cols_in_datasets & exposure_cols_in_datasets
+    # Filter to likely join keys (identifiers or columns present in both)
+    join_candidates = [c for c in shared_columns
+                       if all_columns[c]["type"] in {"identifier", "categorical", "datetime"}]
+
+    if not join_candidates:
+        issues.append(("ERROR",
+            f'Outcome variables are in dataset(s) {outcome_datasets} but exposure variables '
+            f'are in {exposure_datasets}, and no shared join key was found — '
+            f'these datasets may not be joinable'))
+    else:
+        issues.append(("WARN",
+            f'Outcome and exposure are in different datasets '
+            f'({outcome_datasets} vs {exposure_datasets}). '
+            f'Possible join key(s): {join_candidates} — verify this join is valid'))
 
     return issues
 
@@ -380,13 +557,15 @@ def main():
     all_issues: list[tuple[str, str]] = []
     checks = [
         ("Schema completeness", check_schema(rq)),
+        ("Type conflicts across datasets", get_type_conflicts(all_columns)),
         ("Column coverage", check_column_coverage(rq, all_columns)),
         ("Column references", check_column_references(rq, all_columns)),
-        ("Identifier role check", check_identifier_roles(rq, all_columns)),
+        ("Identifier/text role check", check_identifier_roles(rq, all_columns)),
         ("Outcome analyzability", check_outcome_is_analyzable(rq, all_columns, profile)),
         ("Exposure analyzability", check_exposure_is_analyzable(rq, all_columns, profile)),
         ("Outcome not denominator", check_outcome_not_denominator(rq, profile)),
         ("Question specificity", check_question_specificity(rq, all_columns)),
+        ("Cross-dataset feasibility", check_cross_dataset_feasibility(rq, all_columns)),
         ("Data acquisition requirements", check_data_acquisition(rq, all_columns)),
         ("Derived variables", check_derived_variables(rq, all_columns)),
     ]

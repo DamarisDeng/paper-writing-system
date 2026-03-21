@@ -118,6 +118,168 @@ def ipw_estimate(
     }
 
 
+# ── Augmented IPW (Doubly Robust) ────────────────────────────────────────────
+
+def aipw_estimate(
+    df: pd.DataFrame,
+    treatment_col: str,
+    covariates: list,
+    outcome_col: str,
+) -> dict:
+    """Augmented IPW (doubly robust) estimate of ATE.
+
+    Combines propensity score weighting with outcome regression.
+    Consistent if EITHER the propensity score model OR outcome model is correct.
+
+    Uses the double robust estimator:
+    tau_DR = (1/n) * sum[ T*Y/ps(X) - (T-ps(X))*m(X)/ps(X) ]
+              - (1/n) * sum[ (1-T)*Y/(1-ps(X)) + (T-ps(X))*m(X)/(1-ps(X)) ]
+
+    where ps(X) is propensity score and m(X) is outcome prediction.
+    """
+    cols = [c for c in covariates if c in df.columns]
+    X = pd.get_dummies(df[cols], drop_first=True, dtype=float)
+    t = df[treatment_col].astype(float)
+    y = df[outcome_col].astype(float)
+    mask = X.notna().all(axis=1) & t.notna() & y.notna()
+    X, t, y = X[mask].values, t[mask].values, y[mask].values
+    n = len(y)
+
+    # 1. Fit propensity score model
+    ps_model = LogisticRegression(max_iter=5000, random_state=42)
+    ps_model.fit(X, t)
+    ps = np.clip(ps_model.predict_proba(X)[:, 1], 0.01, 0.99)
+
+    # 2. Fit outcome regression models (separate for treated and control)
+    # For continuous outcome: use linear regression
+    # For binary outcome: use logistic regression
+    is_binary_outcome = len(np.unique(y)) == 2 and set(np.unique(y)).issubset({0, 1})
+
+    if is_binary_outcome:
+        from sklearn.linear_model import LogisticRegression as OutcomeLogit
+        outcome_model_t = OutcomeLogit(max_iter=5000, random_state=42)
+        outcome_model_c = OutcomeLogit(max_iter=5000, random_state=42)
+
+        # Fit outcome model on treated
+        mask_t = t == 1
+        if mask_t.sum() > 0:
+            outcome_model_t.fit(X[mask_t], y[mask_t])
+        # Fit outcome model on control
+        mask_c = t == 0
+        if mask_c.sum() > 0:
+            outcome_model_c.fit(X[mask_c], y[mask_c])
+
+        def predict_outcome(X_new, model):
+            return model.predict_proba(X_new)[:, 1]
+    else:
+        from sklearn.linear_model import LinearRegression
+        outcome_model_t = LinearRegression()
+        outcome_model_c = LinearRegression()
+
+        mask_t = t == 1
+        if mask_t.sum() > 0:
+            outcome_model_t.fit(X[mask_t], y[mask_t])
+        mask_c = t == 0
+        if mask_c.sum() > 0:
+            outcome_model_c.fit(X[mask_c], y[mask_c])
+
+        def predict_outcome(X_new, model):
+            return model.predict(X_new)
+
+    # 3. Compute AIPW estimate
+    aipw_sum = 0.0
+
+    for i in range(n):
+        ti, yi, psi = t[i], y[i], ps[i]
+        xi = X[i].reshape(1, -1)
+
+        # Predict outcome under both treatment and control
+        m1 = predict_outcome(xi, outcome_model_t)[0]
+        m0 = predict_outcome(xi, outcome_model_c)[0]
+
+        # Doubly robust estimator for potential outcomes
+        if ti == 1:
+            # Treated: potential outcome Y(1)
+            y1_dr = yi / psi + (1 - ti / psi) * m1
+            # Potential outcome Y(0)
+            y0_dr = m0
+        else:
+            # Control: potential outcome Y(1)
+            y1_dr = m1
+            # Potential outcome Y(0)
+            y0_dr = yi / (1 - psi) + (1 - (1 - ti) / (1 - psi)) * m0
+
+        aipw_sum += (y1_dr - y0_dr)
+
+    ate = float(aipw_sum / n)
+
+    # 4. Bootstrap for standard errors
+    rng = np.random.RandomState(42)
+    boot_estimates = []
+
+    for _ in range(500):
+        idx = rng.choice(n, n, replace=True)
+        X_b, t_b, y_b = X[idx], t[idx], y[idx]
+
+        # Refit PS model on bootstrap sample
+        ps_model_b = LogisticRegression(max_iter=5000, random_state=42)
+        ps_model_b.fit(X_b, t_b)
+        ps_b = np.clip(ps_model_b.predict_proba(X_b)[:, 1], 0.01, 0.99)
+
+        # Refit outcome models on bootstrap sample
+        mask_t_b = t_b == 1
+        mask_c_b = t_b == 0
+
+        if is_binary_outcome:
+            outcome_model_t_b = OutcomeLogit(max_iter=5000, random_state=42)
+            outcome_model_c_b = OutcomeLogit(max_iter=5000, random_state=42)
+            if mask_t_b.sum() > 0:
+                outcome_model_t_b.fit(X_b[mask_t_b], y_b[mask_t_b])
+            if mask_c_b.sum() > 0:
+                outcome_model_c_b.fit(X_b[mask_c_b], y_b[mask_c_b])
+        else:
+            from sklearn.linear_model import LinearRegression
+            outcome_model_t_b = LinearRegression()
+            outcome_model_c_b = LinearRegression()
+            if mask_t_b.sum() > 0:
+                outcome_model_t_b.fit(X_b[mask_t_b], y_b[mask_t_b])
+            if mask_c_b.sum() > 0:
+                outcome_model_c_b.fit(X_b[mask_c_b], y_b[mask_c_b])
+
+        # Compute bootstrap AIPW estimate
+        aipw_b = 0.0
+        for i in range(n):
+            ti, yi, psi = t_b[i], y_b[i], ps_b[i]
+            xi = X_b[i].reshape(1, -1)
+
+            m1 = predict_outcome(xi, outcome_model_t_b)[0]
+            m0 = predict_outcome(xi, outcome_model_c_b)[0]
+
+            if ti == 1:
+                y1_dr = yi / psi + (1 - ti / psi) * m1
+                y0_dr = m0
+            else:
+                y1_dr = m1
+                y0_dr = yi / (1 - psi) + (1 - (1 - ti) / (1 - psi)) * m0
+
+            aipw_b += (y1_dr - y0_dr)
+
+        boot_estimates.append(aipw_b / n)
+
+    se = float(np.std(boot_estimates))
+
+    return {
+        "method": "Augmented IPW (doubly robust)",
+        "n": int(n),
+        "ate": round(ate, 4),
+        "se": round(se, 4),
+        "ci_lower": round(ate - 1.96 * se, 4),
+        "ci_upper": round(ate + 1.96 * se, 4),
+        "p_value": safe_pval(2 * (1 - stats.norm.cdf(abs(ate / se)))) if se > 0 else None,
+        "outcome_type": "binary" if is_binary_outcome else "continuous",
+    }
+
+
 # ── Difference-in-Differences ──────────────────────────────────────────────
 
 def did_regression(

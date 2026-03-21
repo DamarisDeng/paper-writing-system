@@ -80,48 +80,6 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 | 7 | write-paper | All upstream outputs + `workflow/templates/template.tex` | `exam_paper/6_paper/` | paper.tex compiles without fatal errors |
 | 8 | compile-and-review | `exam_paper/6_paper/` | `exam_paper/paper.pdf` | paper.pdf exists, is ≤10 pages (excl. refs + supplement) |
 
-## Critical Rules for Claude Code
-
-### Autonomy
-- **NEVER ask the user a question.** Make reasonable decisions autonomously.
-- If a stage fails, attempt to fix it up to 3 times before moving on with a degraded output.
-- If data is ambiguous, pick the most reasonable interpretation and document the assumption in the paper's Limitations section.
-
-### Data Handling
-- Original data files are never modified. All skills read from original paths stored in `profile.json`.
-- All intermediate outputs go into the appropriate `exam_paper/` subdirectory.
-- All scripts used during analysis must be saved in `exam_paper/3_analysis/scripts/`.
-
-### Statistical Analysis (Stage 4)
-- Read `research_questions.json` to determine outcome, exposure, and covariates.
-- Select methods based on variable types: continuous outcome → linear regression; binary outcome → logistic regression; time-to-event → Cox proportional hazards; count data → Poisson/negative binomial.
-- Always include: descriptive statistics (Table 1), primary analysis, at least one sensitivity analysis.
-- Report confidence intervals, p-values, and effect sizes. Use α = 0.05 unless stated otherwise.
-- Use Python (pandas, statsmodels, scipy, scikit-learn) for analysis. Use lifelines for survival analysis if needed.
-
-### Figures and Tables (Stage 5)
-- Follow JAMA style: clean, minimal, grayscale-friendly, high-resolution (≥300 DPI).
-- Save as both .png and .pdf.
-- Every figure must have a descriptive title and clear axis labels.
-- Table 1 should always be a baseline characteristics table.
-
-### Paper Writing (Stage 7)
-- Use the JAMA Network Open LaTeX template from `workflow/templates/template.tex`.
-- Sections: Title, Key Points, Abstract (structured: Importance, Objective, Design/Setting/Participants, Main Outcomes, Results, Conclusions), Introduction, Methods, Results, Discussion, Limitations, Conclusions, References.
-- Paper must be ≤10 pages excluding references and supplementary material.
-- Write in third person, past tense for methods and results.
-- Include at least one supplementary section (e.g., detailed statistical methods, additional tables).
-
-### LaTeX Compilation (Stage 8)
-- Compile with: `pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex`
-- If compilation fails, read the `.log` file, fix the `.tex` source, and retry (up to 3 attempts).
-- Copy final `paper.pdf` to `exam_paper/paper.pdf`.
-
-### Time Awareness
-- The entire pipeline should complete within 60 minutes to leave buffer for the 90-minute exam.
-- If a stage takes too long, produce a simplified version and move on.
-- Literature review should be time-boxed: spend at most 10 minutes searching.
-
 ## Trigger Prompt
 
 When the user says anything like:
@@ -130,8 +88,6 @@ When the user says anything like:
 - "Generate paper"
 
 Execute the orchestrator skill which runs stages 1–8 in sequence.
-
----
 
 ## Setup: Model Mapping Configuration
 
@@ -159,3 +115,7 @@ Each skill specifies its required model level in its SKILL.md frontmatter (`mode
 | 6. Literature Review | low | haiku | Search and format |
 | 7. Write Paper | high | opus[1m] | Complex synthesis and writing |
 | 8. Compile & Review | low | haiku | Compilation, error handling |
+
+## Other
+
+During execution of the pipeline, do not modify `workflow/`, direct all output to `exam_paper/`.

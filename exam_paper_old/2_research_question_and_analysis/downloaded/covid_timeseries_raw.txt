@@ -1,1 +1,0 @@
-https://data.cdc.gov/api/views/9mfq-cb36/rows.csv?accessType=DOWNLOAD, https://data.cdc.gov/api/views/9mfq-cb36/rows.rdf?accessType=DOWNLOAD, https://data.cdc.gov/api/views/9mfq-cb36/rows.json?accessType=DOWNLOAD, https://data.cdc.gov/api/views/9mfq-cb36/rows.xml?accessType=DOWNLOAD

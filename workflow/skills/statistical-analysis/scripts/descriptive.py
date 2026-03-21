@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from utils import safe_pval
+from utils import safe_pval, jama_p
 
 
 def generate_table1(
@@ -38,6 +38,7 @@ def generate_table1(
         if var in df.columns:
             result["variables"][var] = _describe_categorical(df, var, group_col, groups)
 
+    result["table1_formatted"] = format_table1_for_display(result, df)
     return result
 
 
@@ -143,3 +144,72 @@ def _describe_categorical(df, var, group_col, groups) -> dict:
         "p_value": safe_pval(pval),
         "test_used": test,
     }
+
+
+# ── Table 1 formatting for display ────────────────────────────────────────────
+
+def format_table1_for_display(table1_result: dict, df: pd.DataFrame) -> list:
+    """Convert nested table1 result to flat array for Stage 5 rendering.
+
+    Returns a list of dicts ready for table1_formatted in analysis_results.json.
+    Each dict has: variable, overall, group_0, group_1, p_value, test
+    """
+    formatted = []
+    group_labels = sorted(table1_result["groups"].keys())
+
+    # Process continuous variables
+    for var, info in table1_result["variables"].items():
+        if info.get("type") != "continuous":
+            continue
+
+        if info.get("distribution") == "normal":
+            overall = f"{info['overall']['mean']:.1f} ({info['overall']['sd']:.1f})"
+            group_strs = [
+                f"{info['by_group'][g]['mean']:.1f} ({info['by_group'][g]['sd']:.1f})"
+                for g in group_labels
+            ]
+        else:  # non-normal
+            overall = f"{info['overall']['median']:.1f} ({info['overall']['q1']:.1f}-{info['overall']['q3']:.1f})"
+            group_strs = [
+                f"{info['by_group'][g]['median']:.1f} ({info['by_group'][g]['q1']:.1f}-{info['by_group'][g]['q3']:.1f})"
+                for g in group_labels
+            ]
+
+        row = {
+            "variable": var.replace("_", " ").title(),
+            "overall": overall,
+            **{f"group_{i}": s for i, s in enumerate(group_strs)},
+            "p_value": jama_p(info["p_value"]) if info.get("p_value") is not None else None,
+            "test": info["test_used"]
+        }
+        formatted.append(row)
+
+    # Process categorical variables (for binary categories)
+    for var, info in table1_result["variables"].items():
+        if info.get("type") != "categorical":
+            continue
+
+        for cat_val in info["overall"].keys():
+            cat_n = info["overall"][cat_val]["n"]
+            cat_pct = info["overall"][cat_val]["pct"]
+            overall = f"{cat_n} ({cat_pct})"
+
+            group_strs = []
+            for g in group_labels:
+                if cat_val in info["by_group"][g]:
+                    gn = info["by_group"][g][cat_val]["n"]
+                    gpct = info["by_group"][g][cat_val]["pct"]
+                    group_strs.append(f"{gn} ({gpct})")
+                else:
+                    group_strs.append("0 (0)")
+
+            row = {
+                "variable": f"{var.replace('_', ' ').title()} = {cat_val}",
+                "overall": overall,
+                **{f"group_{i}": s for i, s in enumerate(group_strs)},
+                "p_value": jama_p(info["p_value"]) if info.get("p_value") is not None else None,
+                "test": info["test_used"]
+            }
+            formatted.append(row)
+
+    return formatted

@@ -11,7 +11,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from utils import safe_pval
+from utils import safe_pval, jama_p, jama_ci, jama_effect
 
 
 def fit_regression(
@@ -89,11 +89,24 @@ def _fit_cox(df, outcome, exposure, covars) -> dict:
     exp_rows = [c for c in s.index if exposure in c] or [s.index[0]]
     effects = {}
     for row in exp_rows:
+        hr_val = round(s.loc[row, "exp(coef)"], 4)
+        ci_lo = round(s.loc[row, "exp(coef) lower 95%"], 4)
+        ci_hi = round(s.loc[row, "exp(coef) upper 95%"], 4)
+        pv = s.loc[row, "p"]
+
         effects[row] = {
-            "hazard_ratio": round(s.loc[row, "exp(coef)"], 4),
-            "ci_lower": round(s.loc[row, "exp(coef) lower 95%"], 4),
-            "ci_upper": round(s.loc[row, "exp(coef) upper 95%"], 4),
-            "p_value": safe_pval(s.loc[row, "p"]),
+            "raw": {
+                "estimate": hr_val,
+                "ci_lower": ci_lo,
+                "ci_upper": ci_hi,
+                "p_value": safe_pval(pv),
+            },
+            "formatted": {
+                "estimate_str": f"{hr_val:.2f}",
+                "ci_str": jama_ci(ci_lo, ci_hi),
+                "p_str": jama_p(pv),
+                "jama_sentence": jama_effect(hr_val, ci_lo, ci_hi, pv, "HR"),
+            }
         }
 
     return {
@@ -156,33 +169,74 @@ def _extract_results(result, method, exposure, col_names) -> dict:
             continue
         est = params[col]
         ci_lo, ci_hi = conf.loc[col, 0], conf.loc[col, 1]
-        pv = pvals[col]
+        pv = float(pvals[col])
+        se_val = float(result.bse[col]) if hasattr(result, 'bse') else None
 
         if method == "logit":
+            or_val = round(np.exp(est), 4)
+            ci_lo_exp = round(np.exp(ci_lo), 4)
+            ci_hi_exp = round(np.exp(ci_hi), 4)
+            p_str = jama_p(pv)
+
             effects[col] = {
-                "odds_ratio": round(np.exp(est), 4),
-                "ci_lower": round(np.exp(ci_lo), 4),
-                "ci_upper": round(np.exp(ci_hi), 4),
-                "p_value": safe_pval(pv),
-                "interpretation": (f"OR = {np.exp(est):.2f} "
-                                   f"(95% CI, {np.exp(ci_lo):.2f}-{np.exp(ci_hi):.2f})"),
+                "raw": {
+                    "estimate": or_val,
+                    "ci_lower": ci_lo_exp,
+                    "ci_upper": ci_hi_exp,
+                    "p_value": safe_pval(pv),
+                    "se": round(se_val, 4) if se_val is not None else None,
+                },
+                "formatted": {
+                    "estimate_str": f"{or_val:.2f}",
+                    "ci_str": jama_ci(ci_lo_exp, ci_hi_exp),
+                    "p_str": p_str,
+                    "interpretation": f"OR = {or_val:.2f} (95% CI, {ci_lo_exp:.2f}-{ci_hi_exp:.2f})",
+                    "jama_sentence": jama_effect(or_val, ci_lo_exp, ci_hi_exp, pv, "OR"),
+                }
             }
         elif method == "poisson":
+            rr_val = round(np.exp(est), 4)
+            ci_lo_exp = round(np.exp(ci_lo), 4)
+            ci_hi_exp = round(np.exp(ci_hi), 4)
+            p_str = jama_p(pv)
+
             effects[col] = {
-                "rate_ratio": round(np.exp(est), 4),
-                "ci_lower": round(np.exp(ci_lo), 4),
-                "ci_upper": round(np.exp(ci_hi), 4),
-                "p_value": safe_pval(pv),
-                "interpretation": (f"RR = {np.exp(est):.2f} "
-                                   f"(95% CI, {np.exp(ci_lo):.2f}-{np.exp(ci_hi):.2f})"),
+                "raw": {
+                    "estimate": rr_val,
+                    "ci_lower": ci_lo_exp,
+                    "ci_upper": ci_hi_exp,
+                    "p_value": safe_pval(pv),
+                    "se": round(se_val, 4) if se_val is not None else None,
+                },
+                "formatted": {
+                    "estimate_str": f"{rr_val:.2f}",
+                    "ci_str": jama_ci(ci_lo_exp, ci_hi_exp),
+                    "p_str": p_str,
+                    "interpretation": f"RR = {rr_val:.2f} (95% CI, {ci_lo_exp:.2f}-{ci_hi_exp:.2f})",
+                    "jama_sentence": jama_effect(rr_val, ci_lo_exp, ci_hi_exp, pv, "RR"),
+                }
             }
         else:
+            est_val = round(est, 4)
+            ci_lo_val = round(ci_lo, 4)
+            ci_hi_val = round(ci_hi, 4)
+            p_str = jama_p(pv)
+
             effects[col] = {
-                "estimate": round(est, 4),
-                "ci_lower": round(ci_lo, 4),
-                "ci_upper": round(ci_hi, 4),
-                "p_value": safe_pval(pv),
-                "interpretation": f"β = {est:.4f} (95% CI, {ci_lo:.4f}-{ci_hi:.4f})",
+                "raw": {
+                    "estimate": est_val,
+                    "ci_lower": ci_lo_val,
+                    "ci_upper": ci_hi_val,
+                    "p_value": safe_pval(pv),
+                    "se": round(se_val, 4) if se_val is not None else None,
+                },
+                "formatted": {
+                    "estimate_str": f"{est_val:.4f}",
+                    "ci_str": jama_ci(ci_lo_val, ci_hi_val),
+                    "p_str": p_str,
+                    "interpretation": f"β = {est_val:.4f} (95% CI, {ci_lo_val:.4f}-{ci_hi_val:.4f})",
+                    "jama_sentence": jama_effect(est_val, ci_lo_val, ci_hi_val, pv, "β"),
+                }
             }
 
     fit = {}

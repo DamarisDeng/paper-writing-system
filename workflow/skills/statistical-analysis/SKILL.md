@@ -61,12 +61,12 @@ If `progress.json` does not exist, start from Step 1.
 
    Copy the method-specific module **after Step 3b**, once `analysis_plan.json` has been written and the method is known:
 
-   | Module | Copy when `model_selection.selected_method` is... |
+   | Module | Copy when `model_selection.task_track` and `selected_method` is... |
    |---|---|
-   | `regression.py` | OLS, logistic, Poisson, NegBin, mixed-effects, Cox |
-   | `penalized.py` | LASSO, Ridge, Elastic Net |
-   | `ml.py` | Random Forest, XGBoost, SVM, KNN |
-   | `causal.py` | PSM, IPW, DiD, ITS |
+   | `regression.py` | Track A: OLS, logistic, Poisson, NegBin, ordinal, mixed-effects, GEE<br>Track D: Cox, AFT, Fine-Gray |
+   | `penalized.py` | Track A (high-dim) or Track B: LASSO, Ridge, Elastic Net |
+   | `ml.py` | Track B: Random Forest, XGBoost, SVM, KNN |
+   | `causal.py` | Track C: PSM, IPW, AIPW, DiD, ITS |
 
 2. **Read the method reference**: If the analysis method is non-trivial (anything beyond OLS), read `references/methods.md` from this skill's directory for implementation guidance and known pitfalls.
 
@@ -245,10 +245,15 @@ Save to `<output_folder>/3_analysis/analysis_plan.json`:
     "clustering_detected": false,
     "clustering_variable": null,
     "study_design": "cross-sectional",
+    "task_track": "A",
+    "task_track_label": "Explanatory inference",
+    "candidate_methods": ["Logistic regression"],
     "selected_method": "Logistic regression",
     "python_class": "statsmodels.Logit",
     "cov_type": null,
-    "rationale": "Binary outcome, cross-sectional design, no clustering detected. Covariates selected based on variable_roles from research_questions.json."
+    "tie_breaking_rule_applied": null,
+    "flexibility_override": false,
+    "rationale": "Binary outcome, cross-sectional design, no clustering. Track A inference: logistic regression is the sole qualifying candidate. Covariates from variable_roles."
   },
 
   "sensitivity_analyses_planned": [
@@ -291,52 +296,170 @@ continue from the next incomplete step per `progress.json`.
 
 Read `<output_folder>/3_analysis/analysis_plan.json` → `model_selection` to determine the method, covariates, and clustering strategy. Do NOT re-derive the model choice — use what the plan specifies.
 
-Walk through these checks **in order**. Stop at the first matching terminal node.
+The tree has **three levels**: task → outcome + design → candidate methods. Work through them in order. At the terminal node you will find 1–3 candidate methods; apply the tie-breaking rules to pick one and document why.
 
-1. **What is the outcome type?**
-   - Read from `variable_types.json` for the outcome column.
-   - If `numeric`: go to 2.
-   - If `binary`: go to 3.
-   - If `numeric` but unique values ≤ 10: treat as **ordinal** → use ordinal logistic
-     (`statsmodels.OrderedModel`). Go to 5.
+---
 
-2. **Continuous outcome — is there clustering?**
-   - Check: are observations nested within groups (e.g., states, hospitals, schools)?
-     Look for identifier columns in `variable_roles.covariates` that are categorical
-     with 5–200 levels.
-   - If YES + study_design is `longitudinal`: **Mixed-effects model**
-     (`statsmodels.MixedLM`). → Go to 5.
-   - If YES + study_design is `cross-sectional`: **OLS with clustered standard errors**
-     (`statsmodels.OLS` + `cov_type='cluster'`). → Go to 5.
-   - If NO clustering: **OLS** (`statsmodels.OLS`). → Go to 5.
+#### Level 1 — What is the primary task?
 
-3. **Binary outcome — is there clustering?**
-   - If YES: **GEE with logit link** (`statsmodels.GEE`) or logistic with
-     clustered SEs. → Go to 5.
-   - If NO + study_design is `ecological-did`:
-     **Logistic regression with exposure × time interaction**. → Go to 5.
-   - If NO: **Logistic regression** (`statsmodels.Logit`). → Go to 5.
+Read `research_questions.json → analysis_type`. Map it to one of four tracks:
 
-4. **Count outcome — check dispersion.**
-   - Fit Poisson first. Compute dispersion = deviance / df_resid.
-   - If dispersion > 1.5: use **Negative Binomial**
-     (`statsmodels.NegativeBinomial`).
-   - If many zeros (>30% of outcome values are 0): use **Zero-Inflated Poisson**
-     (`statsmodels.ZeroInflatedPoisson`).
-   - Otherwise: **Poisson** (`statsmodels.Poisson`).
-   - → Go to 5.
+| `analysis_type` value | Track |
+|---|---|
+| `"association"`, `"risk_factor"`, `"inference"` | **Track A — Explanatory inference** |
+| `"prediction"`, `"classification"`, `"risk_score"` | **Track B — Prediction** |
+| `"causal_effect"`, `"treatment_effect"`, `"policy_evaluation"` | **Track C — Causal inference** |
+| `"survival"`, `"time_to_event"` | **Track D — Survival / time-to-event** |
+
+If `analysis_type` is ambiguous or absent, default to **Track A** and note it in `rationale`.
+
+---
+
+#### Track A — Explanatory Inference
+
+Goal: estimate an interpretable association (coefficient, OR, RR) with valid uncertainty. Prioritize interpretability and assumption transparency over predictive performance.
+
+**A1. What is the outcome type?**
+
+- **Continuous** → go to A2
+- **Binary** → go to A3
+- **Count** → go to A4
+- **Ordinal** (numeric, ≤ 10 unique values) → **Ordinal logistic** (`statsmodels.OrderedModel`). Candidates: `[OrderedModel]`. Go to A5.
+- **Multinomial** (categorical, > 2 classes) → **Multinomial logistic** (`statsmodels.MNLogit`). Candidates: `[MNLogit]`. Go to A5.
+
+**A2. Continuous outcome — is there clustering or repeated measures?**
+
+- Clustering present AND `study_design = "longitudinal"` → Candidates: **`[MixedLM, GEE-identity]`**. Prefer `MixedLM` if random effects are of scientific interest; prefer `GEE` if only population-average estimate is needed.
+- Clustering present AND `study_design = "cross-sectional"` → Candidates: **`[OLS + clustered SE, GEE-identity]`**. Prefer `OLS + clustered SE` for simplicity; prefer `GEE` if correlation structure is complex.
+- No clustering → Candidates: **`[OLS]`**. Go to A5.
+
+**A3. Binary outcome — is there clustering?**
+
+- Clustering present → Candidates: **`[GEE-logit, Mixed logistic (MixedLM with binomial)]`**. Prefer `GEE` for population-average OR; prefer mixed logistic if subject-specific OR is needed.
+- `study_design = "ecological-did"` → Candidates: **`[Logistic with exposure × time interaction]`**. Go to A5.
+- No clustering → Candidates: **`[Logistic regression]`**. Go to A5.
+
+**A4. Count outcome — check dispersion.**
+
+Fit Poisson first; compute dispersion = deviance / df_resid.
+
+- dispersion > 1.5 → Candidates: **`[NegativeBinomial, Quasi-Poisson]`**. Prefer NegBin for count data with clear overdispersion; prefer Quasi-Poisson when overdispersion is moderate and you want simpler inference.
+- Zero-inflated (> 30% zeros) → Candidates: **`[ZeroInflatedPoisson, ZeroInflatedNegBin]`**. Prefer ZINB if overdispersion is also present.
+- Otherwise → Candidates: **`[Poisson]`**.
+
+**A5. Penalized regression as an alternative for Track A.** If p > N/5 (many predictors relative to sample size) OR collinearity (VIF > 10 for ≥ 2 predictors), add **Elastic Net** to the candidates list and note it in `rationale`. Elastic Net preserves interpretable coefficients while handling high dimensionality; prefer it over LASSO when predictors are correlated.
+
+---
+
+#### Track B — Prediction
+
+Goal: maximize generalization performance. Interpretability is secondary unless the research question requires a risk score that clinicians will use directly.
+
+**B1. How many predictors are there relative to N?**
+
+- High-dimensional (p > N/10) → Candidates: **`[LASSO, Elastic Net, Ridge]`** for linear/logistic tasks. Add a tree method if non-linearity is suspected.
+- Low-to-moderate dimensionality → go to B2.
+
+**B2. Is the outcome continuous or categorical?**
+
+- Continuous → Candidates: **`[XGBoost-regressor, Random Forest-regressor, Ridge]`**.
+  - Use `Ridge` if a linear baseline or interpretable coefficients are needed.
+  - Use `XGBoost` or `Random Forest` when non-linearity or interactions are likely.
+  - Use `XGBoost` over `Random Forest` if N > 5000 and computational budget allows.
+- Binary classification → Candidates: **`[XGBoost-classifier, Random Forest-classifier, Logistic + penalization]`**.
+  - Use penalized logistic as the interpretable baseline.
+  - Add XGBoost or RF when AUC of the baseline falls below 0.70.
+- Multi-class → Candidates: **`[XGBoost-multiclass, Random Forest-multiclass]`**.
+
+**B3. Evaluation protocol for all prediction models.**
+
+Regardless of method chosen:
+- Split: stratified 70/15/15 (train/val/test) or 5-fold CV if N < 500.
+- Report train and test AUC/RMSE; flag if gap > 15% (overfitting).
+- Report feature importances (SHAP values preferred for XGBoost/RF).
+- If a penalized model is chosen, perform cross-validated hyperparameter search (alpha/lambda).
+
+---
+
+#### Track C — Causal Inference
+
+Goal: estimate an average treatment effect (ATE or ATT) under explicit assumptions. Causal methods are only valid when the study design supports causal claims (observational with a well-defined treatment; natural experiment; panel data with a policy change). Document the causal assumption being invoked.
+
+**C1. What is the study design?**
+
+- `"observational"` with a binary treatment AND no natural experiment → go to C2.
+- `"observational"` with a binary treatment AND rich confounder data (≥ 10 measured confounders) → go to C3.
+- `"panel"` or `"ecological-did"` with a policy change at a known time → **Difference-in-Differences (DiD)**. Candidates: **`[DiD OLS with treatment × post interaction, Callaway-Sant'Anna staggered DiD]`**. Prefer staggered DiD if treatment timing varies across units.
+- `"ecological-panel"` with a single treated unit and no control group → **Interrupted Time Series (ITS)**. Candidates: **`[ITS segmented regression]`**. Go to C4.
+
+**C2. Standard observational — balance first.**
+
+- Run propensity score model (logistic or LASSO-logistic if many confounders).
+- Assess overlap (check propensity score distributions; flag if < 10% of treated or control have no counterparts).
+- Candidates: **`[PSM (1:1 nearest-neighbor), IPW (stabilized weights), AIPW (doubly robust)]`**.
+  - Use `PSM` when you want matched-pair intuition and balanced Table 1. Call `propensity_score_match()` from `causal.py`.
+  - Use `IPW` when matching would discard too many observations. Call `ipw_estimate()` from `causal.py`.
+  - Use `AIPW` (doubly robust) when you want protection against misspecification of either the propensity score or the outcome model — **preferred default when N > 1000**. Call `aipw_estimate()` from `causal.py`.
+- Go to C4.
+
+**C3. High-dimensional confounding (≥ 10 confounders or p > N/5).**
+
+- Candidates: **`[LASSO-based propensity score + IPW, AIPW (doubly robust), high-dimensional PSM (hdPS)]`**.
+- Prefer AIPW (doubly robust) for robustness against misspecification of either the propensity score or outcome model. Call `aipw_estimate()` from `causal.py`.
+- Go to C4.
+
+**C4. All causal analyses must report:**
+- Balance table (SMD before and after weighting/matching; target SMD < 0.1 for all covariates).
+- Positivity/overlap check.
+- Sensitivity analysis: E-value for unmeasured confounding (mandatory for observational designs).
+- For DiD: pre-trend test (parallel trends assumption).
+- For ITS: test for autocorrelation (Durbin-Watson).
+
+---
+
+#### Track D — Survival / Time-to-Event
+
+**D1. Is the hazard assumption plausible?**
+
+- Standard survival with time-varying or fixed covariates → Candidates: **`[Cox PH, Parametric AFT (Weibull or log-normal)]`**.
+  - Use Cox PH as default (semi-parametric, no distributional assumption).
+  - Use parametric AFT if Schoenfeld residuals show PH violation AND the event-time distribution is well-characterized.
+- Competing risks present → Candidates: **`[Fine-Gray subdistribution hazard, Cause-specific Cox]`**.
+  - Use Fine-Gray when the research question is about cumulative incidence in the presence of competing events.
+  - Use cause-specific Cox when the mechanism for the event of interest is the focus.
+
+**D2. All survival analyses must report:**
+- Median survival with 95% CI per group (Kaplan-Meier).
+- Schoenfeld residuals test for proportional hazards.
+- Censoring summary (% censored, reason if known).
+
+---
+
+#### Tie-breaking rules (apply when candidates list has > 1 method)
+
+When multiple candidates qualify, use these rules in order:
+
+1. **Simplest valid model first.** If a parametric model (OLS, logistic, Cox) fits the data adequately (assumptions pass), prefer it over ML or penalized alternatives. Simpler models are easier to audit and reproduce.
+2. **Sample size guard.** Tree-based ML methods (RF, XGBoost) require N ≥ 200 in the training set and at least 10 events per predictor for reliable performance. Below these thresholds, fall back to penalized linear/logistic.
+3. **Interpretability requirement.** If `research_questions.json → primary_question` uses language like "association between," "effect of," or "risk factor for," the primary model should produce a coefficient, OR, HR, or RR — not just an AUC. ML models may be added as sensitivity analyses.
+4. **Reproducibility anchor.** When you choose a non-default method (anything other than OLS/logistic/Cox), document the specific justification in `rationale`. A future analyst should be able to re-derive your choice from the documented data properties alone.
+5. **Flexibility override.** These rules establish a recommended default — they are not a hard constraint. If a method not listed in the candidates would produce materially better or more valid results given the specific data (e.g., a GAM for a non-linear dose-response, a quantile regression for a highly skewed outcome), you may use it. Document the override in `rationale` and add the default method as a sensitivity analysis.
+
+---
 
 **After resolving the method from `analysis_plan.json`, call the corresponding helper:**
 
 | Method | Import + Call |
 |--------|--------------|
-| OLS / logit / Poisson / NegBin / mixed / Cox | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method=..., cluster_col=...)` |
+| OLS / logit / Poisson / NegBin / ordinal / mixed / GEE | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method=..., cluster_col=...)` |
 | LASSO / Ridge / Elastic Net | `from penalized import fit_penalized`<br>`results = fit_penalized(df, outcome, predictors, method=..., task="auto")` |
 | Random Forest / XGBoost / SVM / KNN | `from ml import fit_ml_model`<br>`results = fit_ml_model(df, outcome, predictors, method=..., task="auto")` |
 | PSM | `from causal import propensity_score_match`<br>`results = propensity_score_match(df, treatment_col, covariates, outcome_col)` |
 | IPW | `from causal import ipw_estimate`<br>`results = ipw_estimate(df, treatment_col, covariates, outcome_col)` |
+| AIPW | `from causal import aipw_estimate`<br>`results = aipw_estimate(df, treatment_col, covariates, outcome_col)` |
 | DiD | `from causal import did_regression`<br>`results = did_regression(df, outcome, treatment_col, time_col, covariates)` |
 | ITS | `from causal import its_analysis`<br>`results = its_analysis(df, outcome, time_col, intervention_point)` |
+| Cox / AFT / Fine-Gray | `from regression import fit_regression`<br>`results = fit_regression(df, outcome, exposure, covariates, method="cox"|"aft"|"fine_gray", time_col=..., event_col=...)` |
 
 Do NOT re-implement these from scratch — the helpers handle clustering, SE correction,
 output formatting, and JSON-ready results.
@@ -348,13 +471,18 @@ output formatting, and JSON-ready results.
      "outcome_variable": "col_name",
      "outcome_type_raw": "numeric",
      "outcome_type_resolved": "continuous",
+     "task_track": "A",
+     "task_track_label": "Explanatory inference",
      "clustering_detected": true,
      "clustering_variable": "state_id",
      "study_design": "cross-sectional",
+     "candidate_methods": ["OLS with clustered SE", "GEE-identity"],
      "selected_method": "OLS with clustered standard errors",
      "python_class": "statsmodels.OLS",
      "cov_type": "cluster",
-     "rationale": "Continuous outcome, cross-sectional design, 50 state clusters detected"
+     "tie_breaking_rule_applied": "Rule 1 (simplest valid model)",
+     "flexibility_override": false,
+     "rationale": "Continuous outcome, cross-sectional design, 50 state clusters detected. Both OLS+clustered SE and GEE qualify; OLS selected per tie-breaking rule 1 (simpler, easier to audit)."
    }
 ```
 
@@ -415,22 +543,54 @@ assumption_results = check_assumptions(
 Returns `{check_name: {"passed": bool, "details": str}}`. If a check fails, document it
 and add a sensitivity analysis (Step 5). Save to `assumption_checks.json`.
 
-Supported methods: `"ols"`, `"logit"`, `"cox"`. For penalized/ML/causal, skip
-`check_assumptions` and run method-specific diagnostics per `references/methods.md`.
+Supported methods and their key checks:
+
+| Track | Method | Key assumption checks |
+|---|---|---|
+| A | `"ols"` | Linearity, homoscedasticity, normality of residuals, no influential outliers |
+| A | `"logit"` | No complete separation, linearity of log-odds for continuous predictors |
+| A | `"poisson"` / `"negbin"` | Dispersion check, no excess zeros |
+| A | `"mixed"` / `"gee"` | Residual correlation structure, convergence |
+| B | penalized / ML | No structural assumption checks; run calibration + overfitting diagnostics instead |
+| C | PSM / IPW / AIPW | Overlap/positivity check, covariate balance (SMD < 0.1 post-weighting), SUTVA plausibility |
+| C | DiD | Pre-trend parallel test, no anticipation effects |
+| C | ITS | Autocorrelation (Durbin-Watson), no concurrent interventions |
+| D | `"cox"` | Schoenfeld residuals (PH test), no influential observations |
+| D | `"aft"` | Distribution fit (AIC comparison across Weibull/log-normal/log-logistic) |
+
+For causal and survival tracks, run the track-specific checks documented in `references/methods.md` in addition to calling `check_assumptions()`.
 ---
 
 ### Step 5: Sensitivity Analyses
 
-Run **at least two** of the following (more is better). Write each as a separate script in `scripts/sensitivity_*.py`.
+Run **at least two** of the following. Write each as a separate script in `scripts/sensitivity_*.py`. Choose sensitivities appropriate to the method track identified in Step 4.
 
-1. **Alternative model specification** — Add/remove covariates, different functional form.
+**Universal (all tracks):**
+1. **Alternative covariate set** — Add/remove covariates, different functional form.
 2. **Subgroup analysis** — Stratify by `stratification_variables`.
 3. **Robustness to missing data** — Compare complete-case vs. imputed results.
-4. **E-value for unmeasured confounding** — For observational studies, compute the E-value.
-5. **Alternative ML model** — If primary was XGBoost, run Random Forest as comparison.
-6. **Bootstrap confidence intervals** — Non-parametric CI estimation.
-7. **Outlier sensitivity** — Refit excluding influential observations (Cook's distance > 4/N).
-8. **Alternative outcome definition** — If outcome can be operationalized differently.
+4. **Outlier sensitivity** — Refit excluding influential observations (Cook's distance > 4/N for regression; top-1% leverage for ML).
+
+**Track A (Explanatory inference):**
+5. **Alternative model specification** — E.g., add interaction terms, splines for continuous predictors.
+6. **Penalized regression comparison** — If OLS/logistic was primary, run Elastic Net and compare coefficient direction and magnitude.
+
+**Track B (Prediction):**
+7. **Alternative ML model** — If primary was XGBoost, run Random Forest (or vice versa). Compare AUC/RMSE on the same test split.
+8. **Bootstrap confidence intervals** — Non-parametric CI estimation for AUC/RMSE.
+9. **Calibration check** — Calibration curve and Brier score for classifiers; residual plot for regressors.
+
+**Track C (Causal inference):**
+10. **E-value for unmeasured confounding** — Mandatory for all observational designs. Compute and report.
+11. **Alternative propensity model** — If PSM/IPW was primary, re-estimate propensity scores using a different model (e.g., LASSO vs. logistic) and compare ATEs.
+12. **Pre-trend test** — For DiD: formal test of parallel pre-treatment trends.
+13. **Trimming sensitivity** — For IPW: compare results under different propensity score trimming thresholds (e.g., [0.05, 0.95] vs. [0.10, 0.90]).
+14. **Doubly robust check** — If PSM or IPW was primary, run AIPW as a sensitivity.
+
+**Track D (Survival):**
+15. **Proportional hazards test** — Schoenfeld residuals. If PH violated, re-run with time-varying coefficient or parametric AFT.
+16. **Competing risks sensitivity** — If competing risks are present but not modeled in primary, run Fine-Gray as sensitivity.
+17. **Landmark analysis** — Re-run survival analysis starting from a landmark time to address immortal-time bias if applicable.
 
 **Checkpoint:** Update `<output_folder>/3_analysis/progress.json`:
 ```json
@@ -475,7 +635,7 @@ After writing `analysis_results.json`, also write `<output_folder>/3_analysis/re
 - {sensitivity_name}: {jama-formatted sentence from sensitivity results}
 - (repeat for each sensitivity analysis)
 
-## Figure Captions
+## Figures Planned
 **Figure 1.** {What is shown}. {Method used}. {Covariates adjusted for, if any}. {Sample, N=...}.
 (repeat for each figure)
 
