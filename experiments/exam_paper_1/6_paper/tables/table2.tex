@@ -1,0 +1,43 @@
+\begin{table}[H]
+\centering
+\sffamily\fontsize{8.5}{11}\selectfont
+\caption{Association Between HCW Vaccine Mandates and COVID-19 Mortality Rates (July-October 2021)}
+\label{tab:regression}
+
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{4cm}
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X @{}}
+
+\arrayrulecolor{jamadarkgray}
+\toprule[0.8pt]
+\textbf{Variable} & \textbf{Model 1\textsuperscript{a}} & \textbf{Model 2\textsuperscript{b}} & \textbf{Model 3\textsuperscript{c}} \\
+\midrule[0.5pt]
+HCW vaccine mandate & $-27.3$ ($-40.0$, $-14.5$) & $-22.4$ ($-33.9$, $-11.0$) & $-23.4$ ($-35.2$, $-11.5$) \\
+\quad p-value & $<0.001$ & $<0.001$ & $<0.001$ \\
+\addlinespace
+Region (ref: Northeast) &  &  &  \\
+\quad Midwest &  & $-4.1$ ($-19.8$, $11.6$) & $-3.9$ ($-19.3$, $11.5$) \\
+\quad South &  & $26.4$ ($11.5$, $41.3$) & $26.3$ ($11.6$, $41.0$) \\
+\quad West &  & $-4.1$ ($-19.2$, $11.0$) & $-5.0$ ($-19.8$, $9.8$) \\
+\addlinespace
+Log\textsubscript{10}(Population) &  &  & $1.9$ ($-7.2$, $11.0$) \\
+\addlinespace
+Intercept & $49.9$ ($38.0$, $61.8$) & $31.5$ ($16.7$, $46.3$) & $29.8$ ($-106.5$, $166.1$) \\
+\addlinespace
+Model statistics &  &  &  \\
+\quad N & 52 & 52 & 52 \\
+\quad R\textsuperscript{2} & 0.259 & 0.584 & 0.589 \\
+\quad Adjusted R\textsuperscript{2} & 0.244 & 0.536 & 0.528 \\
+\bottomrule[0.8pt]
+\end{tabularx}
+
+\footnotesize
+\begin{flushleft}
+\textbf{Note:} Values represent regression coefficients (95\% confidence intervals) for the association with COVID-19 mortality rate per 100\,000 population. Negative coefficients indicate lower mortality associated with the variable. \\
+\textsuperscript{a} Model 1: Unadjusted analysis including only mandate status. \\
+\textsuperscript{b} Model 2: Adjusted for Census region. \\
+\textsuperscript{c} Model 3: Adjusted for Census region and state population (log\textsubscript{10} transformed).
+\end{flushleft}
+\end{table}

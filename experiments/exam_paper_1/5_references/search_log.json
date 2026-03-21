@@ -1,0 +1,44 @@
+{
+  "search_queries": [
+    {
+      "query": "COVID-19 vaccine mandate healthcare worker vaccination coverage",
+      "source": "PubMed/JAMA Network Open",
+      "results_found": 3
+    },
+    {
+      "query": "COVID-19 vaccine mandate nursing home mortality",
+      "source": "PubMed",
+      "results_found": 2
+    },
+    {
+      "query": "healthcare worker COVID-19 vaccine effectiveness",
+      "source": "Clinical Infectious Diseases",
+      "results_found": 2
+    },
+    {
+      "query": "STROBE observational studies reporting guideline",
+      "source": "Epidemiology Journal",
+      "results_found": 1
+    },
+    {
+      "query": "CDC COVID-19 vaccine effectiveness hospitalization Delta variant",
+      "source": "MMWR/CDC",
+      "results_found": 2
+    },
+    {
+      "query": "COVID-19 state mandates ecological study mortality",
+      "source": "Annals of Internal Medicine",
+      "results_found": 1
+    }
+  ],
+  "references_by_category": {
+    "similar_studies": ["Mullen2022", "Chen2022", "Karlsson2022", "Shah2022"],
+    "methodology": ["STROBE2007"],
+    "clinical_context": ["Thompson2021", "Talbot2022", "CDC2021", "CDC2022", "WHO2023"],
+    "data_sources": ["NYTimes2020", "Census2024"]
+  },
+  "total_references": 12,
+  "verified": true,
+  "fallbacks_used": 0,
+  "search_date": "2026-03-20"
+}

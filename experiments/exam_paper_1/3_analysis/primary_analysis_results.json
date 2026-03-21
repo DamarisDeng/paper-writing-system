@@ -1,0 +1,168 @@
+{
+  "primary_analysis": {
+    "method": "OLS Linear Regression",
+    "outcome": "COVID-19 mortality rate (per 100,000)",
+    "exposure": "HCW mandate status",
+    "models": [
+      {
+        "model": "OLS Regression",
+        "n": 52,
+        "df_resid": 50,
+        "r_squared": 0.26,
+        "adj_r_squared": 0.245,
+        "coefficients": [
+          {
+            "variable": "intercept",
+            "estimate": 49.9448,
+            "se": 3.6097,
+            "t_statistic": 13.836,
+            "p_value": "<0.001",
+            "ci_lower": 42.8698,
+            "ci_upper": 57.0197
+          },
+          {
+            "variable": "mandate",
+            "estimate": -27.2573,
+            "se": 6.5074,
+            "t_statistic": -4.189,
+            "p_value": "<0.001",
+            "ci_lower": -40.0119,
+            "ci_upper": -14.5028
+          }
+        ],
+        "model_name": "Model 1: Unadjusted",
+        "covariates": [
+          "None (mandate only)"
+        ]
+      },
+      {
+        "model": "OLS Regression",
+        "n": 52,
+        "df_resid": 47,
+        "r_squared": 0.584,
+        "adj_r_squared": 0.549,
+        "coefficients": [
+          {
+            "variable": "intercept",
+            "estimate": 31.8907,
+            "se": 4.8568,
+            "t_statistic": 6.566,
+            "p_value": "<0.001",
+            "ci_lower": 22.3714,
+            "ci_upper": 41.4099
+          },
+          {
+            "variable": "mandate",
+            "estimate": -22.4386,
+            "se": 5.8609,
+            "t_statistic": -3.829,
+            "p_value": "<0.001",
+            "ci_lower": -33.926,
+            "ci_upper": -10.9513
+          },
+          {
+            "variable": "Northeast",
+            "estimate": 2.6509,
+            "se": 8.429,
+            "t_statistic": 0.315,
+            "p_value": 0.753,
+            "ci_lower": -13.8699,
+            "ci_upper": 19.1717
+          },
+          {
+            "variable": "South",
+            "estimate": 34.5196,
+            "se": 6.3348,
+            "t_statistic": 5.449,
+            "p_value": "<0.001",
+            "ci_lower": 22.1034,
+            "ci_upper": 46.9358
+          },
+          {
+            "variable": "West",
+            "estimate": 17.9302,
+            "se": 6.7778,
+            "t_statistic": 2.645,
+            "p_value": 0.008,
+            "ci_lower": 4.6456,
+            "ci_upper": 31.2147
+          }
+        ],
+        "model_name": "Model 2: Adjusted for Region",
+        "covariates": [
+          "Mandate",
+          "Region (Midwest, South, West; reference=Northeast)"
+        ]
+      },
+      {
+        "model": "OLS Regression",
+        "n": 52,
+        "df_resid": 46,
+        "r_squared": 0.589,
+        "adj_r_squared": 0.544,
+        "coefficients": [
+          {
+            "variable": "intercept",
+            "estimate": 6.1222,
+            "se": 36.5493,
+            "t_statistic": 0.168,
+            "p_value": 0.867,
+            "ci_lower": -65.5144,
+            "ci_upper": 77.7588
+          },
+          {
+            "variable": "mandate",
+            "estimate": -23.3777,
+            "se": 6.038,
+            "t_statistic": -3.872,
+            "p_value": "<0.001",
+            "ci_lower": -35.2121,
+            "ci_upper": -11.5433
+          },
+          {
+            "variable": "Northeast",
+            "estimate": 3.5906,
+            "se": 8.576,
+            "t_statistic": 0.419,
+            "p_value": 0.675,
+            "ci_lower": -13.2182,
+            "ci_upper": 20.3995
+          },
+          {
+            "variable": "South",
+            "estimate": 34.3149,
+            "se": 6.3748,
+            "t_statistic": 5.383,
+            "p_value": "<0.001",
+            "ci_lower": 21.8202,
+            "ci_upper": 46.8096
+          },
+          {
+            "variable": "West",
+            "estimate": 18.7353,
+            "se": 6.9071,
+            "t_statistic": 2.712,
+            "p_value": 0.007,
+            "ci_lower": 5.1975,
+            "ci_upper": 32.2732
+          },
+          {
+            "variable": "log10_population",
+            "estimate": 3.9045,
+            "se": 5.4884,
+            "t_statistic": 0.711,
+            "p_value": 0.477,
+            "ci_lower": -6.8528,
+            "ci_upper": 14.6617
+          }
+        ],
+        "model_name": "Model 3: Fully Adjusted",
+        "covariates": [
+          "Mandate",
+          "Region",
+          "Log10(Population)"
+        ]
+      }
+    ]
+  }
+}

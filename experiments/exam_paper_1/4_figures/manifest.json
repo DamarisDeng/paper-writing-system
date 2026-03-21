@@ -1,0 +1,44 @@
+{
+  "figures": [
+    {
+      "id": "figure1",
+      "title": "Association Between HCW Vaccine Mandates and COVID-19 Mortality",
+      "files": {
+        "png": "figures/figure1.png",
+        "pdf": "figures/figure1.pdf"
+      },
+      "script": "scripts/figure1.py",
+      "placement": "main_text",
+      "width": "single_column",
+      "description": "Forest plot showing adjusted mean difference in COVID-19 mortality rate (per 100,000) between states with and without HCW vaccine mandates, adjusted for region and population."
+    },
+    {
+      "id": "figure2",
+      "title": "COVID-19 Mortality Rates by Mandate Status and Census Region",
+      "files": {
+        "png": "figures/figure2.png",
+        "pdf": "figures/figure2.pdf"
+      },
+      "script": "scripts/figure2.py",
+      "placement": "main_text",
+      "width": "single_column",
+      "description": "Grouped bar chart comparing COVID-19 mortality rates (per 100,000) across US Census regions, stratified by HCW vaccine mandate status."
+    }
+  ],
+  "tables": [
+    {
+      "id": "table1",
+      "title": "Baseline Characteristics of US States, by HCW Vaccine Mandate Status (July-October 2021)",
+      "file": "tables/table1.tex",
+      "placement": "main_text",
+      "description": "Baseline characteristics of 52 US states/territories stratified by HCW vaccine mandate status, including population, COVID-19 mortality and case rates, and regional distribution."
+    },
+    {
+      "id": "table2",
+      "title": "Association Between HCW Vaccine Mandates and COVID-19 Mortality Rates (July-October 2021)",
+      "file": "tables/table2.tex",
+      "placement": "main_text",
+      "description": "Linear regression models showing the association between HCW vaccine mandates and COVID-19 mortality rates, with progressive adjustment for covariates."
+    }
+  ]
+}

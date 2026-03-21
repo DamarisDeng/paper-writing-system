@@ -1,0 +1,251 @@
+{
+  "analytic_sample": {
+    "total_n": 52,
+    "excluded_n": 0,
+    "exposure_groups": {
+      "mandate_states": {
+        "n": 16
+      },
+      "non_mandate_states": {
+        "n": 36
+      }
+    }
+  },
+  "descriptive_statistics": {
+    "variables": {
+      "population_2021": {
+        "type": "continuous",
+        "label": "Population (2021)",
+        "overall": {
+          "mean": 6449278.29,
+          "sd": 7336282.89,
+          "median": 4380931.5,
+          "q25": 1875040.5,
+          "q75": 7391498.5
+        },
+        "by_group": {
+          "mandate_states": {
+            "mean": 8427748.88,
+            "sd": 9755104.97,
+            "median": 5996719.5,
+            "q25": 1932732.5,
+            "q75": 10128066.0
+          },
+          "non_mandate_states": {
+            "mean": 5569958.03,
+            "sd": 5920852.74,
+            "median": 3665988.0,
+            "q25": 1875040.5,
+            "q75": 6853365.25
+          }
+        },
+        "p_value": 0.05,
+        "test_used": "Welch's t-test"
+      },
+      "mortality_rate_per_100k": {
+        "type": "continuous",
+        "label": "COVID-19 Mortality Rate (per 100,000)",
+        "overall": {
+          "mean": 41.56,
+          "sd": 24.92,
+          "median": 34.07,
+          "q25": 21.93,
+          "q75": 61.49
+        },
+        "by_group": {
+          "mandate_states": {
+            "mean": 22.69,
+            "sd": 9.61,
+            "median": 22.02,
+            "q25": 14.48,
+            "q75": 30.06
+          },
+          "non_mandate_states": {
+            "mean": 49.94,
+            "sd": 25.11,
+            "median": 45.1,
+            "q25": 26.19,
+            "q75": 72.87
+          }
+        },
+        "p_value": 0.0,
+        "test_used": "Welch's t-test"
+      },
+      "case_rate_per_100k": {
+        "type": "continuous",
+        "label": "COVID-19 Case Rate (per 100,000)",
+        "overall": {
+          "mean": 3881.39,
+          "sd": 1590.21,
+          "median": 3594.98,
+          "q25": 2682.32,
+          "q75": 4895.28
+        },
+        "by_group": {
+          "mandate_states": {
+            "mean": 2580.68,
+            "sd": 679.98,
+            "median": 2497.18,
+            "q25": 2173.95,
+            "q75": 3196.52
+          },
+          "non_mandate_states": {
+            "mean": 4459.49,
+            "sd": 1539.31,
+            "median": 4098.34,
+            "q25": 3444.21,
+            "q75": 5633.63
+          }
+        },
+        "p_value": 0.0,
+        "test_used": "Welch's t-test"
+      },
+      "region": {
+        "type": "categorical",
+        "label": "Census Region",
+        "overall": {
+          "South": {
+            "n": 17,
+            "pct": 32.7
+          },
+          "West": {
+            "n": 14,
+            "pct": 26.9
+          },
+          "Midwest": {
+            "n": 12,
+            "pct": 23.1
+          },
+          "Northeast": {
+            "n": 9,
+            "pct": 17.3
+          }
+        },
+        "by_group": {
+          "mandate_states": {
+            "Northeast": {
+              "n": 7,
+              "pct": 43.8
+            },
+            "West": {
+              "n": 5,
+              "pct": 31.2
+            },
+            "South": {
+              "n": 3,
+              "pct": 18.8
+            },
+            "Midwest": {
+              "n": 1,
+              "pct": 6.2
+            }
+          },
+          "non_mandate_states": {
+            "South": {
+              "n": 14,
+              "pct": 38.9
+            },
+            "Midwest": {
+              "n": 11,
+              "pct": 30.6
+            },
+            "West": {
+              "n": 9,
+              "pct": 25.0
+            },
+            "Northeast": {
+              "n": 2,
+              "pct": 5.6
+            }
+          }
+        },
+        "p_value": 0.01,
+        "test_used": "Chi-square test"
+      },
+      "test_out_option": {
+        "type": "categorical",
+        "label": "Test-Out Option (among mandate states)",
+        "overall": {
+          "No": {
+            "n": 11,
+            "pct": 68.8
+          },
+          "Yes": {
+            "n": 5,
+            "pct": 31.2
+          }
+        },
+        "by_group": {},
+        "notes": "Only applicable to states with mandates"
+      },
+      "mandate_scope": {
+        "type": "categorical",
+        "label": "Mandate Scope (among mandate states)",
+        "overall": {
+          "Healthcare facilities": {
+            "n": 6,
+            "pct": 37.5
+          },
+          "Healthcare facilities, high-risk congregate settings, in-home direct care settings": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Long-term care facilities, state hospitals": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Acute and outpatient providers, hospitals, home health agencies, long-term care facilities": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Hospitals, nursing homes": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Skilled nursing facilities, soldiers\u2019 homes, assisted living facilities": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Healthcare facilities, high-risk congregate settings": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Hospitals, congregate care facilities": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "State healthcare facilities, high-risk congregate care facilities": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "RIDOH-licensed healthcare facilities, RIDOH-licensed healthcare providers": {
+            "n": 1,
+            "pct": 6.2
+          },
+          "Public and private healthcare providers": {
+            "n": 1,
+            "pct": 6.2
+          }
+        },
+        "by_group": {},
+        "notes": "Only applicable to states with mandates"
+      },
+      "early_adopter": {
+        "type": "categorical",
+        "label": "Early Adopter (July vs August announcement)",
+        "overall": {
+          "August": {
+            "n": 14,
+            "pct": 87.5
+          },
+          "July": {
+            "n": 2,
+            "pct": 12.5
+          }
+        },
+        "by_group": {},
+        "notes": "Only applicable to states with mandates"
+      }
+    }
+  }
+}

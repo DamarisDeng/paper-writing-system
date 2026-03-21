@@ -1,0 +1,52 @@
+============================================================
+PRIMARY ANALYSIS RESULTS
+Association Between HCW Vaccine Mandates and COVID-19 Mortality
+July-October 2021, 52 U.S. States/ Territories
+============================================================
+
+
+Model 1: Unadjusted
+------------------------------------------------------------
+N = 52
+R² = 0.26
+Adjusted R² = 0.245
+Covariates: None (mandate only)
+
+Variable                    Estimate       SE        t    p-value               95% CI
+------------------------------------------------------------
+intercept                      49.94     3.61    13.84     <0.001   [42.8698, 57.0197]
+mandate                       -27.26     6.51    -4.19     <0.001 [-40.0119, -14.5028]
+
+
+Model 2: Adjusted for Region
+------------------------------------------------------------
+N = 52
+R² = 0.584
+Adjusted R² = 0.549
+Covariates: Mandate, Region (Midwest, South, West; reference=Northeast)
+
+Variable                    Estimate       SE        t    p-value               95% CI
+------------------------------------------------------------
+intercept                      31.89     4.86     6.57     <0.001   [22.3714, 41.4099]
+mandate                       -22.44     5.86    -3.83     <0.001  [-33.926, -10.9513]
+Northeast                       2.65     8.43     0.32      0.753  [-13.8699, 19.1717]
+South                          34.52     6.33     5.45     <0.001   [22.1034, 46.9358]
+West                           17.93     6.78     2.65      0.008    [4.6456, 31.2147]
+
+
+Model 3: Fully Adjusted
+------------------------------------------------------------
+N = 52
+R² = 0.589
+Adjusted R² = 0.544
+Covariates: Mandate, Region, Log10(Population)
+
+Variable                    Estimate       SE        t    p-value               95% CI
+------------------------------------------------------------
+intercept                       6.12    36.55     0.17      0.867  [-65.5144, 77.7588]
+mandate                       -23.38     6.04    -3.87     <0.001 [-35.2121, -11.5433]
+Northeast                       3.59     8.58     0.42      0.675  [-13.2182, 20.3995]
+South                          34.31     6.37     5.38     <0.001   [21.8202, 46.8096]
+West                           18.74     6.91     2.71      0.007    [5.1975, 32.2732]
+log10_population                3.90     5.49     0.71      0.477   [-6.8528, 14.6617]
+
