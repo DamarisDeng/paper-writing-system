@@ -12,24 +12,6 @@ repo/
 ├── Readme.md                  # Project documentation, tutorial links
 ├── workflow/                  # GENERIC reusable assets (skills, templates, scripts)
 │   ├── skills/                # Claude Code SKILL.md files (one per pipeline stage)
-│   │   ├── orchestrator/
-│   │   │   └── SKILL.md       # Master orchestrator — chains all stages
-│   │   ├── load-and-profile/
-│   │   │   └── SKILL.md       # Stage 1: data ingestion & profiling
-│   │   ├── generate-research-questions/
-│   │   │   └── SKILL.md       # Stage 2: PICO/PECO research question formulation
-│   │   ├── acquire-data/
-│   │   │   └── SKILL.md       # Stage 3: download external supporting data
-│   │   ├── statistical-analysis/
-│   │   │   └── SKILL.md       # Stage 4: statistical modeling & analysis
-│   │   ├── generate-figures/
-│   │   │   └── SKILL.md       # Stage 5: publication-quality figures & tables
-│   │   ├── literature-review/
-│   │   │   └── SKILL.md       # Stage 6: reference search & .bib generation
-│   │   ├── write-paper/
-│   │   │   └── SKILL.md       # Stage 7: LaTeX paper drafting
-│   │   └── compile-and-review/
-│   │       └── SKILL.md       # Stage 8: compile PDF, self-review, revise, recompile
 │   ├── templates/
 │   │   └── template.tex       # JAMA Network Open LaTeX template
 │   ├── scripts/               # Reusable Python/R scripts called by skills
@@ -37,24 +19,7 @@ repo/
 │   └── references/
 │       └── base_references.bib  # Pre-loaded common public health references (optional)
 ├── exam_paper/                # ALL runtime outputs for a specific dataset run
-│   ├── 1_data_profile/        # Stage 1 outputs
-│   │   ├── profile.json
-│   │   └── variable_types.json
-│   ├── 2_research_question/   # Stage 2-3 outputs
-│   │   ├── research_questions.json
-│   │   └── downloaded/        # External data from acquire-data
-│   ├── 3_analysis/            # Stage 4 outputs
-│   │   ├── analysis_results.json
-│   │   ├── models/            # Saved model summaries
-│   │   └── scripts/           # Analysis scripts used
-│   ├── 4_figures/             # Stage 5 outputs
-│   │   ├── figures/           # .png/.pdf figure files
-│   │   └── tables/            # .tex or .csv formatted tables
-│   ├── 5_references/          # Stage 6 outputs
-│   │   └── references.bib
-│   ├── 6_paper/               # Stage 7 outputs
-│   │   ├── paper.tex
-│   │   └── supplementary.tex  # Optional
+│   └── ...                    # Intermediate outputs
 │   └── paper.pdf              # FINAL deliverable
 └── sample/                    # Provided sample data and reference paper
     ├── data/
@@ -79,6 +44,57 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 | 6 | literature-review | `exam_paper/2_research_question/` | `exam_paper/5_references/` | references.bib has ≥10 entries |
 | 7 | write-paper | All upstream outputs + `workflow/templates/template.tex` | `exam_paper/6_paper/` | paper.tex compiles without fatal errors |
 | 8 | compile-and-review | `exam_paper/6_paper/` | `exam_paper/paper.pdf` | paper.pdf exists, is ≤10 pages (excl. refs + supplement) |
+
+## Progress Tracking Requirements
+
+**MANDATORY**: Every stage skill MUST implement progress tracking using `workflow/scripts/progress_utils.py`.
+
+### When Developing or Modifying a Skill
+
+1. **Track every step** with `update_step()`:
+   - Call `update_step(output_folder, stage_name, step_id, "completed")` immediately after each step finishes
+   - Include the `outputs` parameter when a step produces files
+   - Never leave a step without a progress checkpoint
+
+2. **Validate outputs** before marking stage complete:
+   - Call `complete_stage(output_folder, stage_name, expected_outputs=[...])` at stage end
+   - List ALL required output files in `expected_outputs`
+   - The stage will NOT be marked complete if any expected file is missing
+   - Empty files generate a warning but still allow completion
+
+3. **Use the standard pattern**:
+   ```python
+   import sys; sys.path.insert(0, "workflow/scripts")
+   from progress_utils import create_stage_tracker, update_step, complete_stage
+
+   # At stage start
+   tracker = create_stage_tracker(output_folder, "stage_name", ["step_1", "step_2", ...])
+
+   # After each step completes
+   update_step(output_folder, "stage_name", "step_1", "completed",
+               outputs=["path/to/output1.json"])
+
+   # At stage end - validates outputs before marking complete
+   complete_stage(output_folder, "stage_name",
+                  expected_outputs=["stage_folder/output1.json",
+                                    "stage_folder/output2.json"])
+   ```
+
+### Progress Files
+
+Each stage creates a `progress.json` in its output folder:
+- `1_data_profile/progress.json`
+- `2_research_question/progress.json`
+- `3_analysis/progress.json`
+- `4_figures/progress.json`
+- `5_references/progress.json`
+- `6_paper/progress.json`
+
+The orchestrator reads these files to determine resume points and overall pipeline status.
+
+### Resume Protocol
+
+If a stage is interrupted, read `progress.json` to find the last completed step and continue from the next incomplete step. Never re-run a completed step.
 
 ## Trigger Prompt
 
