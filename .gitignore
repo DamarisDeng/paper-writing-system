@@ -5,3 +5,5 @@ test*
 exam_folder/
 experiments/
 exam_paper/
+
+*.security-scan-passed

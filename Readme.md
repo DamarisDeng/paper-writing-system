@@ -22,7 +22,7 @@ Place your data in a folder (e.g., `exam_folder_sample/data/`), then enter this 
 write a paper using data in exam_folder_sample/data/, all output (intermediate and final) should be placed inside exam_paper/
 ```
 
-That's it. The pipeline will autonomously execute all 9 stages and produce a final `exam_paper/paper.pdf`.
+That's it. The pipeline will autonomously execute all stages (including an initial Stage 0 for data acquisition) and produce a final `exam_paper/paper.pdf`.
 
 > **Note**: Model level mappings are automatically configured by Claude Code. See `.claude/CLAUDE.md` for details.
 
@@ -52,6 +52,26 @@ This prevents wasting computational resources on literature searches and analysi
 ## Pipeline Steps
 
 Each stage can be run independently via Claude Code slash command (e.g., `/load-and-profile <args>`) or as part of the full orchestrator pipeline. All stages have full progress tracking with resume capability.
+
+### Stage 0: Acquire Documented Data (Pre-Processing)
+
+**Run**: Automatically by orchestrator (before Stage 1)
+
+**Purpose**: Download datasets documented in `Data_Description.md` before profiling
+
+**Logic**:
+1. Orchestrator reads `Data_Description.md` from data folder
+2. Builds download manifest from documented datasets with URLs
+3. Calls acquire-data skill with manifest
+4. Downloads to `<output_folder>/data/<target_dir>/`
+
+**Outputs**:
+- `0_data_acquisition/manifest.json` — Download manifest
+- `0_data_acquisition/download_report.json` — Download results
+- `data/<target_dir>/*` — Downloaded datasets
+- `data/README.md` — File documentation
+
+**Note**: This step ensures all documented datasets are available before profiling, so the question generator sees the full data landscape.
 
 ---
 
@@ -136,27 +156,30 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 
 ---
 
-### Stage 4: Acquire Data (low)
+### Stage 4: Acquire Supplementary Data (low)
 
-**Run**: `/acquire-data <output_folder>`
+**Run**: `/acquire-data <output_folder> <manifest_path>`
 
-**Input**: `ranked_questions.json` → `data_acquisition_requirements`
+**Input**: Orchestrator builds manifest from `data_acquisition_requirements` in `ranked_questions.json`
 
-**Logic**:
-1. Load selected research question and extract data acquisition requirements
-2. Create download directory
-3. For each requirement: try primary URLs, then parse archive links, then fallback to known sources (NYTimes COVID, JHU CSSE)
-4. Download and process (parse data, subset to study period, validate columns)
-5. Handle failures gracefully (404→fallback, timeout→retry, parse errors→try delimiters)
-6. Verify and document each download (file size, row count, date range, source used)
-7. Report summary with warnings
+**Logic** (manifest-driven, stateless downloader):
+1. Read manifest JSON (array of download entries with name, target_dir, downloads[])
+2. Check what's already on disk (idempotent)
+3. Download missing files, extract archives, retry on failure
+4. Verify against verify_patterns, skip skip_patterns
+5. Write data/README.md documenting each file
+6. Write download report JSON
 
-**Progress Tracking**: 5 checkpoints (`step_1_load_requirements` → `step_5_report_summary`)
+**Progress Tracking**: 5 checkpoints (`step_1_read_manifest` → `step_5_document`)
 
 **Outputs**:
-- `2_research_question/downloaded/*.csv` — Downloaded data files
-- `2_research_question/downloaded/README.md` — Source documentation
-- `2_research_question/progress.json` — Progress state (shared with Stage 2)
+- `data/<target_dir>/*.csv` — Downloaded data files (same location as Stage 0)
+- `data/README.md` — Documentation of all acquired files
+- `2_research_question/download_report.json` — Download summary
+
+**Note**: acquire-data is used twice in the pipeline:
+- **Stage 0**: Orchestrator builds manifest from Data_Description.md → downloads base datasets
+- **Stage 4**: Orchestrator builds manifest from data_acquisition_requirements → downloads supplementary data
 
 ---
 
@@ -273,7 +296,7 @@ repo/
 │   │   ├── load-and-profile/            # Stage 1
 │   │   ├── generate-research-questions/ # Stage 2
 │   │   ├── score-and-rank/              # Stage 3 (NEW - literature-informed scoring)
-│   │   ├── acquire-data/                # Stage 4
+│   │   ├── acquire-data/                # Stage 4 (also used in Stage 0)
 │   │   ├── statistical-analysis/        # Stage 5
 │   │   ├── generate-figures/            # Stage 6
 │   │   ├── literature-review/           # Stage 7
@@ -286,9 +309,16 @@ repo/
 │   └── templates/
 │       └── template.tex                 # JAMA Network Open LaTeX template
 ├── exam_paper/                          # Runtime outputs
+│   ├── 0_data_acquisition/              # Stage 0 (pre-profiling data acquisition)
+│   │   ├── manifest.json                # Download manifest built from Data_Description.md
+│   │   └── download_report.json         # Download results
+│   ├── data/                            # All acquired datasets (from Stage 0 and Stage 4)
+│   │   ├── HPS_PUF/                     # Example: Household Pulse Survey data
+│   │   ├── covid_deaths/                # Example: Supplementary outcome data
+│   │   └── README.md                    # File documentation
 │   ├── 1_data_profile/
 │   ├── 2_research_question/
-│   │   └── downloaded/                  # Acquired external data
+│   │   └── downloaded/                  # Legacy: acquired external data
 │   ├── 2_scoring/                      # Stage 3 outputs (NEW)
 │   ├── 3_analysis/
 │   ├── 4_figures/
@@ -309,10 +339,12 @@ repo/
 |------|-------------|
 | `exam_paper/paper.pdf` | Final compiled paper (main deliverable) |
 | `exam_paper/pipeline_log.json` | Execution log with timestamps, status, notes |
+| `exam_paper/data/README.md` | All acquired datasets documentation |
 | `exam_paper/6_paper/paper.tex` | LaTeX source (editable) |
 | `exam_paper/3_analysis/analysis_results.json` | All statistical results |
 | `exam_paper/4_figures/figures/*.png` | Publication-ready figures |
 | `exam_paper/5_references/references.bib` | Bibliography |
+| `exam_paper/0_data_acquisition/download_report.json` | Stage 0 download results |
 
 ---
 

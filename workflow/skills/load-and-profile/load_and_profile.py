@@ -10,12 +10,23 @@ import pandas as pd
 
 
 def scan_data_files(data_folder: str) -> list[Path]:
-    """Find all CSV and XLSX files in the data folder, skipping hidden files."""
+    """Find all CSV and XLSX files in the data folder and subdirectories."""
     folder = Path(data_folder)
     files = []
-    for f in sorted(folder.iterdir()):
-        if f.name.startswith("."):
+    skip_names = {"__MACOSX", ".git", "downloaded"}
+
+    for f in sorted(folder.rglob("*")):
+        # Skip hidden directories and their contents
+        if any(part.startswith(".") for part in f.parts):
             continue
+        # Skip specific directory names
+        if any(skip in f.parts for skip in skip_names):
+            continue
+        # Skip files with metadata-related keywords
+        lower_name = f.name.lower()
+        if any(kw in lower_name for kw in ("dictionary", "readme", "repwgt", "replicate")):
+            continue
+        # Only include CSV and XLSX files
         if f.suffix.lower() in (".csv", ".xlsx"):
             files.append(f)
     return files
@@ -249,16 +260,19 @@ def main():
     all_types = {}
 
     for path in files:
-        print(f"\nLoading {path.name}...")
+        # Use relative path as key to avoid collisions when subdirectories
+        # have files with the same name (e.g., data/HPS_PUF/file.csv and other/file.csv)
+        rel_path = path.relative_to(data_folder)
+        print(f"\nLoading {rel_path}...")
         try:
             df = load_file(path)
             df = clean_dataframe(df)
             print(f"  Shape: {df.shape}")
             profile, types = profile_dataset(df, str(path))
-            all_profiles[path.name] = profile
-            all_types[path.name] = types
+            all_profiles[str(rel_path)] = profile
+            all_types[str(rel_path)] = types
         except Exception as e:
-            print(f"  ERROR loading {path.name}: {e}")
+            print(f"  ERROR loading {rel_path}: {e}")
             continue
 
     profile_out = {"datasets": all_profiles}

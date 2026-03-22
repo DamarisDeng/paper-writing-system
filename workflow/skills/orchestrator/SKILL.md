@@ -2,11 +2,12 @@
 name: orchestrator
 model: medium
 description: >
-  Master orchestrator that runs the full paper-generation pipeline (stages 1-9)
+  Master orchestrator that runs the full paper-generation pipeline (stages 0-9)
   sequentially. Handles initialization, stage execution with validation,
   failure retries (up to 3 per stage), graceful degradation, progress tracking,
-  time budgeting (70 min total), and a feedback loop that re-ranks research
+  time budgeting (61 min total), and a feedback loop that re-ranks research
   question candidates if analysis encounters structural failures.
+  Stage 0 performs initial data acquisition from documented datasets.
   Triggers on: "run the pipeline", "generate paper",
   "write a paper using the data", or any request to execute the full workflow.
 argument-hint: <data_folder> <output_folder>
@@ -14,7 +15,7 @@ argument-hint: <data_folder> <output_folder>
 
 # Orchestrator — Full Pipeline Execution
 
-Run stages 1-9 of the JAMA Network Open paper-generation pipeline sequentially, producing a final `paper.pdf` from raw data with zero human intervention. Includes a feedback loop between analysis and question scoring to recover from structural analysis failures.
+Run stages 0-9 of the JAMA Network Open paper-generation pipeline sequentially, producing a final `paper.pdf` from data documentation with zero human intervention. Stage 0 acquires documented datasets, Stages 1-9 process data and generate the paper. Includes a feedback loop between analysis and question scoring to recover from structural analysis failures.
 
 ## Usage
 
@@ -49,6 +50,7 @@ You are a senior research automation engineer. Your job is to execute the entire
 
 1. **Create the output directory structure:**
    ```bash
+   mkdir -p <output_folder>/0_data_acquisition
    mkdir -p <output_folder>/1_data_profile
    mkdir -p <output_folder>/2_research_question/downloaded
    mkdir -p <output_folder>/2_scoring
@@ -58,6 +60,7 @@ You are a senior research automation engineer. Your job is to execute the entire
    mkdir -p <output_folder>/4_figures/tables
    mkdir -p <output_folder>/5_references
    mkdir -p <output_folder>/6_paper
+   mkdir -p <output_folder>/data
    ```
 
 2. **Record start time** for time budgeting. The entire pipeline should target completion within 70 minutes (56 min happy path, up to 70 min if feedback loop triggers).
@@ -83,10 +86,11 @@ You are a senior research automation engineer. Your job is to execute the entire
 
    Use `TaskCreate` to create tasks for stages that will be executed:
    ```
+   - Stage 0: Acquire Documented Data
    - Stage 1: Load and Profile Data
    - Stage 2: Generate Research Questions
    - Stage 3: Score and Rank Questions
-   - Stage 4: Acquire External Data
+   - Stage 4: Acquire Supplementary Data
    - Stage 5: Statistical Analysis
    - Stage 6: Generate Figures
    - Stage 7: Literature Review
@@ -95,6 +99,60 @@ You are a senior research automation engineer. Your job is to execute the entire
    ```
 
    Store task IDs in a dict for status updates: `task_ids = {}`
+
+### Step 0.5: Execute Stage 0 — Acquire Documented Data
+
+**Before profiling**, acquire datasets documented in `Data_Description.md`:
+
+1. **Read `Data_Description.md`** from `<data_folder>`:
+   ```python
+   data_desc_path = Path(data_folder) / "Data_Description.md"
+   if data_desc_path.exists():
+       with open(data_desc_path) as f:
+           data_desc_content = f.read()
+   ```
+
+2. **Parse the description** and build a download manifest for each dataset that includes download instructions. For datasets with URLs or download instructions:
+   ```python
+   import json
+
+   manifest = []
+
+   # Example: If Data_Description.md documents HPS_PUF with URLs
+   manifest.append({
+       "name": "HPS_PUF",
+       "description": "Household Pulse Survey microdata weeks 31-39",
+       "target_dir": "HPS_PUF",
+       "downloads": [
+           {
+               "url": "https://www2.census.gov/programs-surveys/demo/datasets/hhp/2021/wk31/HPS_Week31_PUF_CSV.zip",
+               "extract": True
+           }
+       ],
+       "verify_patterns": ["*.csv"],
+       "skip_patterns": ["*repwgt*", "*dictionary*"]
+   })
+
+   # Write manifest to file
+   manifest_path = Path(output_folder) / "0_data_acquisition" / "manifest.json"
+   manifest_path.parent.mkdir(parents=True, exist_ok=True)
+   with open(manifest_path, "w") as f:
+       json.dump(manifest, f, indent=2)
+   ```
+
+3. **Check what's already on disk** in `<output_folder>/data/` and include only missing datasets in the manifest.
+
+4. **Call acquire-data** with the manifest:
+   ```
+   /acquire-data <output_folder> <output_folder>/0_data_acquisition/manifest.json
+   ```
+
+5. **Verify outputs**:
+   - `<output_folder>/data/<target_dir>/` contains downloaded files
+   - `<output_folder>/data/README.md` exists
+   - `<output_folder>/0_data_acquisition/download_report.json` exists
+
+**If `Data_Description.md` doesn't exist or has no download instructions**, skip this stage and proceed to profiling with whatever data is on disk.
 
 ### Step 1: Execute Stages Sequentially
 
@@ -139,10 +197,11 @@ Run each stage in order. For each stage:
 
 | Stage | Skill | Validation Check | Degraded Fallback |
 |-------|-------|-----------------|-------------------|
+| 0 | acquire-data (Stage 0) | `data/README.md` exists, documented datasets downloaded | Skip — proceed with available data only |
 | 1 | load-and-profile | `profile.json` and `variable_types.json` exist with >0 datasets | Generate minimal profile from file headers only |
 | 2 | generate-research-questions | `research_questions.json` has `candidate_questions` array with ≥2 candidates | Use first numeric column as outcome, first categorical as exposure |
 | 3 | score-and-rank | `ranked_questions.json` exists with `primary_question` and `selection_metadata` | Use first candidate from `research_questions.json` as-is |
-| 4 | acquire-data | Downloaded files exist (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
+| 4 | acquire-data (Stage 4) | Downloaded files exist (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
 | 5 | statistical-analysis | `analysis_results.json` exists with `descriptive_statistics` and `primary_analysis` | Run descriptive stats only, skip regression |
 | 6 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
 | 7 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |
@@ -206,23 +265,73 @@ else:
 - **Stage 5 re-run**: Run primary model + Table 1 only, skip sensitivity analyses. Target: 10 min.
 - **Total feedback re-run budget**: 14 min.
 
+### Step 1c: Execute Stage 4 — Acquire Supplementary Data
+
+**After Stage 3 (score-and-rank) completes**, check if supplementary data is needed:
+
+1. **Read `data_acquisition_requirements`** from `<output_folder>/2_scoring/ranked_questions.json`:
+   ```python
+   with open(f"{output_folder}/2_scoring/ranked_questions.json") as f:
+       ranked = json.load(f)
+
+   data_reqs = ranked.get("data_acquisition_requirements", [])
+   ```
+
+2. **If `data_acquisition_requirements` is non-empty**, build a manifest:
+   ```python
+   import json
+   from pathlib import Path
+
+   manifest = []
+   for req in data_reqs:
+       manifest.append({
+           "name": req.get("variable", "unknown"),
+           "description": req.get("action", "Supplementary data for analysis"),
+           "target_dir": req.get("target_dir", req.get("variable", "unknown")),
+           "downloads": [
+               {
+                   "url": req.get("url", ""),
+                   "extract": req.get("extract", False)
+               }
+           ]
+       })
+
+   # Write manifest
+   manifest_path = Path(output_folder) / "2_research_question" / "download_manifest.json"
+   with open(manifest_path, "w") as f:
+       json.dump(manifest, f, indent=2)
+   ```
+
+3. **Call acquire-data** with the manifest:
+   ```
+   /acquire-data <output_folder> <output_folder>/2_research_question/download_manifest.json
+   ```
+
+4. **Verify outputs**:
+   - `<output_folder>/data/<target_dir>/` contains downloaded files (same location as Stage 0)
+   - `<output_folder>/data/README.md` is updated with new file descriptions
+   - `<output_folder>/2_research_question/download_report.json` exists
+
+**If `data_acquisition_requirements` is empty**, skip this stage and proceed directly to Stage 5.
+
 ### Step 2: Time Budget Management
 
 Allocate time across stages approximately:
 
 | Stage | Happy Path | With Feedback |
 |-------|-----------|---------------|
+| 0. Acquire Documented Data | 5 min | 5 min |
 | 1. Load & Profile | 5 min | 5 min |
 | 2. Research Questions | 5 min | 5 min |
 | 3. Score & Rank | 3 min | 3 min |
-| 4. Acquire Data | 3 min | 3 min |
+| 4. Acquire Supplementary Data | 3 min | 3 min |
 | 5. Statistical Analysis | 13 min | 13 min |
 | *Feedback re-run (3-5)* | — | *14 min* |
 | 6. Generate Figures | 8 min | 8 min |
 | 7. Literature Review | 8 min | 8 min |
 | 8. Write Paper | 8 min | 8 min |
 | 9. Compile & Review | 3 min | 3 min |
-| **Total** | **56 min** | **70 min** |
+| **Total** | **61 min** | **75 min** |
 
 If a stage exceeds its budget by 2x, produce a simplified version and move on. The goal is a complete (even if imperfect) paper, not a perfect partial paper.
 
@@ -231,17 +340,30 @@ If a stage exceeds its budget by 2x, produce a simplified version and move on. T
 Ensure correct data flow between stages:
 
 ```
-Stage 1 → profile.json, variable_types.json
+Data_Description.md (in <data_folder>)
+  ↓ (orchestrator parses, builds manifest)
+0_data_acquisition/manifest.json
+  ↓ (acquire-data downloads to <output_folder>/data/)
+<output_folder>/data/HPS_PUF/*.csv
+<output_folder>/data/README.md
+0_data_acquisition/download_report.json
   ↓
-Stage 2 → research_questions.json (candidate_questions array)
+Stage 1: load-and-profile → profiles <output_folder>/data/ (all CSV/XLSX)
+  → profile.json, variable_types.json
   ↓
-Stage 3 → ranked_questions.json (selected primary + scoring details)
+Stage 2: generate-research-questions → research_questions.json
   ↓
-Stage 4 → downloaded/ files (reads 2_scoring/ranked_questions.json)
+Stage 3: score-and-rank → ranked_questions.json
+  ↓ (orchestrator extracts data_acquisition_requirements, builds manifest)
+2_research_question/download_manifest.json
+  ↓ (acquire-data downloads to SAME <output_folder>/data/)
+<output_folder>/data/covid_deaths/*.csv (supplementary)
+<output_folder>/data/README.md (updated)
+2_research_question/download_report.json
   ↓
-Stage 5 → analysis_results.json (reads profile + variable_types + 2_scoring/ranked_questions + downloaded data)
+Stage 5: statistical-analysis → analysis_results.json
   ↓                                    ↑
-  ↓  ← ← ← FEEDBACK LOOP ← ← ← ← ← ↑  (if structural failure: re-score → re-acquire → re-analyze)
+  ↓  ← ← ← FEEDBACK LOOP ← ← ← ← ← ← ← ↑  (if structural failure: re-score → re-acquire → re-analyze)
   ↓
 Stage 6 → figures/*.png, tables/*.tex (reads 3_analysis/analysis_results)
   ↓
@@ -251,6 +373,8 @@ Stage 8 → paper.tex (reads ALL upstream outputs + template + decision_log.json
   ↓
 Stage 9 → paper.pdf (compiles paper.tex)
 ```
+
+**Key point:** Both Stage 0 and Stage 4 write to the same `<output_folder>/data/` directory. The profiler (Stage 1) reads everything in that directory, including data from both acquisition passes.
 
 ### Step 4: Finalize
 
