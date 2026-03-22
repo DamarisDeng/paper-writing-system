@@ -22,15 +22,36 @@ Place your data in a folder (e.g., `exam_folder_sample/data/`), then enter this 
 write a paper using data in exam_folder_sample/data/, all output (intermediate and final) should be placed inside exam_paper/
 ```
 
-That's it. The pipeline will autonomously execute all 8 stages and produce a final `exam_paper/paper.pdf`.
+That's it. The pipeline will autonomously execute all 9 stages and produce a final `exam_paper/paper.pdf`.
 
 > **Note**: Model level mappings are automatically configured by Claude Code. See `.claude/CLAUDE.md` for details.
 
 ---
 
+## Feasibility-First Approach
+
+This pipeline uses a **feasibility-first** approach to avoid wasting time on infeasible research questions:
+
+1. **Stage 2** generates candidate questions and runs a **rigorous feasibility check**:
+   - Control groups: At least 2 exposure groups with adequate N
+   - Outcome data: Outcome exists or can be downloaded
+   - Sample size: Meets minimum for study design (≥20 cross-sectional, ≥50 DiD)
+   - Design match: Required data structure exists
+   - Variable availability: All critical variables present
+
+2. Candidates are marked as `feasible` or `infeasible` with specific reasons
+
+3. **Stage 3** only performs expensive literature searches on **feasible candidates**
+
+4. If NO feasible candidates exist, the pipeline fails early with clear error
+
+This prevents wasting computational resources on literature searches and analysis for questions that cannot be answered with the available data.
+
+---
+
 ## Pipeline Steps
 
-Each stage can be run independently via Claude Code slash command (e.g., `/load-and-profile <args>`) or as part of the full orchestrator pipeline. Stages 1-4 have full progress tracking with resume capability.
+Each stage can be run independently via Claude Code slash command (e.g., `/load-and-profile <args>`) or as part of the full orchestrator pipeline. All stages have full progress tracking with resume capability.
 
 ---
 
@@ -66,27 +87,63 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 1. Load inputs and extract search context (topic keywords, methodological terms)
 2. Build mental model of data landscape (datasets, joins, candidates for outcome/exposure/covariates)
 3. Identify strongest outcome–exposure pairings (start from outcomes, not topics)
-4. Score candidates on feasibility (0.40), significance (0.20), novelty (0.25), rigor (0.15)
-5. For each candidate, assign variable roles (outcome, exposure, covariates, excluded)
-6. Assess feasibility (strengths, limitations, required assumptions, data acquisition needs)
-7. Save and validate output (runs validation script)
+4. **RIGOROUS FEASIBILITY VALIDATION** (Step 3b):
+   - Checks control groups (at least 2 exposure groups with adequate N)
+   - Checks outcome data availability (exists or can be downloaded)
+   - Checks sample size (≥20 cross-sectional, ≥50 DiD/longitudinal)
+   - Checks study design match (required data structure exists)
+   - Checks variable availability (all critical variables in data)
+5. Mark candidates as `feasible` or `infeasible` with reasons
+6. Score only **feasible** candidates on feasibility (0.40), significance (0.20), novelty (0.25), rigor (0.15)
+7. For each candidate, assign variable roles (outcome, exposure, covariates, excluded)
+8. Assess feasibility (strengths, limitations, required assumptions, data acquisition needs)
+9. Save and validate output (runs validation script)
 
 **Progress Tracking**: 7 checkpoints (`step_1_load_inputs` → `step_7_save_validate`)
 
 **Outputs**:
-- `2_research_question/research_questions.json` — Candidate questions with PICO fields, variable roles, feasibility
+- `2_research_question/research_questions.json` — Candidate questions with **status** field (`feasible`/`infeasible`), PICO fields, variable roles, feasibility
 - `2_research_question/progress.json` — Progress state for resume
+
+**Key Feature**: Infeasible candidates are rejected BEFORE expensive literature searches in Stage 3, saving time and computational resources.
 
 ---
 
-### Stage 3: Acquire Data (low)
+### Stage 3: Score and Rank Research Questions (medium)
+
+**Run**: `/score-and-rank <output_folder>`
+
+**Input**: `research_questions.json` (Stage 2 output), `cycle_state.json` (if in feedback loop)
+
+**Logic**:
+1. Load candidates and filter to **only `status: "feasible"`** candidates
+2. **Literature Search** (skip in fast-track mode):
+   - For each feasible candidate, search for novelty (few existing studies) and support (plausible mechanism)
+   - Record results for fast-track reuse
+3. Compute composite scores: `0.40 * data_feasibility + 0.25 * novelty + 0.20 * support + 0.15 * rigor`
+4. **Apply feedback penalties** (if in feedback loop): set failed candidates to score 0.0
+5. Select top candidate and save `ranked_questions.json` (backward-compatible format)
+6. Validate output
+
+**Progress Tracking**: 6 checkpoints (`step_1_load_inputs` → `step_6_validate`)
+
+**Early Termination**: If NO feasible candidates exist, stage fails immediately with clear error rather than wasting time on literature searches.
+
+**Outputs**:
+- `2_scoring/ranked_questions.json` — Selected question with `selection_metadata`
+- `2_scoring/scoring_details.json` — Full scoring details for audit trail
+- `2_scoring/progress.json` — Progress state for resume
+
+---
+
+### Stage 4: Acquire Data (low)
 
 **Run**: `/acquire-data <output_folder>`
 
-**Input**: `research_questions.json` → `data_acquisition_requirements`
+**Input**: `ranked_questions.json` → `data_acquisition_requirements`
 
 **Logic**:
-1. Load research questions and extract data acquisition requirements
+1. Load selected research question and extract data acquisition requirements
 2. Create download directory
 3. For each requirement: try primary URLs, then parse archive links, then fallback to known sources (NYTimes COVID, JHU CSSE)
 4. Download and process (parse data, subset to study period, validate columns)
@@ -103,11 +160,11 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 
 ---
 
-### Stage 4: Statistical Analysis (medium)
+### Stage 5: Statistical Analysis (medium)
 
 **Run**: `/statistical-analysis <output_folder>`
 
-**Input**: Profile, research questions, raw data, downloaded data
+**Input**: Profile, ranked_questions.json, raw data, downloaded data
 
 **Logic**:
 1. Load all inputs and copy helper modules (utils.py, data_utils.py, descriptive.py, validation.py)
@@ -131,9 +188,11 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 - `3_analysis/scripts/` — Python scripts used
 - `3_analysis/progress.json` — Progress state for resume
 
+**Feedback Loop**: If critical failures detected (non-convergence, separation, violated assumptions), triggers re-ranking from Stage 3.
+
 ---
 
-### Stage 5: Generate Figures and Tables (medium)
+### Stage 6: Generate Figures and Tables (medium)
 
 **Input**: `analysis_results.json`, `research_questions.json`
 
@@ -152,9 +211,9 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 
 ---
 
-### Stage 6: Literature Review (low)
+### Stage 7: Literature Review (low)
 
-**Input**: `research_questions.json`
+**Input**: `ranked_questions.json` (selected question)
 
 **What it does**:
 - Searches for references across 4 categories: similar studies, methodology, clinical/policy context, data sources
@@ -167,7 +226,7 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 
 ---
 
-### Stage 7: Write Paper (high)
+### Stage 8: Write Paper (high)
 
 **Input**: All upstream outputs + LaTeX template
 
@@ -187,7 +246,7 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 
 ---
 
-### Stage 8: Compile and Review (low)
+### Stage 9: Compile and Review (low)
 
 **Input**: `paper.tex` and all assets
 
@@ -209,27 +268,36 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 ```
 repo/
 ├── workflow/
-│   ├── skills/                    # Pipeline stage definitions
-│   │   ├── orchestrator/SKILL.md  # Master coordinator
-│   │   ├── load-and-profile/      # Stage 1
-│   │   ├── generate-research-questions/  # Stage 2
-│   │   ├── acquire-data/          # Stage 3
-│   │   ├── statistical-analysis/  # Stage 4
-│   │   ├── generate-figures/      # Stage 5
-│   │   ├── literature-review/     # Stage 6
-│   │   ├── write-paper/           # Stage 7
-│   │   └── compile-and-review/    # Stage 8
+│   ├── skills/                         # Pipeline stage definitions
+│   │   ├── orchestrator/SKILL.md       # Master coordinator
+│   │   ├── load-and-profile/            # Stage 1
+│   │   ├── generate-research-questions/ # Stage 2
+│   │   ├── score-and-rank/              # Stage 3 (NEW - literature-informed scoring)
+│   │   ├── acquire-data/                # Stage 4
+│   │   ├── statistical-analysis/        # Stage 5
+│   │   ├── generate-figures/            # Stage 6
+│   │   ├── literature-review/           # Stage 7
+│   │   ├── write-paper/                 # Stage 8
+│   │   └── compile-and-review/          # Stage 9
+│   ├── scripts/                         # Shared utility scripts
+│   │   ├── feasibility_validator.py     # Rigorous feasibility checking (NEW)
+│   │   ├── progress_utils.py            # Progress tracking across stages
+│   │   └── feedback_utils.py            # Feedback loop management
 │   └── templates/
-│       └── template.tex           # JAMA Network Open LaTeX template
-├── exam_paper/                    # Runtime outputs
+│       └── template.tex                 # JAMA Network Open LaTeX template
+├── exam_paper/                          # Runtime outputs
 │   ├── 1_data_profile/
 │   ├── 2_research_question/
+│   │   └── downloaded/                  # Acquired external data
+│   ├── 2_scoring/                      # Stage 3 outputs (NEW)
 │   ├── 3_analysis/
 │   ├── 4_figures/
 │   ├── 5_references/
 │   ├── 6_paper/
+│   ├── cycle_state.json                 # Feedback loop state
+│   ├── decision_log.json                # Selection audit trail
 │   ├── pipeline_log.json
-│   └── paper.pdf                  # FINAL DELIVERABLE
+│   └── paper.pdf                        # FINAL DELIVERABLE
 └── README.md
 ```
 

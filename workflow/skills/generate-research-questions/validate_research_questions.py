@@ -35,9 +35,32 @@ def load_json(path: str) -> dict:
 
 def collect_all_columns(variable_types: dict) -> dict[str, dict]:
     """Return {col_name: {datasets: [ds1, ds2], type: semantic_type, types_by_dataset: {ds: type}}}
-    for every column. Flags type conflicts across datasets."""
+    for every column. Flags type conflicts across datasets.
+
+    Handles two schema formats:
+    1. Legacy: {dataset_name: {col_name: {type: ...}}}
+    2. Current: {datasets: [{filename: ds_name, variables: {col_name: {type: ...}}}]}
+    """
     cols: dict[str, dict] = {}
+
+    # Handle current schema from Stage 1 (datasets array format)
+    if "datasets" in variable_types and isinstance(variable_types["datasets"], list):
+        for ds_info in variable_types["datasets"]:
+            ds_name = ds_info.get("filename", "unknown")
+            ds_vars = ds_info.get("variables", {})
+            for col_name, col_info in ds_vars.items():
+                col_type = col_info if isinstance(col_info, str) else col_info.get("type", "unknown")
+                if col_name not in cols:
+                    cols[col_name] = {"datasets": [], "type": col_type, "types_by_dataset": {}}
+                cols[col_name]["datasets"].append(ds_name)
+                cols[col_name]["types_by_dataset"][ds_name] = col_type
+        return cols
+
+    # Handle legacy schema (flat dict of datasets)
     for ds_name, ds_cols in variable_types.items():
+        # Skip non-dataset keys
+        if ds_name in ("total_datasets", "generated_at"):
+            continue
         for col_name, col_type in ds_cols.items():
             if col_name not in cols:
                 cols[col_name] = {"datasets": [], "type": col_type, "types_by_dataset": {}}
@@ -60,16 +83,53 @@ def get_type_conflicts(all_columns: dict[str, dict]) -> list[tuple[str, str]]:
 
 
 def get_column_profile(profile: dict, col_name: str) -> dict | None:
-    """Find the profile stats for a column across all datasets."""
-    for ds_name, ds_data in profile.get("datasets", {}).items():
+    """Find the profile stats for a column across all datasets.
+
+    Handles two schema formats:
+    1. Legacy: {datasets: {ds_name: {columns: {col_name: {...}}}}}}
+    2. Current: {datasets: [{filename: ds_name, columns: [{name: col_name, ...}]}]}
+    """
+    datasets = profile.get("datasets", [])
+
+    # Handle current schema (array of dataset objects)
+    if isinstance(datasets, list):
+        for ds_data in datasets:
+            columns = ds_data.get("columns", [])
+            # Columns is an array of objects with 'name' key
+            if isinstance(columns, list):
+                for col_info in columns:
+                    if col_info.get("name") == col_name:
+                        return col_info
+            # Columns is a dict (legacy within array)
+            elif isinstance(columns, dict) and col_name in columns:
+                return columns[col_name]
+        return None
+
+    # Handle legacy schema (dict of datasets)
+    for ds_data in datasets.values():
         if col_name in ds_data.get("columns", {}):
             return ds_data["columns"][col_name]
     return None
 
 
 def get_dataset_row_count(profile: dict, dataset_name: str) -> int | None:
-    """Get the row count for a dataset from its profile."""
-    ds_data = profile.get("datasets", {}).get(dataset_name, {})
+    """Get the row count for a dataset from its profile.
+
+    Handles two schema formats:
+    1. Legacy: {datasets: {ds_name: {row_count: N}}}
+    2. Current: {datasets: [{filename: ds_name, row_count: N}]}
+    """
+    datasets = profile.get("datasets", [])
+
+    # Handle current schema (array)
+    if isinstance(datasets, list):
+        for ds_data in datasets:
+            if ds_data.get("filename") == dataset_name:
+                return ds_data.get("row_count")
+        return None
+
+    # Handle legacy schema (dict)
+    ds_data = datasets.get(dataset_name, {})
     return ds_data.get("row_count") or ds_data.get("n_rows") or ds_data.get("num_rows")
 
 
@@ -108,6 +168,25 @@ def check_schema_candidates(rq: dict) -> list[tuple[str, str]]:
         if not cand.get("candidate_id"):
             issues.append(("ERROR", f"{prefix}.candidate_id is missing"))
 
+        # status field (feasible/infeasible)
+        status = cand.get("status")
+        if status is None:
+            issues.append(("WARN", f"{prefix}.status is missing (should be 'feasible' or 'infeasible')"))
+        elif status not in ("feasible", "infeasible"):
+            issues.append(("WARN", f"{prefix}.status='{status}' should be 'feasible' or 'infeasible'"))
+        elif status == "infeasible":
+            # Infeasible candidates must have infeasibility_reason
+            reason = cand.get("infeasibility_reason")
+            if not reason:
+                issues.append(("ERROR", f"{prefix}.status is 'infeasible' but infeasibility_reason is missing"))
+            # Infeasible candidates should NOT have preliminary_scores
+            if cand.get("preliminary_scores"):
+                issues.append(("WARN", f"{prefix}.status is 'infeasible' but preliminary_scores is present (should be omitted)"))
+        else:
+            # Feasible candidates MUST have preliminary_scores
+            if not cand.get("preliminary_scores"):
+                issues.append(("ERROR", f"{prefix}.status is 'feasible' but preliminary_scores is missing"))
+
         # PICO fields
         required_fields = ["question", "population", "exposure_or_intervention",
                            "comparator", "outcome", "study_design", "rationale"]
@@ -116,17 +195,19 @@ def check_schema_candidates(rq: dict) -> list[tuple[str, str]]:
             if not val or not str(val).strip():
                 issues.append(("ERROR", f"{prefix}.{field} is missing or empty"))
 
-        # preliminary_scores
-        scores = cand.get("preliminary_scores")
-        if not isinstance(scores, dict):
-            issues.append(("ERROR", f"{prefix}.preliminary_scores is missing or not an object"))
-        else:
-            for score_key in ["data_feasibility", "significance", "novelty", "rigor", "composite"]:
-                val = scores.get(score_key)
-                if val is None:
-                    issues.append(("ERROR", f"{prefix}.preliminary_scores.{score_key} is missing"))
-                elif not isinstance(val, (int, float)) or val < 0 or val > 1:
-                    issues.append(("WARN", f"{prefix}.preliminary_scores.{score_key}={val} should be 0.0-1.0"))
+        # preliminary_scores (only for feasible candidates)
+        status = cand.get("status")
+        if status != "infeasible":
+            scores = cand.get("preliminary_scores")
+            if not isinstance(scores, dict):
+                issues.append(("ERROR", f"{prefix}.preliminary_scores is missing or not an object"))
+            else:
+                for score_key in ["data_feasibility", "significance", "novelty", "rigor", "composite"]:
+                    val = scores.get(score_key)
+                    if val is None:
+                        issues.append(("ERROR", f"{prefix}.preliminary_scores.{score_key} is missing"))
+                    elif not isinstance(val, (int, float)) or val < 0 or val > 1:
+                        issues.append(("WARN", f"{prefix}.preliminary_scores.{score_key}={val} should be 0.0-1.0"))
 
         # secondary_questions (per candidate)
         sqs = cand.get("secondary_questions")
@@ -134,22 +215,42 @@ def check_schema_candidates(rq: dict) -> list[tuple[str, str]]:
             issues.append(("WARN", f"{prefix}.secondary_questions is missing or empty"))
         else:
             for i, sq in enumerate(sqs):
-                for field in ["question", "variables_involved", "analysis_type", "rationale"]:
-                    if field not in sq:
-                        issues.append(("ERROR", f"{prefix}.secondary_questions[{i}] missing field: {field}"))
-                if not isinstance(sq.get("variables_involved"), list):
-                    issues.append(("ERROR", f"{prefix}.secondary_questions[{i}].variables_involved must be a list"))
+                # Allow both string format (legacy/transition) and object format (full schema)
+                if isinstance(sq, str):
+                    issues.append(("INFO", f"{prefix}.secondary_questions[{i}] is a string (should be object with question, variables_involved, analysis_type, rationale)"))
+                elif isinstance(sq, dict):
+                    for field in ["question", "variables_involved", "analysis_type", "rationale"]:
+                        if field not in sq:
+                            issues.append(("WARN", f"{prefix}.secondary_questions[{i}] missing field: {field}"))
+                    if "variables_involved" in sq and not isinstance(sq.get("variables_involved"), list):
+                        issues.append(("ERROR", f"{prefix}.secondary_questions[{i}].variables_involved must be a list"))
+                else:
+                    issues.append(("ERROR", f"{prefix}.secondary_questions[{i}] must be a string or object"))
 
         # variable_roles (per candidate)
         vr = cand.get("variable_roles")
         if not isinstance(vr, dict):
             issues.append(("ERROR", f"{prefix}.variable_roles is missing or not an object"))
         else:
-            for role in ["outcome_variables", "exposure_variables", "covariates",
-                          "stratification_variables", "excluded_variables"]:
-                if role not in vr:
-                    issues.append(("ERROR", f"{prefix}.variable_roles.{role} is missing"))
-            if not isinstance(vr.get("excluded_variables"), dict):
+            # Check for either new format (plural keys) or legacy format (singular keys)
+            has_new_format = any(role in vr for role in ["outcome_variables", "exposure_variables"])
+            has_legacy_format = any(role in vr for role in ["outcome", "exposure"])
+
+            if has_legacy_format and not has_new_format:
+                issues.append(("INFO", f"{prefix}.variable_roles uses legacy format (outcome/exposure instead of outcome_variables/exposure_variables)"))
+                # For legacy format, just check that at least outcome and exposure exist
+                if "outcome" not in vr and "outcome_variables" not in vr:
+                    issues.append(("ERROR", f"{prefix}.variable_roles missing outcome/outcome_variables"))
+                if "exposure" not in vr and "exposure_variables" not in vr:
+                    issues.append(("ERROR", f"{prefix}.variable_roles missing exposure/exposure_variables"))
+            else:
+                # New format - check all required roles
+                for role in ["outcome_variables", "exposure_variables", "covariates",
+                              "stratification_variables", "excluded_variables"]:
+                    if role not in vr:
+                        issues.append(("ERROR", f"{prefix}.variable_roles.{role} is missing"))
+
+            if "excluded_variables" in vr and not isinstance(vr.get("excluded_variables"), dict):
                 issues.append(("ERROR", f"{prefix}.variable_roles.excluded_variables must be an object"))
             for critical_role in ["outcome_variables", "exposure_variables"]:
                 val = vr.get(critical_role)
@@ -317,6 +418,35 @@ def _get_primary_question_texts(rq: dict) -> list[dict]:
         return [pq] if isinstance(pq, dict) else []
 
 
+def _get_role_values(vr: dict, role_name: str, legacy_name: str | None = None) -> list:
+    """Get values from variable_roles dict, handling both new and legacy formats.
+
+    Args:
+        vr: variable_roles dict
+        role_name: New format key (e.g., "outcome_variables")
+        legacy_name: Legacy format key (e.g., "outcome"), or None
+
+    Returns list of values for the role.
+    """
+    # Try new format first
+    if role_name in vr:
+        val = vr[role_name]
+        return val if isinstance(val, list) else [val]
+    # Try legacy format
+    if legacy_name and legacy_name in vr:
+        val = vr[legacy_name]
+        return val if isinstance(val, list) else [val]
+    return []
+
+
+def _get_excluded_variables(vr: dict) -> dict:
+    """Get excluded_variables dict, handling both new and legacy formats."""
+    if "excluded_variables" in vr:
+        return vr["excluded_variables"] if isinstance(vr["excluded_variables"], dict) else {}
+    # Legacy format might not have excluded_variables
+    return {}
+
+
 def check_column_coverage(rq: dict, all_columns: dict[str, dict]) -> list[tuple[str, str]]:
     """Every column in variable_types.json must appear in exactly one role.
     For candidate_questions format, checks each candidate independently."""
@@ -331,17 +461,36 @@ def check_column_coverage(rq: dict, all_columns: dict[str, dict]) -> list[tuple[
         prefix = f"candidate[{idx}]" if len(vr_list) > 1 else ""
 
         assigned: dict[str, str] = {}
-        list_roles = ["outcome_variables", "exposure_variables", "covariates", "stratification_variables"]
-        for role in list_roles:
-            for col in vr.get(role, []):
-                if col in assigned:
-                    issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and {role}'))
-                assigned[col] = role
 
-        for col in vr.get("excluded_variables", {}):
+        # Get variables from each role, handling both new and legacy formats
+        outcome_vars = _get_role_values(vr, "outcome_variables", "outcome")
+        exposure_vars = _get_role_values(vr, "exposure_variables", "exposure")
+        covariates = _get_role_values(vr, "covariates", "confounders")
+        strat_vars = _get_role_values(vr, "stratification_variables", "stratifier")
+
+        for col in outcome_vars:
             if col in assigned:
-                issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and excluded_variables'))
-            assigned[col] = "excluded_variables"
+                issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and outcome'))
+            assigned[col] = "outcome"
+        for col in exposure_vars:
+            if col in assigned:
+                issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and exposure'))
+            assigned[col] = "exposure"
+        for col in covariates:
+            if col in assigned:
+                issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and covariate'))
+            assigned[col] = "covariate"
+        for col in strat_vars:
+            if col in assigned:
+                issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and stratification'))
+            assigned[col] = "stratification"
+
+        # Handle excluded_variables
+        excluded = _get_excluded_variables(vr)
+        for col in excluded:
+            if col in assigned:
+                issues.append(("ERROR", f'{prefix}"{col}" assigned to both {assigned[col]} and excluded'))
+            assigned[col] = "excluded"
 
         for col in all_columns:
             if col not in assigned:
@@ -361,6 +510,9 @@ def check_column_references(rq: dict, all_columns: dict[str, dict]) -> list[tupl
     for c_idx, sqs in enumerate(sqs_list):
         prefix = f"candidate[{c_idx}]." if len(sqs_list) > 1 else ""
         for i, sq in enumerate(sqs if isinstance(sqs, list) else []):
+            # Skip if sq is a string (legacy format)
+            if isinstance(sq, str):
+                continue
             for v in sq.get("variables_involved", []):
                 if v not in all_columns:
                     issues.append(("ERROR", f'{prefix}secondary_questions[{i}].variables_involved references non-existent column: "{v}"'))
@@ -374,14 +526,14 @@ def check_identifier_roles(rq: dict, all_columns: dict[str, dict]) -> list[tuple
     forbidden_exposure_types = {"identifier", "text"}
 
     for vr in _get_variable_roles_list(rq):
-        for col in vr.get("outcome_variables", []):
+        for col in _get_role_values(vr, "outcome_variables", "outcome"):
             if col in all_columns and all_columns[col]["type"] in forbidden_outcome_types:
                 col_type = all_columns[col]["type"]
                 issues.append(("ERROR",
                     f'Outcome variable "{col}" is typed as {col_type} in variable_types.json — '
                     f'{col_type} columns cannot be outcomes'))
 
-        for col in vr.get("exposure_variables", []):
+        for col in _get_role_values(vr, "exposure_variables", "exposure"):
             if col in all_columns and all_columns[col]["type"] in forbidden_exposure_types:
                 col_type = all_columns[col]["type"]
                 issues.append(("ERROR",
@@ -394,14 +546,14 @@ def check_identifier_roles(rq: dict, all_columns: dict[str, dict]) -> list[tuple
 def check_outcome_is_analyzable(rq: dict, all_columns: dict[str, dict], profile: dict) -> list[tuple[str, str]]:
     """Outcome variables must be numeric or binary with analyzable data, OR listed in data_acquisition_requirements for download."""
     issues = []
-    allowed_outcome_types = {"numeric", "binary"}
+    allowed_outcome_types = {"numeric", "binary", "continuous"}
 
     downloadable_outcomes = set()
     for req in rq.get("data_acquisition_requirements", []):
         downloadable_outcomes.add(req.get("variable", ""))
 
     for vr in _get_variable_roles_list(rq):
-        for col in vr.get("outcome_variables", []):
+        for col in _get_role_values(vr, "outcome_variables", "outcome"):
             if col in downloadable_outcomes:
                 for req in rq.get("data_acquisition_requirements", []):
                     if req.get("variable") == col:
@@ -420,7 +572,7 @@ def check_outcome_is_analyzable(rq: dict, all_columns: dict[str, dict], profile:
 
             col_profile = get_column_profile(profile, col)
             if col_profile:
-                miss_pct = col_profile.get("missing_pct", 0)
+                miss_pct = col_profile.get("null_percentage", col_profile.get("missing_pct", 0))
                 if miss_pct > 50:
                     issues.append(("ERROR",
                         f'Outcome variable "{col}" has {miss_pct}% missing values — too high for a primary outcome'))
@@ -435,10 +587,10 @@ def check_outcome_is_analyzable(rq: dict, all_columns: dict[str, dict], profile:
 def check_exposure_is_analyzable(rq: dict, all_columns: dict[str, dict], profile: dict) -> list[tuple[str, str]]:
     """Exposure variables must be categorical, binary, numeric, or datetime — not text or identifier."""
     issues = []
-    allowed_exposure_types = {"categorical", "binary", "numeric", "datetime"}
+    allowed_exposure_types = {"categorical_nominal", "categorical_ordinal", "binary", "numeric", "continuous", "datetime"}
 
     for vr in _get_variable_roles_list(rq):
-        for col in vr.get("exposure_variables", []):
+        for col in _get_role_values(vr, "exposure_variables", "exposure"):
             if col not in all_columns:
                 continue
 
@@ -449,11 +601,11 @@ def check_exposure_is_analyzable(rq: dict, all_columns: dict[str, dict], profile
 
             col_profile = get_column_profile(profile, col)
             if col_profile:
-                miss_pct = col_profile.get("missing_pct", 0)
+                miss_pct = col_profile.get("null_percentage", col_profile.get("missing_pct", 0))
                 if miss_pct > 50:
                     issues.append(("ERROR",
                         f'Exposure variable "{col}" has {miss_pct}% missing values — too high for a primary exposure'))
-                if col_type in {"categorical", "binary"}:
+                if col_type in {"categorical", "binary", "categorical_nominal", "categorical_ordinal"}:
                     _check_group_sizes(col, col_profile, issues)
 
     return issues

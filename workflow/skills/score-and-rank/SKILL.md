@@ -77,9 +77,48 @@ update_step(output_folder, "score_and_rank", "step_1_load_inputs", "completed")
 
 ---
 
+### Step 1b: Filter to Feasible Candidates
+
+**CRITICAL:** Before performing expensive literature searches, filter to only candidates that passed feasibility validation in Stage 2.
+
+```python
+# Filter candidates to only feasible ones
+feasible_candidates = [
+    c for c in research_questions.get("candidate_questions", [])
+    if c.get("status") != "infeasible"
+]
+
+infeasible_count = len(research_questions.get("candidate_questions", [])) - len(feasible_candidates)
+
+if infeasible_count > 0:
+    print(f"[score_and_rank] Filtered out {infeasible_count} infeasible candidate(s)")
+
+if len(feasible_candidates) == 0:
+    # Early termination - no viable research questions
+    print("[score_and_rank] ERROR: No feasible candidates found!")
+    print("All candidates were rejected during Stage 2 feasibility validation.")
+    print("The data is insufficient for any viable research question.")
+    raise SystemExit(
+        "No feasible candidates - data insufficient for research. "
+        "Check Stage 2 output for infeasibility reasons."
+    )
+
+print(f"[score_and_rank] Proceeding with {len(feasible_candidates)} feasible candidate(s)")
+```
+
+**Why this matters:** Literature searches are expensive. If all candidates are infeasible, we fail fast rather than wasting time on web searches.
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "score_and_rank", "step_1_load_inputs", "completed",
+            notes=f"Filtered to {len(feasible_candidates)} feasible candidates")
+```
+
+---
+
 ### Step 2: Literature Search (Skip in Fast-Track Mode)
 
-For each candidate question, construct 1-2 search queries from its PICO elements:
+For each **feasible** candidate question, construct 1-2 search queries from its PICO elements:
 
 1. **Novelty query**: `"{population}" "{exposure}" "{outcome}" site:pubmed.ncbi.nlm.nih.gov OR site:scholar.google.com`
    - Goal: Assess how many existing studies address this exact question.
@@ -108,7 +147,7 @@ update_step(output_folder, "score_and_rank", "step_2_literature_search", "comple
 
 ### Step 3: Compute Composite Scores
 
-For each candidate, compute a final composite score using:
+For each **feasible** candidate, compute a final composite score using:
 
 ```
 composite = 0.40 * data_feasibility + 0.25 * novelty + 0.20 * support + 0.15 * rigor
@@ -132,6 +171,10 @@ update_step(output_folder, "score_and_rank", "step_3_compute_scores", "completed
 ---
 
 ### Step 4: Apply Feedback Penalties
+
+**Note:** With the new feasibility filtering in Stage 2, `data_not_feasible` failures in Stage 5 should be rare. Candidates without control groups, missing outcomes, or insufficient sample are rejected before literature search.
+
+However, runtime failures (model non-convergence, separation, violated assumptions) can still occur and trigger feedback.
 
 If `cycle_state.json` exists and `current_cycle > 1`:
 

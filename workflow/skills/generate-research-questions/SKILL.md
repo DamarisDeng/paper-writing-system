@@ -34,7 +34,8 @@ This skill uses `progress_utils.py` for stage-level progress tracking. Progress 
 - `step_1_load_inputs`: Load profile and variable_types
 - `step_2_understand_data`: Build mental model of data landscape
 - `step_3_identify_pairings`: Find outcome-exposure pairs
-- `step_4_rank_select`: Select primary and secondary questions
+- `step_3b_validate_feasibility`: Rigorous feasibility check for each candidate
+- `step_4_rank_select`: Score candidates (feasible only)
 - `step_5_assign_variables`: Map variables to roles
 - `step_6_assess_feasibility`: Document strengths and limitations
 - `step_7_save_validate`: Write and validate research_questions.json
@@ -55,8 +56,8 @@ from progress_utils import create_stage_tracker
 
 tracker = create_stage_tracker(output_folder, "generate_research_questions",
     ["step_1_load_inputs", "step_2_understand_data", "step_3_identify_pairings",
-     "step_4_rank_select", "step_5_assign_variables", "step_6_assess_feasibility",
-     "step_7_save_validate"])
+     "step_3b_validate_feasibility", "step_4_rank_select", "step_5_assign_variables",
+     "step_6_assess_feasibility", "step_7_save_validate"])
 ```
 
 ### Step 1: Load Inputs
@@ -147,9 +148,73 @@ update_step(output_folder, "generate_research_questions", "step_3_identify_pairi
 
 ---
 
+### Step 3b: Validate Feasibility (RIGOROUS)
+
+**CRITICAL:** Before proceeding to scoring and literature search, you must rigorously validate each candidate's feasibility. This prevents wasting time on literature searches for infeasible questions.
+
+```python
+import sys; sys.path.insert(0, "workflow/scripts")
+from feasibility_validator import validate_all_candidates
+
+# Run rigorous feasibility check
+validated_candidates = validate_all_candidates(
+    candidates,  # Your list of candidate dicts from Step 3
+    variable_types,  # Loaded from variable_types.json
+    profile,  # Loaded from profile.json
+    data_acquisition_requirements  # From your candidates (if any)
+)
+
+# Check feasibility results
+feasible_candidates = [c for c in validated_candidates if c.get("status") == "feasible"]
+infeasible_candidates = [c for c in validated_candidates if c.get("status") == "infeasible"]
+
+print(f"Feasible candidates: {len(feasible_candidates)}")
+print(f"Infeasible candidates: {len(infeasible_candidates)}")
+
+for c in infeasible_candidates:
+    print(f"  {c['candidate_id']}: {c.get('infeasibility_reason', 'unknown')}")
+```
+
+**What the validator checks:**
+
+| Check | Requirement | Failure Mode |
+|-------|-------------|---------------|
+| **Control Group** | At least one exposure group AND one comparison group exists | `no_control_group` |
+| **Outcome Data** | Outcome variable exists OR can be derived/downloaded | `no_outcome_data` |
+| **Sample Size** | Total N ≥ 20 (cross-sectional), ≥ 50 (DiD/longitudinal) | `insufficient_sample` |
+| **Study Design Match** | Required data structure exists (e.g., time series for DiD) | `design_mismatch` |
+| **Variable Availability** | All critical variables exist in data | `missing_critical_variables` |
+
+**Handling infeasible candidates:**
+- Keep them in the output (for audit trail)
+- Mark with `status: "infeasible"` and `infeasibility_reason` with comma-separated failure codes
+- Do NOT assign `preliminary_scores` to infeasible candidates
+- Only `status: "feasible"` candidates proceed to Step 4
+
+**Example output after validation:**
+```json
+{
+  "candidate_id": "CQ2",
+  "status": "infeasible",
+  "infeasibility_reason": "no_control_group,no_outcome_data,insufficient_sample",
+  "question": "...",
+  "variable_roles": {...}
+  // Note: No preliminary_scores for infeasible candidates
+}
+```
+
+**Progress checkpoint:**
+```python
+update_step(output_folder, "generate_research_questions", "step_3b_validate_feasibility", "completed")
+```
+
+---
+
 ### Step 4: Score Candidates (Preliminary)
 
-For each of your 2-3 candidates, compute preliminary scores on these criteria. **Do NOT select a primary yet** — selection is deferred to the score-and-rank stage which adds literature-informed signals.
+**IMPORTANT:** Only score candidates that passed the feasibility check in Step 3b (`status: "feasible"`). Infeasible candidates should NOT receive `preliminary_scores`.
+
+For each **feasible** candidate, compute preliminary scores on these criteria. **Do NOT select a primary yet** — selection is deferred to the score-and-rank stage which adds literature-informed signals.
 
 Score each candidate (0.0–1.0) on:
 
@@ -175,7 +240,9 @@ update_step(output_folder, "generate_research_questions", "step_4_rank_select", 
 
 ### Step 5: Assign Variable Roles (Per Candidate)
 
-For **each candidate question**, map every column from `variable_types.json` into exactly one of these five roles. Different candidates may assign different roles to the same column (e.g., a column is an outcome for one candidate but a covariate for another).
+For **each feasible candidate question**, map every column from `variable_types.json` into exactly one of these five roles. Different candidates may assign different roles to the same column (e.g., a column is an outcome for one candidate but a covariate for another).
+
+**Note:** Infeasible candidates should still include `variable_roles` for documentation purposes, but they will not be used in analysis.
 
 **Role definitions:**
 - **outcome_variables** — The dependent variable(s). Must be `numeric` or `binary` type and represent actual health measures.
@@ -245,6 +312,7 @@ Write to `<output_folder>/2_research_question/research_questions.json` with this
   "candidate_questions": [
     {
       "candidate_id": "CQ1",
+      "status": "feasible",
       "question": "Full PICO question referencing column names in backticks",
       "population": "Target population",
       "exposure_or_intervention": "Main IV with `column_name`",
@@ -288,6 +356,22 @@ Write to `<output_folder>/2_research_question/research_questions.json` with this
         "limitations": ["Limitation 1 with specifics", "Limitation 2 with specifics"],
         "required_assumptions": ["Assumption 1", "Assumption 2"]
       }
+    },
+    {
+      "candidate_id": "CQ2",
+      "status": "infeasible",
+      "infeasibility_reason": "no_control_group,no_outcome_data,insufficient_sample",
+      "question": "Question that failed feasibility check",
+      "population": "...",
+      "exposure_or_intervention": "...",
+      "comparator": "...",
+      "outcome": "...",
+      "study_design": "...",
+      "rationale": "...",
+      "secondary_questions": [],
+      "variable_roles": {...},
+      "feasibility_assessment": {...}
+      // Note: No preliminary_scores for infeasible candidates
     }
   ],
   "data_acquisition_requirements": [

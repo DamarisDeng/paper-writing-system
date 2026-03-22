@@ -7,6 +7,13 @@ re-ranking candidate questions.
 
 Also manages the decision_log.json audit trail.
 
+NOTE: With the new feasibility filtering in Stage 2 (generate-research-questions),
+candidates with data feasibility issues (no control group, missing outcome data,
+insufficient sample) are rejected BEFORE expensive literature searches in Stage 3.
+This means `data_not_feasible` failures in Stage 5 (statistical-analysis) should be
+much rarer. The feedback loop now primarily handles runtime failures (non-convergence,
+separation, violated assumptions) that cannot be detected during initial validation.
+
 Usage:
     from feedback_utils import build_feedback_signal, update_decision_log, read_decision_log
 """
@@ -21,6 +28,10 @@ from typing import Optional, List, Dict, Any
 
 # Failure patterns checked in analysis_results.json
 FAILURE_CHECKS = {
+    "data_not_feasible": {
+        "description": "Analysis not feasible with available data (missing control group, outcome data, or required structure)",
+        "severity": "critical",
+    },
     "non_convergence": {
         "description": "Model failed to converge",
         "severity": "critical",
@@ -48,6 +59,11 @@ def build_feedback_signal(output_folder: str) -> Optional[Dict[str, Any]]:
     """
     Inspect analysis_results.json for structural failures that indicate
     the research question is not viable with the available data.
+
+    NOTE: With Stage 2 feasibility filtering, `data_not_feasible` failures
+    should be rare. This check primarily catches runtime issues that couldn't
+    be detected during initial validation (e.g., model non-convergence during
+    fitting, data quality issues that only emerge during analysis).
 
     Args:
         output_folder: Base output directory (e.g., "exam_paper")
@@ -81,6 +97,38 @@ def build_feedback_signal(output_folder: str) -> Optional[Dict[str, Any]]:
         }
 
     issues = []
+
+    # Check 0: Data feasibility (NEW - checks if analysis is fundamentally not feasible)
+    primary = results.get("primary_analysis", {})
+    feasibility_report = results.get("feasibility_report", {})
+
+    # Check if primary analysis status is NOT_EXECUTABLE
+    if primary.get("status") == "NOT_EXECUTABLE":
+        error_info = primary.get("error", {})
+        issues.append({
+            "check": "data_not_feasible",
+            "description": FAILURE_CHECKS["data_not_feasible"]["description"],
+            "severity": "critical",
+            "details": error_info.get("details", "Analysis not executable") if isinstance(error_info, dict) else str(error_info)
+        })
+
+    # Check if feasibility report says can_proceed is false
+    if feasibility_report.get("can_proceed") is False:
+        blocking_issues = feasibility_report.get("blocking_issues", [])
+        issues.append({
+            "check": "data_not_feasible",
+            "description": FAILURE_CHECKS["data_not_feasible"]["description"],
+            "severity": "critical",
+            "details": f"Blocking issues: {', '.join(blocking_issues) if blocking_issues else 'Data limitations prevent analysis'}"
+        })
+
+    # If we found critical data feasibility issues, return immediately
+    if any(i["severity"] == "critical" and i["check"] == "data_not_feasible" for i in issues):
+        return {
+            "issues": issues,
+            "failed_candidate_id": _get_current_candidate_id(output_folder),
+            "recommendation": "retry_next_candidate"
+        }
 
     # Check 1: Non-convergence
     primary = results.get("primary_analysis", {})

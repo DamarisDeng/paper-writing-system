@@ -32,20 +32,20 @@ from typing import Optional, List, Dict, Any
 STAGE_MAPPING = {
     "1": "load_and_profile",
     "2": "generate_research_questions",
-    "2.5": "score_and_rank",
-    "3": "acquire_data",
-    "4": "statistical_analysis",
-    "5": "generate_figures",
-    "6": "literature_review",
-    "7": "write_paper",
-    "8": "compile_and_review",
+    "3": "score_and_rank",
+    "4": "acquire_data",
+    "5": "statistical_analysis",
+    "6": "generate_figures",
+    "7": "literature_review",
+    "8": "write_paper",
+    "9": "compile_and_review",
 }
 
 STAGE_TO_FOLDER = {
     "load_and_profile": "1_data_profile",
     "generate_research_questions": "2_research_question",
     "score_and_rank": "2_scoring",
-    "acquire_data": "2_research_question",
+    "acquire_data": "2_research_question",  # Shares folder with Stage 2
     "statistical_analysis": "3_analysis",
     "generate_figures": "4_figures",
     "literature_review": "5_references",
@@ -383,7 +383,7 @@ def _get_progress_dir(output_folder: str, stage_name: str) -> str:
     Get the directory where progress.json should be stored for a stage.
 
     For most stages, this is the stage's output folder.
-    For acquire-data (stage 3), it shares with generate-research-questions.
+    For acquire-data (stage 4), it shares with generate-research-questions (stage 2).
     """
     folder_name = STAGE_TO_FOLDER.get(stage_name, "")
     if folder_name:
