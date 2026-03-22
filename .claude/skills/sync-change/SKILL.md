@@ -4,10 +4,11 @@ description: >
   Synchronizes documentation alignment across the pipeline after non-trivial changes.
   Use this when you modify stage numbers, rename stages, add/remove stages, change output folder names,
   or make other structural changes. Checks and updates README.md, orchestrator SKILL.md, progress_utils.py,
-  and individual stage skill files to ensure consistency. Trigger manually via /sync-change.
+  and individual stage skill files to ensure consistency. Detects non-trivial contradictions across sources
+  and presents resolution options. Trigger manually via /sync-change.
 disable-model-invocation: true
 user-invocable: true
-argument-hint: --check-only
+argument-hint: [--check-only] [--contradictions-only] [--detect-contradictions]
 ---
 
 # Sync Change — Documentation Alignment
@@ -25,10 +26,18 @@ Ensures all pipeline documentation stays aligned after structural changes. Run t
 | File | Contains | Must Align With |
 |------|----------|-----------------|
 | `README.md` | Stage list, folder names | Orchestrator, skills, progress_utils.py |
-| `workflow/skills/orchestrator/SKILL.md` | Stage execution order, data flow | README.md, STAGE_MAPPING |
+| `workflow/skills/orchestrator/SKILL.md` | Stage execution order, data flow, model assignments | README.md, STAGE_MAPPING, skill frontmatter |
 | `workflow/scripts/progress_utils.py` | `STAGE_MAPPING`, `STAGE_TO_FOLDER` | Orchestrator, README.md |
-| `workflow/skills/*/SKILL.md` | Individual stage specs | README.md, orchestrator |
+| `workflow/skills/*/SKILL.md` | Individual stage specs, model levels | README.md, orchestrator |
 | `workflow/scripts/feedback_utils.py` | Stage references | STAGE_MAPPING |
+
+**With `--detect-contradictions` flag**: Also checks for non-trivial semantic contradictions:
+- Stage numbering gaps (e.g., Stage 0 in orchestrator but not in STAGE_MAPPING)
+- Folder name mismatches across documentation sources
+- Input/output path contradictions
+- Feedback loop stage reference inconsistencies
+- Model level conflicts between skill frontmatter and orchestrator table
+- Dependency ordering issues
 
 ## Step 1: Detect Current Structure
 
@@ -242,6 +251,339 @@ assert stage_names.issubset(folder_names), "Missing folder mappings"
 print("✓ All alignments verified")
 ```
 
+## Step 10: Contradiction Detection
+
+**NEW**: Detect non-trivial semantic contradictions across pipeline documentation that cannot be resolved through simple alignment checks.
+
+### 10.1 Contradiction Types
+
+| Pattern | Description | Severity |
+|---------|-------------|----------|
+| Stage numbering gaps | Stage referenced in docs but not in STAGE_MAPPING | HIGH |
+| Folder name mismatches | STAGE_TO_FOLDER vs documented folders | HIGH |
+| Input/output contradictions | Different inputs/outputs across sources | MEDIUM |
+| Feedback loop references | Sources disagree on loop stages | HIGH |
+| Model level conflicts | Frontmatter `model:` vs orchestrator table | MEDIUM |
+| Dependency inconsistencies | Impossible/circular dependencies | CRITICAL |
+
+### 10.2 Detection Functions
+
+Implement detection by reading all sources and checking for patterns:
+
+```python
+import sys
+sys.path.insert(0, "workflow/scripts")
+from progress_utils import STAGE_MAPPING, STAGE_TO_FOLDER
+import re
+from pathlib import Path
+
+def detect_stage_numbering_gaps():
+    """
+    Check for stages referenced in orchestrator/CLAUDE.md that aren't in STAGE_MAPPING.
+    Returns: list of contradictions found
+    """
+    contradictions = []
+
+    # Read orchestrator for stage references
+    orchestrator_path = Path("workflow/skills/orchestrator/SKILL.md")
+    with open(orchestrator_path) as f:
+        orchestrator_content = f.read()
+
+    # Find all stage number mentions (e.g., "Stage 0", "Stage 10")
+    stage_refs = set(re.findall(r'Stage (\d+)', orchestrator_content))
+
+    # Check against STAGE_MAPPING
+    for ref in stage_refs:
+        if ref not in STAGE_MAPPING:
+            contradictions.append({
+                "type": "Stage numbering gap",
+                "severity": "HIGH",
+                "description": f"Stage {ref} referenced in orchestrator but not in STAGE_MAPPING",
+                "sources": [
+                    f"workflow/skills/orchestrator/SKILL.md: references Stage {ref}",
+                    f"workflow/scripts/progress_utils.py: STAGE_MAPPING missing key '{ref}'"
+                ]
+            })
+
+    return contradictions
+
+
+def detect_folder_name_mismatches():
+    """
+    Check STAGE_TO_FOLDER against documented folders in README.md and CLAUDE.md.
+    """
+    contradictions = []
+
+    # Read README for folder documentation
+    readme_path = Path("Readme.md")
+    with open(readme_path) as f:
+        readme_content = f.read()
+
+    # Extract documented folder structure (e.g., `1_data_profile/`, `2_research_question/`)
+    documented_folders = set(re.findall(r'(\d+_[a-z_]+)/', readme_content))
+
+    # Check STAGE_TO_FOLDER entries
+    for stage_name, folder in STAGE_TO_FOLDER.items():
+        if folder:  # Skip empty string (compile_and_review)
+            if folder not in documented_folders:
+                contradictions.append({
+                    "type": "Folder name mismatch",
+                    "severity": "MEDIUM",
+                    "description": f"Folder '{folder}' for stage '{stage_name}' not found in README documentation",
+                    "sources": [
+                        f"workflow/scripts/progress_utils.py: STAGE_TO_FOLDER['{stage_name}'] = '{folder}'",
+                        f"Readme.md: folder not documented"
+                    ]
+                })
+
+    # Check for documented folders without STAGE_TO_FOLDER entries
+    stage_folders = set(f for f in STAGE_TO_FOLDER.values() if f)
+    for folder in documented_folders:
+        if folder not in stage_folders:
+            contradictions.append({
+                "type": "Orphaned folder",
+                "severity": "MEDIUM",
+                "description": f"Folder '{folder}' documented in README but no stage maps to it",
+                "sources": [
+                    f"Readme.md: documents {folder}/",
+                    f"workflow/scripts/progress_utils.py: STAGE_TO_FOLDER has no entry for '{folder}'"
+                ]
+            })
+
+    return contradictions
+
+
+def detect_input_output_contradictions():
+    """
+    Parse data flow tables and find path disagreements across sources.
+    """
+    contradictions = []
+
+    # Read CLAUDE.md pipeline stages table
+    claude_path = Path(".claude/CLAUDE.md")
+    with open(claude_path) as f:
+        claude_content = f.read()
+
+    # Read orchestrator data flow section
+    orchestrator_path = Path("workflow/skills/orchestrator/SKILL.md")
+    with open(orchestrator_path) as f:
+        orchestrator_content = f.read()
+
+    # Extract input/output patterns (simplified - would need more parsing in practice)
+    # Look for discrepancies like "exam_paper/2_scoring/" vs "exam_paper/2_research_question/"
+
+    # Example: acquire-data output location varies
+    if "0_data_acquisition/" in claude_content and "Stage 0" not in STAGE_MAPPING:
+        contradictions.append({
+            "type": "Input/output contradiction",
+            "severity": "HIGH",
+            "description": "Stage 0 outputs to 0_data_acquisition/ but Stage 0 not in STAGE_MAPPING",
+            "sources": [
+                f".claude/CLAUDE.md: documents 0_data_acquisition/ as Stage 0 output",
+                f"workflow/scripts/progress_utils.py: no Stage 0 in STAGE_MAPPING"
+            ]
+        })
+
+    return contradictions
+
+
+def detect_feedback_loop_contradictions():
+    """
+    Check which stages are in feedback loop across sources.
+    """
+    contradictions = []
+
+    # Read CLAUDE.md feedback loop description
+    claude_path = Path(".claude/CLAUDE.md")
+    with open(claude_path) as f:
+        claude_content = f.read()
+
+    # Read orchestrator feedback loop section
+    orchestrator_path = Path("workflow/skills/orchestrator/SKILL.md")
+    with open(orchestrator_path) as f:
+        orchestrator_content = f.read()
+
+    # Extract feedback loop stage mentions
+    claude_stages = set(re.findall(r'[Ss]tage[s]? (\d+)[-–](\d+)', claude_content))
+    orchestrator_stages = set(re.findall(r'[Ss]tage[s]? (\d+)[-–](\d+)', orchestrator_content))
+
+    # Check for mismatches
+    if claude_stages != orchestrator_stages:
+        contradictions.append({
+            "type": "Feedback loop contradiction",
+            "severity": "HIGH",
+            "description": f"Feedback loop stages differ: CLAUDE.md={claude_stages}, orchestrator={orchestrator_stages}",
+            "sources": [
+                f".claude/CLAUDE.md: stages {claude_stages}",
+                f"workflow/skills/orchestrator/SKILL.md: stages {orchestrator_stages}"
+            ]
+        })
+
+    return contradictions
+
+
+def detect_model_level_conflicts():
+    """
+    Compare skill frontmatter `model:` vs orchestrator table.
+    """
+    contradictions = []
+
+    # Read orchestrator model level table
+    orchestrator_path = Path("workflow/skills/orchestrator/SKILL.md")
+    with open(orchestrator_path) as f:
+        orchestrator_content = f.read()
+
+    # Extract model assignments from orchestrator table
+    # Pattern: "Stage N. Name | level | model | rationale"
+    orchestrator_models = {}
+    for match in re.finditer(
+        r'\|\s*(\d+)\.\s+([^|]+)\s*\|\s*(high|medium|low)',
+        orchestrator_content,
+        re.IGNORECASE
+    ):
+        stage_num, stage_name, model = match.groups()
+        orchestrator_models[stage_num] = model.strip().lower()
+
+    # Read each skill's frontmatter
+    skills_dir = Path("workflow/skills")
+    for stage_num, stage_name in STAGE_MAPPING.items():
+        skill_path = skills_dir / stage_name / "SKILL.md"
+        if skill_path.exists():
+            with open(skill_path) as f:
+                content = f.read()
+                # Extract model from frontmatter
+                model_match = re.search(r'^model:\s*(high|medium|low)', content, re.MULTILINE)
+                if model_match:
+                    skill_model = model_match.group(1).lower()
+                    orch_model = orchestrator_models.get(stage_num)
+
+                    if orch_model and skill_model != orch_model:
+                        contradictions.append({
+                            "type": "Model level conflict",
+                            "severity": "MEDIUM",
+                            "description": f"Stage {stage_num} ({stage_name}): skill frontmatter says '{skill_model}' but orchestrator table says '{orch_model}'",
+                            "sources": [
+                                f"workflow/skills/{stage_name}/SKILL.md: model: {skill_model}",
+                                f"workflow/skills/orchestrator/SKILL.md: Stage {stage_num} model = {orch_model}"
+                            ]
+                        })
+
+    return contradictions
+
+
+def detect_dependency_inconsistencies():
+    """
+    Build dependency graphs and check for cycles or impossible ordering.
+    """
+    contradictions = []
+
+    # Build dependency map from CLAUDE.md pipeline table
+    claude_path = Path(".claude/CLAUDE.md")
+    with open(claude_path) as f:
+        claude_content = f.read()
+
+    # Parse table to understand dependencies (e.g., Stage N depends on Stage N-1 output)
+    # Look for circular references or impossible dependencies
+
+    # Example: Stage 5 depends on Stage 2 output (skip-back dependency)
+    # This is valid but worth noting as "non-sequential"
+
+    return contradictions
+
+
+def run_all_detections():
+    """Run all contradiction detection functions."""
+    all_contradictions = []
+    all_contradictions.extend(detect_stage_numbering_gaps())
+    all_contradictions.extend(detect_folder_name_mismatches())
+    all_contradictions.extend(detect_input_output_contradictions())
+    all_contradictions.extend(detect_feedback_loop_contradictions())
+    all_contradictions.extend(detect_model_level_conflicts())
+    all_contradictions.extend(detect_dependency_inconsistencies())
+    return all_contradictions
+```
+
+### 10.3 User Presentation Template
+
+For each contradiction found, present to the user:
+
+```
+CONTRADICTION: [Type]
+
+Severity: [HIGH/MEDIUM/LOW]
+
+[Description]
+
+Conflicting Sources:
+  [Source A]: [What it says] (line X or reference)
+  [Source B]: [What it says instead] (line Y or reference)
+
+Implications:
+  - [Impact on pipeline execution]
+  - [Potential failures or confusion]
+
+Resolution Options:
+  [A] Use Source A as truth - [what changes, which files updated]
+  [B] Use Source B as truth - [what changes, which files updated]
+  [C] Merge/compromise - [how to resolve, e.g., document subdirectory conventions]
+  [D] Custom - [user specifies custom resolution]
+
+Which option? [A/B/C/D or skip]:
+```
+
+### 10.4 Resolution Application
+
+Based on user choice:
+
+- **A/B**: Update conflicting sources to match chosen source of truth
+  - Read the source file(s)
+  - Apply Edit tool to fix contradictions
+  - Verify changes align
+
+- **C**: Apply merge logic
+  - Document the discrepancy (e.g., add comment explaining convention)
+  - Update both sources to reflect the agreed-upon approach
+
+- **D**: Prompt user for custom resolution
+  - Ask user to specify what the correct resolution should be
+  - Apply as specified
+
+- **skip**: Leave contradiction unresolved but logged
+
+### 10.5 Contradiction Detection Report
+
+After processing all contradictions, generate a report:
+
+```
+CONTRADICTION DETECTION REPORT
+==============================
+
+Total contradictions found: N
+  - HIGH: X
+  - MEDIUM: Y
+  - LOW: Z
+
+Resolved: R
+Skipped: S
+Remaining: (R+S)
+
+CONTRADICTIONS BY TYPE:
+- Stage numbering gaps: N1
+- Folder name mismatches: N2
+- Input/output contradictions: N3
+- Feedback loop contradictions: N4
+- Model level conflicts: N5
+- Dependency inconsistencies: N6
+
+ACTIONS TAKEN:
+- [ ] Updated progress_utils.py to include Stage 0
+- [ ] Fixed folder mapping for acquire_data stage
+- [ ] Documented feedback loop stages consistently
+
+UNRESOLVED:
+- (list any skipped contradictions)
+```
+
 ## Output
 
 The skill produces:
@@ -256,6 +598,24 @@ The skill produces:
 /sync-change
 ```
 → Detects new stage in progress_utils.py, prompts to update README.md and orchestrator
+
+**Full sync with contradiction detection:**
+```
+/sync-change --detect-contradictions
+```
+→ Runs alignment checks AND detects non-trivial contradictions across sources
+
+**Only detect contradictions (skip alignment):**
+```
+/sync-change --contradictions-only
+```
+→ Skips basic alignment checks, only runs contradiction detection
+
+**Check contradictions without applying fixes:**
+```
+/sync-change --check-only --detect-contradictions
+```
+→ Reports all alignment issues and contradictions without making changes
 
 **After renumbering stages:**
 ```

@@ -30,10 +30,11 @@ from typing import Optional, List, Dict, Any
 # ── Constants ──────────────────────────────────────────────────────────────
 
 STAGE_MAPPING = {
+    "0": "acquire_data_stage0",  # Pre-profiling data acquisition (documented datasets)
     "1": "load_and_profile",
     "2": "generate_research_questions",
     "3": "score_and_rank",
-    "4": "acquire_data",
+    "4": "acquire_data",  # Stage 4: supplementary data acquisition
     "5": "statistical_analysis",
     "6": "generate_figures",
     "7": "literature_review",
@@ -42,10 +43,11 @@ STAGE_MAPPING = {
 }
 
 STAGE_TO_FOLDER = {
+    "acquire_data_stage0": "0_data_acquisition",  # Stage 0: pre-profiling data acquisition
     "load_and_profile": "1_data_profile",
     "generate_research_questions": "2_research_question",
     "score_and_rank": "2_scoring",
-    "acquire_data": "2_research_question",  # Shares folder with Stage 2
+    "acquire_data": "2_research_question",  # Stage 4: Shares folder with Stage 2
     "statistical_analysis": "3_analysis",
     "generate_figures": "4_figures",
     "literature_review": "5_references",
@@ -626,3 +628,196 @@ def suggest_task_subject(stage_name: str) -> str:
         "compile_and_review": "Compile and review paper"
     }
     return subjects.get(stage_name, f"Execute {stage_name}")
+
+
+# ── Context Management Integration ───────────────────────────────────────────
+
+def complete_stage_with_context(
+    output_folder: str,
+    stage_name: str,
+    context_mode: str = "safe",
+    validate_outputs: bool = True,
+    expected_outputs: Optional[List[str]] = None,
+    context_decisions: Optional[Dict[str, Any]] = None,
+    summary: str = "",
+    notes: str = ""
+) -> Dict[str, Any]:
+    """
+    Mark stage complete and optionally add context layer + prune outputs.
+
+    This is a wrapper around complete_stage() that integrates with the
+    context management system. It:
+    1. Completes the stage normally (validates outputs, updates progress.json)
+    2. Extracts or adds semantic decisions to the context bundle
+    3. Prunes intermediate files if safe (based on context_mode)
+
+    Args:
+        output_folder: Base output directory
+        stage_name: Stage identifier
+        context_mode: Pruning mode - "safe", "aggressive", or "off"
+        validate_outputs: Whether to check that output files exist
+        expected_outputs: List of expected output file paths
+        context_decisions: Optional dict with key_decisions, forward_references, etc.
+                         If None, will attempt to auto-extract from outputs
+        summary: Brief stage summary for context bundle
+        notes: Optional completion notes for progress.json
+
+    Returns:
+        Dict with progress, context_added, pruning_report
+
+    Expected context_decisions schema (if providing manually):
+    {
+        "key_decisions": {
+            "decision_name": {"value": ..., "rationale": "..."}
+        },
+        "forward_references": {
+            "for_downstream_stage": ["context_key_1", "context_key_2"]
+        },
+        "outputs_produced": ["file1.json", "file2.json"],
+        "stage_summary": "Brief summary of what was accomplished"
+    }
+    """
+    result = {
+        "progress": None,
+        "context_added": False,
+        "pruning_report": None,
+        "errors": []
+    }
+
+    # Step 1: Complete the stage normally
+    try:
+        progress = complete_stage(
+            output_folder=output_folder,
+            stage_name=stage_name,
+            validate_outputs=validate_outputs,
+            expected_outputs=expected_outputs,
+            notes=notes
+        )
+        result["progress"] = progress
+    except ValueError as e:
+        result["errors"].append(f"Stage completion failed: {e}")
+        return result
+
+    # Step 2: Add context layer (if context_manager is available)
+    try:
+        import context_manager
+
+        # Extract or use provided decisions
+        if context_decisions is None:
+            # Auto-extract from outputs
+            context_decisions = context_manager.extract_context_decisions(
+                stage_name=stage_name,
+                output_folder=output_folder,
+                summary=summary or f"Completed {stage_name}",
+                outputs=expected_outputs or []
+            )
+        else:
+            # Ensure summary is set
+            if "stage_summary" not in context_decisions:
+                context_decisions["stage_summary"] = summary
+
+        # Add the layer
+        context_manager.add_layer(
+            output_folder=output_folder,
+            stage_name=stage_name,
+            decisions=context_decisions
+        )
+        result["context_added"] = True
+
+    except ImportError:
+        # context_manager not available - gracefully degrade
+        result["errors"].append("context_manager not available - skipping context tracking")
+    except Exception as e:
+        # Non-fatal error - log but don't fail the stage
+        result["errors"].append(f"Context tracking failed: {e}")
+
+    # Step 3: Prune outputs (if safe and mode allows)
+    if context_mode != "off":
+        try:
+            import context_manager
+
+            # Check if safe to prune
+            can_prune = context_manager.can_prune_stage(
+                output_folder=output_folder,
+                stage_name=stage_name,
+                mode=context_mode
+            )
+
+            if can_prune:
+                prune_report = context_manager.prune_stage_outputs(
+                    output_folder=output_folder,
+                    stage_name=stage_name,
+                    mode=context_mode,
+                    dry_run=False
+                )
+                result["pruning_report"] = prune_report
+
+                if prune_report.get("deleted"):
+                    print(f"[context] Pruned {len(prune_report['deleted'])} file(s), "
+                          f"freed {prune_report['space_freed_kb']:.1f} KB")
+
+        except ImportError:
+            pass  # context_manager not available
+        except Exception as e:
+            result["errors"].append(f"Pruning failed: {e}")
+
+    return result
+
+
+def get_context_for_stage(
+    output_folder: str,
+    stage_name: str,
+    include_raw: bool = False
+) -> Optional[Dict[str, Any]]:
+    """
+    Query relevant context for a stage from the context bundle.
+
+    This is a convenience wrapper around context_manager.get_context_for_stage
+    that handles the case where context_manager is not available.
+
+    Args:
+        output_folder: Base output directory
+        stage_name: Current stage requesting context
+        include_raw: If True, include raw key_decisions
+
+    Returns:
+        Context dict or None if not available
+    """
+    try:
+        import context_manager
+        return context_manager.get_context_for_stage(
+            output_folder=output_folder,
+            stage_name=stage_name,
+            include_raw=include_raw
+        )
+    except ImportError:
+        return None
+
+
+def initialize_context_bundle(
+    output_folder: str,
+    cycle: int = 1,
+    max_cycles: int = 2
+) -> Optional[Dict[str, Any]]:
+    """
+    Initialize a new context bundle for the pipeline.
+
+    Convenience wrapper around context_manager.create_context_bundle.
+
+    Args:
+        output_folder: Base output directory
+        cycle: Current feedback loop cycle
+        max_cycles: Maximum feedback loop cycles
+
+    Returns:
+        The created bundle or None if context_manager not available
+    """
+    try:
+        import context_manager
+        return context_manager.create_context_bundle(
+            output_folder=output_folder,
+            cycle=cycle,
+            max_cycles=max_cycles
+        )
+    except ImportError:
+        return None

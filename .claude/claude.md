@@ -46,6 +46,7 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 
 | Stage | Skill | Input | Output | Validates |
 |-------|-------|-------|--------|-----------|
+| 0 | acquire-data (Stage 0) | `Data_Description.md` | `exam_paper/0_data_acquisition/` + `data/` | Downloaded datasets exist, manifest.json created |
 | 1 | load-and-profile | `<data_folder>/` | `exam_paper/1_data_profile/` | profile.json exists, >0 columns detected |
 | 2 | generate-research-questions | `exam_paper/1_data_profile/` | `exam_paper/2_research_question/` | research_questions.json has candidate_questions array |
 | 3 | score-and-rank | `exam_paper/2_research_question/` | `exam_paper/2_scoring/` | ranked_questions.json exists with scored candidate |
@@ -127,7 +128,7 @@ When the user says anything like:
 - "Run the pipeline"
 - "Generate paper"
 
-Execute the orchestrator skill which runs stages 1–9 in sequence (with potential feedback loop between 5→3).
+Execute the orchestrator skill which runs stages 0–9 in sequence (with potential feedback loop between 5→3).
 
 ## Setup: Model Mapping Configuration
 
@@ -147,6 +148,7 @@ Each skill specifies its required model level in its SKILL.md frontmatter (`mode
 
 | Stage | Model Level | Model | Rationale |
 |-------|-------------|-------|-----------|
+| 0. Acquire Documented Data | low | haiku | Simple downloads from documented sources |
 | 1. Load & Profile | medium | sonnet | Data inspection, profiling |
 | 2. Research Questions | high | opus[1m] | Deep reasoning for PICO formulation |
 | 3. Score & Rank | medium | sonnet | Literature search + scoring |
