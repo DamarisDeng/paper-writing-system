@@ -30,69 +30,106 @@ That's it. The pipeline will autonomously execute all 8 stages and produce a fin
 
 ## Pipeline Steps
 
+Each stage can be run independently via Claude Code slash command (e.g., `/load-and-profile <args>`) or as part of the full orchestrator pipeline. Stages 1-4 have full progress tracking with resume capability.
+
+---
+
 ### Stage 1: Load and Profile Data (medium)
+
+**Run**: `/load-and-profile <data_folder>`
 
 **Input**: Raw data folder (CSV, XLSX, etc.)
 
-**What it does**:
-- Reads and inspects all data files
-- Generates column-level statistics (mean, SD, missingness, unique values)
-- Classifies variable types (numeric, categorical, datetime, binary, identifier)
-- Creates data context summary
+**Logic**:
+1. Read any `Data_Description.md` files for domain context
+2. Inspect raw file headers to detect encoding issues, multi-row headers
+3. Run profiling script to generate mechanical statistics
+4. Enrich output with domain knowledge (fix misclassified types, add `data_context`)
+5. Validate outputs before marking complete
+
+**Progress Tracking**: 5 checkpoints (`step_1_read_description` → `step_5_save_final`)
 
 **Outputs**:
-- `1_data_profile/profile.json` — Dataset shapes, column statistics
+- `1_data_profile/profile.json` — Dataset shapes, column statistics, data_context
 - `1_data_profile/variable_types.json` — Semantic type for every column
+- `1_data_profile/progress.json` — Progress state for resume
 
 ---
 
 ### Stage 2: Generate Research Questions (high)
 
+**Run**: `/generate-research-questions <output_folder>`
+
 **Input**: `profile.json`, `variable_types.json`
 
-**What it does**:
-- Analyzes available variables and their relationships
-- Formulates a primary PICO/PECO research question
-- Identifies secondary questions
-- Assigns variable roles (outcome, exposure, covariates)
-- Assesses feasibility and limitations
+**Logic**:
+1. Load inputs and extract search context (topic keywords, methodological terms)
+2. Build mental model of data landscape (datasets, joins, candidates for outcome/exposure/covariates)
+3. Identify strongest outcome–exposure pairings (start from outcomes, not topics)
+4. Score candidates on feasibility (0.40), significance (0.20), novelty (0.25), rigor (0.15)
+5. For each candidate, assign variable roles (outcome, exposure, covariates, excluded)
+6. Assess feasibility (strengths, limitations, required assumptions, data acquisition needs)
+7. Save and validate output (runs validation script)
+
+**Progress Tracking**: 7 checkpoints (`step_1_load_inputs` → `step_7_save_validate`)
 
 **Outputs**:
-- `2_research_question/research_questions.json` — Primary question with PICO fields, secondary questions, variable roles, feasibility assessment
+- `2_research_question/research_questions.json` — Candidate questions with PICO fields, variable roles, feasibility
+- `2_research_question/progress.json` — Progress state for resume
 
 ---
 
 ### Stage 3: Acquire Data (low)
 
-**Input**: `research_questions.json`
+**Run**: `/acquire-data <output_folder>`
 
-**What it does**:
-- Downloads external data specified in `data_acquisition_requirements`
-- Uses fallback sources if primary URLs fail
-- Validates downloaded files
+**Input**: `research_questions.json` → `data_acquisition_requirements`
+
+**Logic**:
+1. Load research questions and extract data acquisition requirements
+2. Create download directory
+3. For each requirement: try primary URLs, then parse archive links, then fallback to known sources (NYTimes COVID, JHU CSSE)
+4. Download and process (parse data, subset to study period, validate columns)
+5. Handle failures gracefully (404→fallback, timeout→retry, parse errors→try delimiters)
+6. Verify and document each download (file size, row count, date range, source used)
+7. Report summary with warnings
+
+**Progress Tracking**: 5 checkpoints (`step_1_load_requirements` → `step_5_report_summary`)
 
 **Outputs**:
-- `2_research_question/downloaded/` — Downloaded data files
+- `2_research_question/downloaded/*.csv` — Downloaded data files
 - `2_research_question/downloaded/README.md` — Source documentation
+- `2_research_question/progress.json` — Progress state (shared with Stage 2)
 
 ---
 
 ### Stage 4: Statistical Analysis (medium)
 
+**Run**: `/statistical-analysis <output_folder>`
+
 **Input**: Profile, research questions, raw data, downloaded data
 
-**What it does**:
-- Prepares analytic dataset (merges, creates derived variables, handles missing data)
-- Generates descriptive statistics (Table 1 data)
-- Runs primary analysis (regression model based on outcome type)
-- Runs sensitivity analyses
-- Saves all scripts for reproducibility
+**Logic**:
+1. Load all inputs and copy helper modules (utils.py, data_utils.py, descriptive.py, validation.py)
+2. Prepare analytic dataset (load/merge, create derived variables, document missingness, apply exclusions)
+3. Generate descriptive statistics (Table 1 with means/SDs or medians/IQRs, p-values, SMDs)
+4. Write analysis plan (model selection decision tree → primary method, covariates, sensitivity strategy)
+5. Run primary analysis (call method-specific helper: regression.py, penalized.py, ml.py, or causal.py)
+6. Run assumption checks (linearity, homoscedasticity, PH test, overlap/positivity)
+7. Run sensitivity analyses (subgroup, alternative covariates, robustness to missing data)
+8. Compile and validate results (sanitize p-values, validate schema)
+
+**Progress Tracking**: 7 checkpoints (`step_1_load_inputs` → `step_6_compile`)
+
+**Resume Protocol**: Read `progress.json` → continue from next incomplete step
 
 **Outputs**:
 - `3_analysis/analytic_dataset.csv` — Cleaned, merged dataset
 - `3_analysis/analysis_results.json` — All statistical results
+- `3_analysis/analysis_plan.json` — Model selection reasoning
+- `3_analysis/results_summary.md` — Prose summary for paper
 - `3_analysis/scripts/` — Python scripts used
-- `3_analysis/models/` — Model summaries
+- `3_analysis/progress.json` — Progress state for resume
 
 ---
 
