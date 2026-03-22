@@ -2,17 +2,19 @@
 name: orchestrator
 model: medium
 description: >
-  Master orchestrator that runs the full paper-generation pipeline (stages 1-8)
+  Master orchestrator that runs the full paper-generation pipeline (stages 1-9)
   sequentially. Handles initialization, stage execution with validation,
   failure retries (up to 3 per stage), graceful degradation, progress tracking,
-  and time budgeting (60 min total). Triggers on: "run the pipeline", "generate paper",
+  time budgeting (70 min total), and a feedback loop that re-ranks research
+  question candidates if analysis encounters structural failures.
+  Triggers on: "run the pipeline", "generate paper",
   "write a paper using the data", or any request to execute the full workflow.
 argument-hint: <data_folder> <output_folder>
 ---
 
 # Orchestrator — Full Pipeline Execution
 
-Run stages 1-8 of the JAMA Network Open paper-generation pipeline sequentially, producing a final `paper.pdf` from raw data with zero human intervention.
+Run stages 1-9 of the JAMA Network Open paper-generation pipeline sequentially, producing a final `paper.pdf` from raw data with zero human intervention. Includes a feedback loop between analysis and question scoring to recover from structural analysis failures.
 
 ## Usage
 
@@ -27,7 +29,8 @@ Where `<data_folder>` contains the raw dataset(s) and `<output_folder>` is the b
 This orchestrator uses `progress_utils.py` for consistent progress tracking across all stages. The utility provides:
 - **PipelineTracker**: Maintains `pipeline_log.json` with overall status
 - **Stage-level tracking**: Each stage creates/updates its own `progress.json`
-- **Task integration**: Tracks Claude Code task statuses for better visibility
+- **Cycle state**: `cycle_state.json` tracks feedback loop iterations
+- **Decision log**: `decision_log.json` records question selection decisions
 
 ### Progress Files
 
@@ -35,6 +38,8 @@ This orchestrator uses `progress_utils.py` for consistent progress tracking acro
 |------|----------|---------|
 | `pipeline_log.json` | `<output_folder>/pipeline_log.json` | Overall pipeline status, stage timing |
 | `progress.json` | `<output_folder>/N_stage_folder/progress.json` | Stage-level step progress |
+| `cycle_state.json` | `<output_folder>/cycle_state.json` | Feedback loop cycle counter |
+| `decision_log.json` | `<output_folder>/decision_log.json` | Question selection audit trail |
 
 ## Instructions
 
@@ -46,6 +51,7 @@ You are a senior research automation engineer. Your job is to execute the entire
    ```bash
    mkdir -p <output_folder>/1_data_profile
    mkdir -p <output_folder>/2_research_question/downloaded
+   mkdir -p <output_folder>/2_scoring
    mkdir -p <output_folder>/3_analysis/scripts
    mkdir -p <output_folder>/3_analysis/models
    mkdir -p <output_folder>/4_figures/figures
@@ -54,19 +60,24 @@ You are a senior research automation engineer. Your job is to execute the entire
    mkdir -p <output_folder>/6_paper
    ```
 
-2. **Record start time** for time budgeting. The entire pipeline should target completion within 60 minutes.
+2. **Record start time** for time budgeting. The entire pipeline should target completion within 70 minutes (56 min happy path, up to 70 min if feedback loop triggers).
 
 3. **Initialize progress tracking** using the PipelineTracker from `progress_utils.py`:
 
    ```python
    import sys
    sys.path.insert(0, "workflow/scripts")
-   from progress_utils import PipelineTracker
+   from progress_utils import PipelineTracker, get_cycle_state, save_cycle_state
+   from feedback_utils import build_feedback_signal
 
    tracker = PipelineTracker(output_folder, data_folder)
+
+   # Initialize cycle state
+   cycle_state = get_cycle_state(output_folder)
+   save_cycle_state(output_folder, cycle_state)
    ```
 
-   This creates `<output_folder>/pipeline_log.json` automatically.
+   This creates `<output_folder>/pipeline_log.json` and `<output_folder>/cycle_state.json` automatically.
 
 4. **Create Claude Code tasks** for each stage (optional but recommended for visibility):
 
@@ -74,12 +85,13 @@ You are a senior research automation engineer. Your job is to execute the entire
    ```
    - Stage 1: Load and Profile Data
    - Stage 2: Generate Research Questions
-   - Stage 3: Acquire External Data
-   - Stage 4: Statistical Analysis
-   - Stage 5: Generate Figures
-   - Stage 6: Literature Review
-   - Stage 7: Write Paper
-   - Stage 8: Compile and Review
+   - Stage 3: Score and Rank Questions
+   - Stage 4: Acquire External Data
+   - Stage 5: Statistical Analysis
+   - Stage 6: Generate Figures
+   - Stage 7: Literature Review
+   - Stage 8: Write Paper
+   - Stage 9: Compile and Review
    ```
 
    Store task IDs in a dict for status updates: `task_ids = {}`
@@ -128,28 +140,89 @@ Run each stage in order. For each stage:
 | Stage | Skill | Validation Check | Degraded Fallback |
 |-------|-------|-----------------|-------------------|
 | 1 | load-and-profile | `profile.json` and `variable_types.json` exist with >0 datasets | Generate minimal profile from file headers only |
-| 2 | generate-research-questions | `research_questions.json` has `primary_question` with all PICO fields | Use first numeric column as outcome, first categorical as exposure |
-| 3 | acquire-data | Downloaded files exist (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
-| 4 | statistical-analysis | `analysis_results.json` exists with `descriptive_statistics` and `primary_analysis` | Run descriptive stats only, skip regression |
-| 5 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
-| 6 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |
-| 7 | write-paper | `paper.tex` exists and is >5KB | Generate a minimal paper with abstract + methods + results |
-| 8 | compile-and-review | `paper.pdf` exists in `<output_folder>/` | Return the `.tex` file as final output |
+| 2 | generate-research-questions | `research_questions.json` has `candidate_questions` array with ≥2 candidates | Use first numeric column as outcome, first categorical as exposure |
+| 3 | score-and-rank | `ranked_questions.json` exists with `primary_question` and `selection_metadata` | Use first candidate from `research_questions.json` as-is |
+| 4 | acquire-data | Downloaded files exist (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
+| 5 | statistical-analysis | `analysis_results.json` exists with `descriptive_statistics` and `primary_analysis` | Run descriptive stats only, skip regression |
+| 6 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
+| 7 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |
+| 8 | write-paper | `paper.tex` exists and is >5KB | Generate a minimal paper with abstract + methods + results |
+| 9 | compile-and-review | `paper.pdf` exists in `<output_folder>/` | Return the `.tex` file as final output |
+
+### Step 1b: Feedback Loop After Stage 5
+
+**After Stage 5 (statistical-analysis) completes**, check for structural analysis failures:
+
+```python
+from feedback_utils import build_feedback_signal
+from progress_utils import get_cycle_state, save_cycle_state, reset_stage_progress
+
+cycle_state = get_cycle_state(output_folder)
+feedback_signal = build_feedback_signal(output_folder)
+
+if feedback_signal is not None and feedback_signal["recommendation"] == "retry_next_candidate":
+    if cycle_state["current_cycle"] < cycle_state["max_cycles"]:
+        # --- FEEDBACK LOOP: Re-rank and retry ---
+        print(f"[FEEDBACK] Structural issues detected: {[i['check'] for i in feedback_signal['issues']]}")
+        print(f"[FEEDBACK] Initiating cycle {cycle_state['current_cycle'] + 1}")
+
+        # 1. Record the failure in cycle state
+        cycle_state["current_cycle"] += 1
+        cycle_state["feedback_history"].append({
+            "cycle": cycle_state["current_cycle"] - 1,
+            "failed_candidate_id": feedback_signal["failed_candidate_id"],
+            "issues": feedback_signal["issues"]
+        })
+        save_cycle_state(output_folder, cycle_state)
+
+        # 2. Reset progress for stages 3-5
+        reset_stage_progress(output_folder, "score_and_rank")
+        reset_stage_progress(output_folder, "acquire_data")
+        reset_stage_progress(output_folder, "statistical_analysis")
+
+        # 3. Re-run Stage 3 (score-and-rank) in FAST-TRACK mode
+        #    The skill reads cycle_state.json and skips web searches,
+        #    applies penalty to failed candidate, re-ranks.
+        #    → Execute /score-and-rank <output_folder>
+
+        # 4. Re-run Stage 4 (acquire-data) — mostly skipped if data unchanged
+        #    → Execute /acquire-data <output_folder>
+
+        # 5. Re-run Stage 5 (statistical-analysis) in FAST-TRACK mode
+        #    Run primary model + Table 1 only, skip sensitivity analyses.
+        #    → Execute /statistical-analysis <output_folder>
+
+        # 6. After re-run, do NOT loop again — proceed to Stage 6
+    else:
+        print(f"[FEEDBACK] Issues detected but max cycles ({cycle_state['max_cycles']}) reached — proceeding with current results")
+else:
+    # No structural issues or only minor issues — proceed normally
+    pass
+```
+
+**Fast-track mode details:**
+- **Stage 3 re-run**: Skips web searches, reuses prior `scoring_details.json`, applies score penalty (0.0) to failed candidate, re-ranks remaining candidates.
+- **Stage 4 re-run**: Mostly skipped if data acquisition requirements are the same.
+- **Stage 5 re-run**: Run primary model + Table 1 only, skip sensitivity analyses. Target: 10 min.
+- **Total feedback re-run budget**: 14 min.
 
 ### Step 2: Time Budget Management
 
 Allocate time across stages approximately:
 
-| Stage | Budget |
-|-------|--------|
-| 1. Load & Profile | 5 min |
-| 2. Research Questions | 5 min |
-| 3. Acquire Data | 5 min |
-| 4. Statistical Analysis | 15 min |
-| 5. Generate Figures | 10 min |
-| 6. Literature Review | 10 min |
-| 7. Write Paper | 10 min |
-| 8. Compile & Review | 5 min |
+| Stage | Happy Path | With Feedback |
+|-------|-----------|---------------|
+| 1. Load & Profile | 5 min | 5 min |
+| 2. Research Questions | 5 min | 5 min |
+| 3. Score & Rank | 3 min | 3 min |
+| 4. Acquire Data | 3 min | 3 min |
+| 5. Statistical Analysis | 13 min | 13 min |
+| *Feedback re-run (3-5)* | — | *14 min* |
+| 6. Generate Figures | 8 min | 8 min |
+| 7. Literature Review | 8 min | 8 min |
+| 8. Write Paper | 8 min | 8 min |
+| 9. Compile & Review | 3 min | 3 min |
+| **Total** | **56 min** | **70 min** |
 
 If a stage exceeds its budget by 2x, produce a simplified version and move on. The goal is a complete (even if imperfect) paper, not a perfect partial paper.
 
@@ -160,19 +233,23 @@ Ensure correct data flow between stages:
 ```
 Stage 1 → profile.json, variable_types.json
   ↓
-Stage 2 → research_questions.json (reads profile + variable_types)
+Stage 2 → research_questions.json (candidate_questions array)
   ↓
-Stage 3 → downloaded/ files (reads 2_research_question/research_questions)
+Stage 3 → ranked_questions.json (selected primary + scoring details)
   ↓
-Stage 4 → analysis_results.json (reads profile + variable_types + 2_research_question/research_questions + downloaded data)
+Stage 4 → downloaded/ files (reads 2_scoring/ranked_questions.json)
   ↓
-Stage 5 → figures/*.png, tables/*.tex (reads 3_analysis/analysis_results)
+Stage 5 → analysis_results.json (reads profile + variable_types + 2_scoring/ranked_questions + downloaded data)
+  ↓                                    ↑
+  ↓  ← ← ← FEEDBACK LOOP ← ← ← ← ← ↑  (if structural failure: re-score → re-acquire → re-analyze)
   ↓
-Stage 6 → references.bib (reads 2_research_question/research_questions for topic context)
+Stage 6 → figures/*.png, tables/*.tex (reads 3_analysis/analysis_results)
   ↓
-Stage 7 → paper.tex (reads ALL upstream outputs + template)
+Stage 7 → references.bib (reads 2_scoring/ranked_questions for topic context)
   ↓
-Stage 8 → paper.pdf (compiles paper.tex)
+Stage 8 → paper.tex (reads ALL upstream outputs + template + decision_log.json)
+  ↓
+Stage 9 → paper.pdf (compiles paper.tex)
 ```
 
 ### Step 4: Finalize
@@ -213,4 +290,29 @@ Stage 8 → paper.pdf (compiles paper.tex)
 }
 ```
 
-**`<output_folder>/paper.pdf`** — The final deliverable. Must exist unless stage 8 failed after 3 retries.
+**`<output_folder>/cycle_state.json`** — Feedback loop state:
+```json
+{
+  "current_cycle": 1,
+  "max_cycles": 2,
+  "feedback_history": []
+}
+```
+
+**`<output_folder>/decision_log.json`** — Question selection audit trail:
+```json
+[
+  {
+    "cycle": 1,
+    "timestamp": "ISO-8601",
+    "candidates_scored": [
+      { "candidate_id": "CQ1", "composite": 0.78 },
+      { "candidate_id": "CQ2", "composite": 0.65 }
+    ],
+    "selected": "CQ1",
+    "feedback_signal": null
+  }
+]
+```
+
+**`<output_folder>/paper.pdf`** — The final deliverable. Must exist unless stage 9 failed after 3 retries.

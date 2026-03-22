@@ -32,6 +32,7 @@ from typing import Optional, List, Dict, Any
 STAGE_MAPPING = {
     "1": "load_and_profile",
     "2": "generate_research_questions",
+    "2.5": "score_and_rank",
     "3": "acquire_data",
     "4": "statistical_analysis",
     "5": "generate_figures",
@@ -43,6 +44,7 @@ STAGE_MAPPING = {
 STAGE_TO_FOLDER = {
     "load_and_profile": "1_data_profile",
     "generate_research_questions": "2_research_question",
+    "score_and_rank": "2_scoring",
     "acquire_data": "2_research_question",
     "statistical_analysis": "3_analysis",
     "generate_figures": "4_figures",
@@ -303,6 +305,69 @@ def get_all_progress(output_folder: str) -> Dict[str, Dict[str, Any]]:
     return all_progress
 
 
+def reset_stage_progress(output_folder: str, stage_name: str) -> None:
+    """
+    Delete progress.json for a stage, enabling re-entry.
+
+    Used by the feedback loop to reset stages that need to be re-run
+    (e.g., score_and_rank, acquire_data, statistical_analysis) when
+    switching to an alternative research question candidate.
+
+    Args:
+        output_folder: Base output directory
+        stage_name: Stage identifier to reset
+    """
+    progress_dir = _get_progress_dir(output_folder, stage_name)
+    progress_path = _get_progress_path(progress_dir)
+    if os.path.exists(progress_path):
+        os.remove(progress_path)
+        print(f"[{stage_name}] Progress reset — ready for re-entry")
+    else:
+        print(f"[{stage_name}] No progress file to reset")
+
+
+def get_cycle_state(output_folder: str) -> Dict[str, Any]:
+    """
+    Read the feedback cycle state from cycle_state.json.
+
+    Returns default state if file does not exist.
+
+    Args:
+        output_folder: Base output directory
+
+    Returns:
+        Dict with current_cycle, max_cycles, feedback_history
+    """
+    cycle_path = os.path.join(output_folder, "cycle_state.json")
+    if os.path.exists(cycle_path):
+        try:
+            with open(cycle_path, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            pass
+
+    return {
+        "current_cycle": 1,
+        "max_cycles": 2,
+        "feedback_history": []
+    }
+
+
+def save_cycle_state(output_folder: str, state: Dict[str, Any]) -> None:
+    """
+    Save the feedback cycle state to cycle_state.json.
+
+    Args:
+        output_folder: Base output directory
+        state: Cycle state dict to persist
+    """
+    cycle_path = os.path.join(output_folder, "cycle_state.json")
+    os.makedirs(output_folder, exist_ok=True)
+    with open(cycle_path, "w") as f:
+        json.dump(state, f, indent=2)
+    print(f"[cycle_state] Saved: cycle {state.get('current_cycle', '?')}/{state.get('max_cycles', '?')}")
+
+
 # ── Helper Functions ───────────────────────────────────────────────────────
 
 def _get_stage_number(stage_name: str) -> str:
@@ -552,6 +617,7 @@ def suggest_task_subject(stage_name: str) -> str:
     subjects = {
         "load_and_profile": "Load and profile dataset",
         "generate_research_questions": "Generate research questions",
+        "score_and_rank": "Score and rank research questions",
         "acquire_data": "Acquire external data",
         "statistical_analysis": "Run statistical analysis",
         "generate_figures": "Generate figures and tables",

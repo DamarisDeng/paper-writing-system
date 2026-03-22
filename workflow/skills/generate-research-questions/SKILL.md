@@ -147,20 +147,20 @@ update_step(output_folder, "generate_research_questions", "step_3_identify_pairi
 
 ---
 
-### Step 4: Rank and Select
+### Step 4: Score Candidates (Preliminary)
 
-From your 2-3 candidates, select 1 primary and 1-2 secondary questions using these criteria (in priority order):
+For each of your 2-3 candidates, compute preliminary scores on these criteria. **Do NOT select a primary yet** — selection is deferred to the score-and-rank stage which adds literature-informed signals.
 
-1. **Data feasibility** — Can the question be answered with the available variables, sample size, and data structure? Disqualify anything that requires data you don't have.
-2. **Clinical/public health significance** — Would JAMA Network Open reviewers find this meaningful for clinicians, policymakers, or public health practitioners?
-3. **Novelty** — Does it go beyond obvious descriptive statistics? Look for comparisons, associations, or policy evaluations.
-4. **Methodological rigor** — Can appropriate statistical methods be applied given the data structure?
+Score each candidate (0.0–1.0) on:
 
-Select:
-- **1 primary question** — the strongest across all criteria
-- **1-2 secondary questions** — subgroup analyses, sensitivity analyses, or complementary questions that strengthen the paper
+1. **Data feasibility** (weight: 0.40) — Can the question be answered with the available variables, sample size, and data structure? 1.0 = all variables present, low missingness, adequate N. 0.0 = missing key variables or insufficient sample.
+2. **Clinical/public health significance** (weight: 0.20) — Would JAMA Network Open reviewers find this meaningful? 1.0 = directly policy-relevant. 0.0 = trivially descriptive.
+3. **Novelty** (weight: 0.25) — Does it go beyond obvious descriptive statistics? 1.0 = novel comparison or evaluation. 0.0 = restatement of known facts.
+4. **Methodological rigor** (weight: 0.15) — Can appropriate statistical methods be applied given the data structure? 1.0 = clean design. 0.0 = fundamental design flaw.
 
-Also match each question to the study design the data supports:
+Compute `composite = 0.40*feasibility + 0.20*significance + 0.25*novelty + 0.15*rigor`.
+
+Also match each candidate to the study design the data supports:
 - Cross-sectional data → prevalence comparisons, associations
 - Repeated measures / time series → before-after, interrupted time series, difference-in-differences
 - Ecological (state-level) data → ecological study (cannot make individual-level claims)
@@ -173,9 +173,9 @@ update_step(output_folder, "generate_research_questions", "step_4_rank_select", 
 
 ---
 
-### Step 5: Assign Variable Roles
+### Step 5: Assign Variable Roles (Per Candidate)
 
-Map every column from `variable_types.json` into exactly one of these five roles. Use the decision rules below for ambiguous cases.
+For **each candidate question**, map every column from `variable_types.json` into exactly one of these five roles. Different candidates may assign different roles to the same column (e.g., a column is an outcome for one candidate but a covariate for another).
 
 **Role definitions:**
 - **outcome_variables** — The dependent variable(s). Must be `numeric` or `binary` type and represent actual health measures.
@@ -236,25 +236,58 @@ update_step(output_folder, "generate_research_questions", "step_6_assess_feasibi
 
 ### Step 7: Save and Validate Output
 
-Write to `<output_folder>/2_research_question/research_questions.json` with this exact structure:
+Write to `<output_folder>/2_research_question/research_questions.json` with this exact structure.
+
+**Important:** This stage outputs an array of **candidate questions** — it does NOT select a primary. Selection is deferred to the score-and-rank stage.
 
 ```json
 {
-  "primary_question": {
-    "question": "Full PICO question referencing column names in backticks",
-    "population": "Target population",
-    "exposure_or_intervention": "Main IV with `column_name`",
-    "comparator": "Reference/control group",
-    "outcome": "Primary DV with `column_name`",
-    "study_design": "e.g., ecological difference-in-differences",
-    "rationale": "Why answerable and clinically relevant (2-3 sentences)"
-  },
-  "secondary_questions": [
+  "candidate_questions": [
     {
-      "question": "Secondary question text",
-      "variables_involved": ["exact_column_name_1", "exact_column_name_2"],
-      "analysis_type": "e.g., subgroup analysis, sensitivity analysis",
-      "rationale": "Brief justification (1-2 sentences)"
+      "candidate_id": "CQ1",
+      "question": "Full PICO question referencing column names in backticks",
+      "population": "Target population",
+      "exposure_or_intervention": "Main IV with `column_name`",
+      "comparator": "Reference/control group",
+      "outcome": "Primary DV with `column_name`",
+      "study_design": "e.g., ecological difference-in-differences",
+      "rationale": "Why answerable and clinically relevant (2-3 sentences)",
+      "preliminary_scores": {
+        "data_feasibility": 0.85,
+        "significance": 0.70,
+        "novelty": 0.60,
+        "rigor": 0.75,
+        "composite": 0.725
+      },
+      "secondary_questions": [
+        {
+          "question": "Secondary question text",
+          "variables_involved": ["exact_column_name_1", "exact_column_name_2"],
+          "analysis_type": "e.g., subgroup analysis, sensitivity analysis",
+          "rationale": "Brief justification (1-2 sentences)"
+        }
+      ],
+      "variable_roles": {
+        "outcome_variables": ["col_name"],
+        "exposure_variables": ["col_name"],
+        "covariates": ["col_name_1", "col_name_2"],
+        "stratification_variables": ["col_name"],
+        "excluded_variables": {
+          "col_name": "reason for exclusion"
+        },
+        "derived_variables": [
+          {
+            "name": "variable_name",
+            "derivation": "How to compute",
+            "source_columns": ["raw_col_1", "raw_col_2"]
+          }
+        ]
+      },
+      "feasibility_assessment": {
+        "strengths": ["Strength 1", "Strength 2"],
+        "limitations": ["Limitation 1 with specifics", "Limitation 2 with specifics"],
+        "required_assumptions": ["Assumption 1", "Assumption 2"]
+      }
     }
   ],
   "data_acquisition_requirements": [
@@ -264,30 +297,11 @@ Write to `<output_folder>/2_research_question/research_questions.json` with this
       "target_file": "<output_folder>/2_research_question/downloaded/<filename>.csv",
       "action": "Specific download steps"
     }
-  ],
-  "feasibility_assessment": {
-    "strengths": ["Strength 1", "Strength 2"],
-    "limitations": ["Limitation 1 with specifics", "Limitation 2 with specifics"],
-    "required_assumptions": ["Assumption 1", "Assumption 2"]
-  },
-  "variable_roles": {
-    "outcome_variables": ["col_name"],
-    "exposure_variables": ["col_name"],
-    "covariates": ["col_name_1", "col_name_2"],
-    "stratification_variables": ["col_name"],
-    "excluded_variables": {
-      "col_name": "reason for exclusion"
-    },
-    "derived_variables": [
-      {
-        "name": "variable_name",
-        "derivation": "How to compute",
-        "source_columns": ["raw_col_1", "raw_col_2"]
-      }
-    ]
-  }
+  ]
 }
 ```
+
+Each `candidate_questions` entry contains its own `variable_roles`, `secondary_questions`, and `feasibility_assessment`. The `data_acquisition_requirements` array at the top level is the union of all candidates' needs.
 
 ---
 

@@ -21,7 +21,7 @@ Conduct a focused literature search and produce a BibTeX bibliography (`referenc
 /literature-review <output_folder>
 ```
 
-Reads from `<output_folder>/2_research_question/research_questions.json`. Writes to `<output_folder>/5_references/`.
+Reads from `<output_folder>/2_scoring/ranked_questions.json`. Writes to `<output_folder>/5_references/`.
 
 ## Progress Tracking
 
@@ -55,7 +55,7 @@ tracker = create_stage_tracker(output_folder, "literature_review",
 
 ### Step 1: Extract Search Context
 
-Read `<output_folder>/2_research_question/research_questions.json` and identify:
+Read `<output_folder>/2_scoring/ranked_questions.json` and identify:
 
 1. **Topic keywords**: From the primary question's population, exposure, and outcome.
 2. **Methodological terms**: From the study design and analysis type.

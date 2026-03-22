@@ -15,11 +15,21 @@ repo/
 │   ├── templates/
 │   │   └── template.tex       # JAMA Network Open LaTeX template
 │   ├── scripts/               # Reusable Python/R scripts called by skills
+│   │   ├── progress_utils.py  # Stage progress tracking, cycle state management
+│   │   ├── feedback_utils.py  # Feedback signal detection, decision logging
 │   │   └── ...
 │   └── references/
 │       └── base_references.bib  # Pre-loaded common public health references (optional)
 ├── exam_paper/                # ALL runtime outputs for a specific dataset run
-│   └── ...                    # Intermediate outputs
+│   ├── 1_data_profile/        # Stage 1 outputs
+│   ├── 2_research_question/   # Stage 2 outputs (candidate questions)
+│   ├── 2_scoring/             # Stage 3 outputs (ranked/selected question)
+│   ├── 3_analysis/            # Stage 5 outputs
+│   ├── 4_figures/             # Stage 6 outputs
+│   ├── 5_references/          # Stage 7 outputs
+│   ├── 6_paper/               # Stage 8 outputs
+│   ├── cycle_state.json       # Feedback loop state
+│   ├── decision_log.json      # Question selection audit trail
 │   └── paper.pdf              # FINAL deliverable
 └── sample/                    # Provided sample data and reference paper
     ├── data/
@@ -37,13 +47,24 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 | Stage | Skill | Input | Output | Validates |
 |-------|-------|-------|--------|-----------|
 | 1 | load-and-profile | `<data_folder>/` | `exam_paper/1_data_profile/` | profile.json exists, >0 columns detected |
-| 2 | generate-research-questions | `exam_paper/1_data_profile/` | `exam_paper/2_research_question/` | research_questions.json has PICO fields |
-| 3 | acquire-data | `exam_paper/2_research_question/` | `exam_paper/2_research_question/downloaded/` | Downloaded files exist (or skip if none needed) |
-| 4 | statistical-analysis | `exam_paper/1_data_profile/` + `exam_paper/2_research_question/` | `exam_paper/3_analysis/` | analysis_results.json exists with p-values, effect sizes |
-| 5 | generate-figures | `exam_paper/3_analysis/` | `exam_paper/4_figures/` | At least 2 figures and 1 table generated |
-| 6 | literature-review | `exam_paper/2_research_question/` | `exam_paper/5_references/` | references.bib has ≥10 entries |
-| 7 | write-paper | All upstream outputs + `workflow/templates/template.tex` | `exam_paper/6_paper/` | paper.tex compiles without fatal errors |
-| 8 | compile-and-review | `exam_paper/6_paper/` | `exam_paper/paper.pdf` | paper.pdf exists, is ≤10 pages (excl. refs + supplement) |
+| 2 | generate-research-questions | `exam_paper/1_data_profile/` | `exam_paper/2_research_question/` | research_questions.json has candidate_questions array |
+| 3 | score-and-rank | `exam_paper/2_research_question/` | `exam_paper/2_scoring/` | ranked_questions.json exists with scored candidate |
+| 4 | acquire-data | `exam_paper/2_scoring/` | `exam_paper/2_research_question/downloaded/` | Downloaded files exist (or skip if none needed) |
+| 5 | statistical-analysis | `exam_paper/1_data_profile/` + `exam_paper/2_scoring/` | `exam_paper/3_analysis/` | analysis_results.json exists with p-values, effect sizes |
+| 5→3 | *(feedback loop)* | `exam_paper/3_analysis/` | Re-triggers stages 3-5 | Structural failure detected in analysis |
+| 6 | generate-figures | `exam_paper/3_analysis/` | `exam_paper/4_figures/` | At least 2 figures and 1 table generated |
+| 7 | literature-review | `exam_paper/2_scoring/` | `exam_paper/5_references/` | references.bib has ≥10 entries |
+| 8 | write-paper | All upstream outputs + `workflow/templates/template.tex` | `exam_paper/6_paper/` | paper.tex compiles without fatal errors |
+| 9 | compile-and-review | `exam_paper/6_paper/` | `exam_paper/paper.pdf` | paper.pdf exists, is ≤10 pages (excl. refs + supplement) |
+
+### Feedback Loop
+
+After Stage 5 (statistical-analysis), the orchestrator checks for structural analysis failures (non-convergence, complete separation, violated assumptions, insufficient N). If critical issues are found and the cycle limit (2) has not been reached:
+
+1. The failed candidate is penalized (score set to 0)
+2. Stages 3-5 are re-run in **fast-track mode** (no web searches, primary model + Table 1 only)
+3. The decision is logged in `decision_log.json`
+4. Maximum 2 total cycles (1 original + 1 retry)
 
 ## Progress Tracking Requirements
 
@@ -85,6 +106,7 @@ Stages run sequentially. Each stage reads from previous stage outputs and writes
 Each stage creates a `progress.json` in its output folder:
 - `1_data_profile/progress.json`
 - `2_research_question/progress.json`
+- `2_scoring/progress.json`
 - `3_analysis/progress.json`
 - `4_figures/progress.json`
 - `5_references/progress.json`
@@ -96,6 +118,8 @@ The orchestrator reads these files to determine resume points and overall pipeli
 
 If a stage is interrupted, read `progress.json` to find the last completed step and continue from the next incomplete step. Never re-run a completed step.
 
+For the feedback loop, `cycle_state.json` tracks which cycle we're on. If `current_cycle > 1`, stages 3-5 run in fast-track mode. Use `reset_stage_progress()` to clear progress before re-running a stage.
+
 ## Trigger Prompt
 
 When the user says anything like:
@@ -103,7 +127,7 @@ When the user says anything like:
 - "Run the pipeline"
 - "Generate paper"
 
-Execute the orchestrator skill which runs stages 1–8 in sequence.
+Execute the orchestrator skill which runs stages 1–9 in sequence (with potential feedback loop between 5→3).
 
 ## Setup: Model Mapping Configuration
 
@@ -125,12 +149,13 @@ Each skill specifies its required model level in its SKILL.md frontmatter (`mode
 |-------|-------------|-------|-----------|
 | 1. Load & Profile | medium | sonnet | Data inspection, profiling |
 | 2. Research Questions | high | opus[1m] | Deep reasoning for PICO formulation |
-| 3. Acquire Data | low | haiku | Simple downloads |
-| 4. Statistical Analysis | medium | sonnet | Code generation, models |
-| 5. Generate Figures | medium | sonnet | Visualization code |
-| 6. Literature Review | low | haiku | Search and format |
-| 7. Write Paper | high | opus[1m] | Complex synthesis and writing |
-| 8. Compile & Review | low | haiku | Compilation, error handling |
+| 3. Score & Rank | medium | sonnet | Literature search + scoring |
+| 4. Acquire Data | low | haiku | Simple downloads |
+| 5. Statistical Analysis | medium | sonnet | Code generation, models |
+| 6. Generate Figures | medium | sonnet | Visualization code |
+| 7. Literature Review | low | haiku | Search and format |
+| 8. Write Paper | high | opus[1m] | Complex synthesis and writing |
+| 9. Compile & Review | low | haiku | Compilation, error handling |
 
 ## Other
 

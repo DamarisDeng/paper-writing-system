@@ -21,7 +21,7 @@ Create publication-quality JAMA Network Open-style figures and tables from stati
 /generate-figures <output_folder>
 ```
 
-Reads from `<output_folder>/3_analysis/analysis_results.json` and `<output_folder>/2_research_question/research_questions.json`. Writes to `<output_folder>/4_figures/`.
+Reads from `<output_folder>/3_analysis/analysis_results.json` and `<output_folder>/2_scoring/ranked_questions.json`. Writes to `<output_folder>/4_figures/`.
 
 ## Progress Tracking
 
@@ -56,7 +56,7 @@ tracker = create_stage_tracker(output_folder, "generate_figures",
 ### Step 1: Load Inputs
 
 1. Read `<output_folder>/3_analysis/analysis_results.json` for all statistical results.
-2. Read `<output_folder>/2_research_question/research_questions.json` for variable context and study design.
+2. Read `<output_folder>/2_scoring/ranked_questions.json` for variable context and study design.
 3. Read `<output_folder>/3_analysis/analytic_dataset.csv` if raw data is needed for plots.
 
 ### Step 2: Set Up JAMA Matplotlib Style

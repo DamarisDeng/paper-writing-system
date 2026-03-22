@@ -52,7 +52,8 @@ tracker = create_stage_tracker(output_folder, "write_paper",
 
 Read these files:
 
-1. **`<output_folder>/2_research_question/research_questions.json`** — Research questions, variable roles, study design.
+1. **`<output_folder>/2_scoring/ranked_questions.json`** — Research questions, variable roles, study design.
+1b. **`<output_folder>/decision_log.json`** (if exists) — Question selection audit trail. Use to describe the question selection process in the Methods section (e.g., number of candidates considered, scoring approach, any feedback cycles).
 2. **`<output_folder>/3_analysis/analysis_results.json`** — All statistical results.
 3. **`<output_folder>/4_figures/manifest.json`** — List of figures and tables with titles and file paths.
 4. **`<output_folder>/5_references/references.bib`** — Bibliography entries.

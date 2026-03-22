@@ -27,7 +27,7 @@ Run descriptive and inferential statistical analyses driven by `research_questio
 /statistical-analysis <output_folder>
 ```
 
-Reads from `<output_folder>/1_data_profile/`, `<output_folder>/2_research_question/`, and original raw data. Writes to `<output_folder>/3_analysis/`.
+Reads from `<output_folder>/1_data_profile/`, `<output_folder>/2_scoring/`, and original raw data. Writes to `<output_folder>/3_analysis/`.
 
 ## Progress Tracking
 
@@ -117,7 +117,7 @@ You are a biostatistician conducting analyses for a JAMA Network Open paper. Eve
 
 Read these files:
 
-1. **`<output_folder>/2_research_question/research_questions.json`** — Primary question, variable roles, derived variables, study design.
+1. **`<output_folder>/2_scoring/ranked_questions.json`** — Primary question, variable roles, derived variables, study design.
 2. **`<output_folder>/1_data_profile/profile.json`** — Dataset metadata and column statistics (includes original file paths).
 3. **`<output_folder>/1_data_profile/variable_types.json`** — Semantic variable types.
 4. **Raw data files** — from original paths in `profile.json`.

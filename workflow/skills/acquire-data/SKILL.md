@@ -19,7 +19,7 @@ Download external data files specified in `data_acquisition_requirements` to sup
 /acquire-data <output_folder>
 ```
 
-Reads from `<output_folder>/2_research_question/research_questions.json` and writes downloaded files to `<output_folder>/2_research_question/downloaded/`.
+Reads from `<output_folder>/2_scoring/ranked_questions.json` and writes downloaded files to `<output_folder>/2_research_question/downloaded/`.
 
 ## Progress Tracking
 
@@ -50,7 +50,7 @@ tracker = create_stage_tracker(output_folder, "acquire_data",
 
 ### Step 1: Load Research Questions
 
-Read `<output_folder>/2_research_question/research_questions.json` and extract the `data_acquisition_requirements` array.
+Read `<output_folder>/2_scoring/ranked_questions.json` and extract the `data_acquisition_requirements` array.
 
 If `data_acquisition_requirements` is empty or missing, report that no data acquisition is needed and exit successfully.
 
