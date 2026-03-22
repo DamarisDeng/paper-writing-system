@@ -286,10 +286,30 @@ This verifies the file has all required fields (`primary_question`, `variable_ro
 ```python
 update_step(output_folder, "score_and_rank", "step_6_validate", "completed")
 
+from progress_utils import complete_stage, complete_stage_with_context
+
+# Option 1: Standard completion
 complete_stage(output_folder, "score_and_rank",
                expected_outputs=["2_scoring/ranked_questions.json",
                                  "2_scoring/scoring_details.json"])
+
+# Option 2: Context-aware completion (recommended for pipeline mode)
+#    Captures selection rationale and forwards context to downstream stages
+complete_stage_with_context(
+    output_folder=output_folder,
+    stage_name="score_and_rank",
+    context_mode="safe",  # or "aggressive" or "off"
+    expected_outputs=["2_scoring/ranked_questions.json",
+                      "2_scoring/scoring_details.json"],
+    summary=f"Selected candidate {top_candidate['candidate_id']} with composite score {composite_score}"
+)
 ```
+
+**Context Decisions Captured** (when using `complete_stage_with_context`):
+- `selected_candidate_id`: Which question was selected
+- `composite_score`: Final score of selected candidate
+- `selection_rationale`: Why this candidate was chosen
+- `literature_findings`: Summary of novelty/support analysis
 
 ---
 

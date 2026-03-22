@@ -124,12 +124,30 @@ Confirm both files are valid JSON.
 
 **Progress checkpoint - Mark stage complete:**
 ```python
-from progress_utils import complete_stage
+from progress_utils import complete_stage, complete_stage_with_context
 
+# Option 1: Standard completion (no context tracking)
 complete_stage(output_folder, "load_and_profile",
                expected_outputs=["1_data_profile/profile.json",
                                  "1_data_profile/variable_types.json"])
+
+# Option 2: Context-aware completion (recommended for pipeline mode)
+#    This automatically extracts key decisions and adds to context bundle
+complete_stage_with_context(
+    output_folder=output_folder,
+    stage_name="load_and_profile",
+    context_mode="safe",  # or "aggressive" or "off"
+    expected_outputs=["1_data_profile/profile.json",
+                      "1_data_profile/variable_types.json"],
+    summary="Loaded and profiled dataset(s), classified variable types"
+)
 ```
+
+**Context Decisions Captured** (when using `complete_stage_with_context`):
+- `datasets_identified`: List of datasets found
+- `variable_classification_strategy`: How variables were typed
+- `data_limitations_identified`: Data quality issues noted
+- `data_context_summary`: Research directions and dataset relationships
 
 ## Output Contract
 

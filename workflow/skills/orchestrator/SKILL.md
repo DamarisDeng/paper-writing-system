@@ -8,9 +8,10 @@ description: >
   time budgeting (61 min total), and a feedback loop that re-ranks research
   question candidates if analysis encounters structural failures.
   Stage 0 performs initial data acquisition from documented datasets.
+  Supports context management modes to prevent token overflow during execution.
   Triggers on: "run the pipeline", "generate paper",
   "write a paper using the data", or any request to execute the full workflow.
-argument-hint: <data_folder> <output_folder>
+argument-hint: <data_folder> <output_folder> [--context-mode: safe|aggressive|off]
 ---
 
 # Orchestrator — Full Pipeline Execution
@@ -20,10 +21,16 @@ Run stages 0-9 of the JAMA Network Open paper-generation pipeline sequentially, 
 ## Usage
 
 ```
-/orchestrator <data_folder> <output_folder>
+/orchestrator <data_folder> <output_folder> [--context-mode: safe|aggressive|off]
 ```
 
-Where `<data_folder>` contains the raw dataset(s) and `<output_folder>` is the base output directory (e.g., `exam_paper`).
+Where:
+- `<data_folder>` contains the raw dataset(s)
+- `<output_folder>` is the base output directory (e.g., `exam_paper`)
+- `--context-mode` controls context pruning behavior:
+  - `safe` (default): Prune only after checkpoint stages, preserves more files
+  - `aggressive`: Prune after every eligible stage, minimizes token usage
+  - `off`: Disable all pruning, useful for debugging
 
 ## Progress Tracking
 
@@ -70,7 +77,10 @@ You are a senior research automation engineer. Your job is to execute the entire
    ```python
    import sys
    sys.path.insert(0, "workflow/scripts")
-   from progress_utils import PipelineTracker, get_cycle_state, save_cycle_state
+   from progress_utils import (
+       PipelineTracker, get_cycle_state, save_cycle_state,
+       initialize_context_bundle, complete_stage_with_context
+   )
    from feedback_utils import build_feedback_signal
 
    tracker = PipelineTracker(output_folder, data_folder)
@@ -78,9 +88,16 @@ You are a senior research automation engineer. Your job is to execute the entire
    # Initialize cycle state
    cycle_state = get_cycle_state(output_folder)
    save_cycle_state(output_folder, cycle_state)
+
+   # Initialize context bundle (if context mode enabled)
+   context_mode = kwargs.get("context_mode", "safe")  # Default to safe mode
+   if context_mode != "off":
+       initialize_context_bundle(output_folder,
+                                 cycle=cycle_state["current_cycle"],
+                                 max_cycles=cycle_state["max_cycles"])
    ```
 
-   This creates `<output_folder>/pipeline_log.json` and `<output_folder>/cycle_state.json` automatically.
+   This creates `<output_folder>/pipeline_log.json`, `<output_folder>/cycle_state.json`, and `<output_folder>/context_bundle.json` (if context mode enabled).
 
 4. **Create Claude Code tasks** for each stage (optional but recommended for visibility):
 
@@ -180,12 +197,25 @@ Run each stage in order. For each stage:
 
 5. **Validate outputs** against the stage's output contract.
 
-6. **Log stage completion**:
+6. **Log stage completion** with context management:
    ```python
    status = "success" if stage_complete else "degraded"
-   tracker.complete_stage(stage_number, stage_name, status,
-                         outputs=progress.get("outputs", []),
-                         notes=progress.get("notes", ""))
+
+   # Use context-aware completion if enabled
+   if context_mode != "off":
+       context_result = complete_stage_with_context(
+           output_folder=output_folder,
+           stage_name=stage_name,
+           context_mode=context_mode,
+           validate_outputs=False,  # Already validated above
+           expected_outputs=progress.get("outputs", []),
+           summary=f"Completed {stage_name} with status {status}"
+       )
+   else:
+       # Fallback to standard completion
+       tracker.complete_stage(stage_number, stage_name, status,
+                             outputs=progress.get("outputs", []),
+                             notes=progress.get("notes", ""))
    ```
 
 7. **Update Claude Code task** to completed (or failed):
@@ -239,25 +269,49 @@ if feedback_signal is not None and feedback_signal["recommendation"] == "retry_n
         reset_stage_progress(output_folder, "acquire_data")
         reset_stage_progress(output_folder, "statistical_analysis")
 
-        # 3. Re-run Stage 3 (score-and-rank) in FAST-TRACK mode
+        # 3. Update context bundle with feedback cycle
+        #    (pruning is automatically disabled for feedback stages)
+        if context_mode != "off":
+            import context_manager
+            bundle = context_manager.get_context_bundle(output_folder)
+            if bundle:
+                bundle["meta"]["cycle"] = cycle_state["current_cycle"]
+                bundle["meta"]["in_feedback_loop"] = True
+                context_manager._save_bundle(
+                    os.path.join(output_folder, "context_bundle.json"),
+                    bundle
+                )
+
+        # 4. Re-run Stage 3 (score-and-rank) in FAST-TRACK mode
         #    The skill reads cycle_state.json and skips web searches,
         #    applies penalty to failed candidate, re-ranks.
         #    → Execute /score-and-rank <output_folder>
 
-        # 4. Re-run Stage 4 (acquire-data) — mostly skipped if data unchanged
+        # 5. Re-run Stage 4 (acquire-data) — mostly skipped if data unchanged
         #    → Execute /acquire-data <output_folder>
 
-        # 5. Re-run Stage 5 (statistical-analysis) in FAST-TRACK mode
+        # 6. Re-run Stage 5 (statistical-analysis) in FAST-TRACK mode
         #    Run primary model + Table 1 only, skip sensitivity analyses.
         #    → Execute /statistical-analysis <output_folder>
 
-        # 6. After re-run, do NOT loop again — proceed to Stage 6
+        # 7. Clear feedback loop flag after re-run completes
+        if context_mode != "off":
+            import context_manager
+            bundle = context_manager.get_context_bundle(output_folder)
+            if bundle:
+                bundle["meta"]["in_feedback_loop"] = False
+                context_manager._save_bundle(
+                    os.path.join(output_folder, "context_bundle.json"),
+                    bundle
+                )
     else:
         print(f"[FEEDBACK] Issues detected but max cycles ({cycle_state['max_cycles']}) reached — proceeding with current results")
 else:
     # No structural issues or only minor issues — proceed normally
     pass
 ```
+
+**Context Management Note**: During feedback loop cycles, pruning of stages 3-5 is automatically disabled regardless of `context_mode` setting. This preserves files needed for re-ranking and re-analysis.
 
 **Fast-track mode details:**
 - **Stage 3 re-run**: Skips web searches, reuses prior `scoring_details.json`, applies score penalty (0.0) to failed candidate, re-ranks remaining candidates.

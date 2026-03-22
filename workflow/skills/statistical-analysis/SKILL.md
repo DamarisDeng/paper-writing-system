@@ -642,13 +642,34 @@ The output schema is documented in `references/methods.md` under "Output Contrac
 ```python
 update_step(output_folder, "statistical_analysis", "step_6_compile", "completed")
 
-# Mark stage complete with validation
+from progress_utils import complete_stage, complete_stage_with_context
+
+# Option 1: Standard completion
 complete_stage(output_folder, "statistical_analysis",
                expected_outputs=["3_analysis/analysis_results.json",
                                  "3_analysis/analytic_dataset.csv",
                                  "3_analysis/analysis_plan.json",
                                  "3_analysis/results_summary.md"])
+
+# Option 2: Context-aware completion (recommended for pipeline mode)
+#    This captures key analysis decisions and enables safe pruning
+complete_stage_with_context(
+    output_folder=output_folder,
+    stage_name="statistical_analysis",
+    context_mode="safe",  # or "aggressive" or "off"
+    expected_outputs=["3_analysis/analysis_results.json",
+                      "3_analysis/analytic_dataset.csv",
+                      "3_analysis/analysis_plan.json",
+                      "3_analysis/results_summary.md"],
+    summary=f"Completed {method} analysis with N={total_n}, primary effect: {estimate} ({ci})"
+)
 ```
+
+**Context Decisions Captured** (when using `complete_stage_with_context`):
+- `primary_method`: Statistical method used (e.g., "logistic regression")
+- `analytic_n`: Sample size for analysis
+- `key_finding`: Primary result summary (estimate, CI, p-value)
+- `assumptions_checked`: Model assumptions that were validated
 
 After writing `analysis_results.json`, also write `<output_folder>/3_analysis/results_summary.md`. This is prose Stage 7 can copy directly into the paper. Structure:
 
