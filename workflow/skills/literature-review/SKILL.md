@@ -1,11 +1,11 @@
 ---
 name: literature-review
-model: low
+model: medium
 description: >
   Conduct a time-boxed literature search and produce a references.bib file
-  with ≥10 BibTeX entries. Searches across 4 categories: similar studies,
-  methodology, clinical/policy context, and data sources. Falls back to
-  foundational references if search yields insufficient results.
+  with ≥10 BibTeX entries. Uses Semantic Scholar API for accurate citation
+  retrieval, supplemented by web searches. Falls back to foundational references
+  if search yields insufficient results.
   Triggers on: "literature review", "find references", "search literature",
   "build bibliography", or any request to gather citations for the paper.
 argument-hint: <output_folder>
@@ -91,17 +91,47 @@ Citations for the datasets used.
 
 Use these approaches in order of preference:
 
-1. **Web search** for peer-reviewed articles using targeted queries:
+1. **Semantic Scholar API** (most reliable for accurate citations):
+
+   **Using the helper script** (`fetch_references.py`):
+   ```bash
+   # Get API key from https://www.semanticscholar.org/product/api#api-key
+   export S2_API_KEY=your_key_here
+
+   # Search and convert to BibTeX
+   python workflow/skills/literature-review/fetch_references.py \
+       "COVID-19 vaccine mandates healthcare workers" 10 references.bib
+   ```
+
+   **Or use Python code directly**:
+   ```python
+   import sys; sys.path.insert(0, "workflow/skills/literature-review")
+   from fetch_references import search_semantic_scholar, semantic_scholar_to_bibtex
+
+   papers = search_semantic_scholar("COVID-19 vaccine mandates", limit=5)
+   for paper in papers:
+       bibtex = semantic_scholar_to_bibtex(paper)
+       print(bibtex)
+   ```
+
+   **Important:** Set `S2_API_KEY` environment variable for higher rate limits. Without a key, the API has strict rate limits (429 errors).
+
+2. **PubMed API** (via NCBI E-utilities):
+   ```python
+   import requests
+
+   def search_pubmed(query, limit=5):
+       base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+       params = {"db": "pubmed", "term": query, "retmax": limit}
+       response = requests.get(base_url, params=params)
+       # Fetch summaries using esummary.fcgi
+       return response
+   ```
+
+3. **Web search** for peer-reviewed articles using targeted queries:
    - `"[topic]" site:pubmed.ncbi.nlm.nih.gov`
    - `"[topic]" JAMA OR Lancet OR NEJM OR BMJ`
    - Search Google Scholar for highly cited papers.
-
-2. **Known reference databases**:
-   - PubMed (via web search)
-   - Google Scholar
-   - CDC/WHO publications for public health context
-
-3. **Check `workflow/references/base_references.bib`** if it exists — use relevant pre-loaded references.
 
 ### Step 4: Format as BibTeX
 

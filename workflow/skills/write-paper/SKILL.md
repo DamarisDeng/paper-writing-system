@@ -21,7 +21,7 @@ Draft a complete JAMA Network Open research paper in LaTeX, integrating all upst
 /write-paper <output_folder>
 ```
 
-Reads from all upstream stage outputs in `<output_folder>/` and the template at `sample/tex/template.tex`. Writes to `<output_folder>/6_paper/`.
+Reads from all upstream stage outputs in `<output_folder>/` and the template at `workflow/skills/write-paper/templates/template.tex`. Writes to `<output_folder>/6_paper/`.
 
 ## Progress Tracking
 
@@ -34,6 +34,13 @@ This skill uses `progress_utils.py` for stage-level progress tracking. Progress 
 - `step_4_validate`: Validate LaTeX structure and completeness
 
 **Resume protocol:** If interrupted, read `progress.json` and continue from the last incomplete step.
+
+| If `progress.json` says last completed is... | Resume at |
+|----------------------------------------------|-----------|
+| `step_1_load_inputs` | Step 2: Copy assets |
+| `step_2_copy_assets` | Step 3: Draft paper |
+| `step_3_draft_paper` | Step 4: Validate |
+| `step_4_validate` | Complete (skip) |
 
 ## Instructions
 
@@ -57,7 +64,7 @@ Read these files:
 2. **`<output_folder>/3_analysis/analysis_results.json`** — All statistical results.
 3. **`<output_folder>/4_figures/manifest.json`** — List of figures and tables with titles and file paths.
 4. **`<output_folder>/5_references/references.bib`** — Bibliography entries.
-5. **`sample/tex/template.tex`** — The JAMA Network Open LaTeX template.
+5. **`workflow/skills/write-paper/templates/template.tex`** — The JAMA Network Open LaTeX template.
 6. **`<output_folder>/1_data_profile/profile.json`** — Dataset context for data description.
 
 ### Step 2: Copy Assets
@@ -68,7 +75,7 @@ Read these files:
 
 ### Step 3: Draft the Paper
 
-Using the template structure from `sample/tex/template.tex`, write `<output_folder>/6_paper/paper.tex` with these sections:
+Using the template structure from `workflow/skills/write-paper/templates/template.tex`, write `<output_folder>/6_paper/paper.tex` with these sections:
 
 #### 3.1 Preamble and Metadata
 
@@ -170,6 +177,33 @@ On a new page after references:
 % Additional figure from analysis
 ```
 
+#### 3.12 LaTeX Math and Symbol Rules
+
+**CRITICAL**: Always use LaTeX commands, NEVER Unicode characters for mathematical symbols. Unicode characters (β, α, χ², ≥, ≤, μ, σ) cause LaTeX compilation failures or inconsistent rendering.
+
+| Symbol | Use | NEVER |
+|--------|-----|-------|
+| Greek letters | `\alpha`, `\beta`, `\chi`, `\mu`, `\sigma`, `\kappa`, `\lambda`, `\tau` | `α`, `β`, `χ`, `μ`, `σ`, `κ`, `λ`, `τ` |
+| Comparisons | `\geq`, `\leq`, `\approx`, `\neq`, `\pm` | `≥`, `≤`, `≈`, `≠`, `±` |
+| Superscript | `^2`, `^{2}` | `²` |
+| Subscript | `_2`, `_{2}` | `₂` |
+| Math mode | `$\beta = 0.5$` or `\(\beta = 0.5\)` | `β = 0.5` (plain text) |
+| P-value | `$P < .05$` or `\textit{P} < .05` | `P < .05` (no formatting) |
+| CI notation | `95\% CI` (with escaped percent) | `95% CI` (unescaped) |
+
+**Before finalizing paper.tex, search for common Unicode patterns and replace with LaTeX:**
+```bash
+grep -n '[αβγδεζηθικλμνξοπρστυφχψω]' paper.tex
+grep -n '[≥≤≈≠±]' paper.tex
+grep -n '[²³¹₀₁₂₃₄₅₆₇₈₉]' paper.tex
+```
+
+**Examples of correct usage:**
+- "β coefficient (95% CI, 0.12-0.45)" → `$\beta$ coefficient (95\% CI, 0.12-0.45)"
+- "P ≤ .05" → "$P \leq .05$"
+- "H₂O" → "H$_2$O"
+- "χ² test" → "$\chi^2$ test"
+
 ### Step 4: Writing Style Rules
 
 - **Tense**: Past tense for Methods and Results ("We used...", "The analysis showed..."). Present tense for established facts in Introduction/Discussion.
@@ -211,6 +245,58 @@ Before saving, verify:
 - [ ] Statistical results in text match `analysis_results.json` values exactly
 - [ ] No placeholder text remains (search for "TODO", "XXX", "PLACEHOLDER")
 - [ ] `references.bib` is copied to `<output_folder>/6_paper/`
+- [ ] No Unicode math symbols (check with grep commands above)
+
+**LaTeX compilation validation:**
+
+Run the following command to validate the LaTeX file compiles without fatal errors:
+```bash
+cd <output_folder>/6_paper && latexmk -pdf -interaction=nonstopmode paper.tex
+```
+
+Alternatively, use the traditional pdflatex+bibtex workflow:
+```bash
+cd <output_folder>/6_paper
+pdflatex -interaction=nonstopmode paper.tex
+bibtex paper
+pdflatex -interaction=nonstopmode paper.tex
+pdflatex -interaction=nonstopmode paper.tex
+```
+
+**What constitutes a fatal error vs. warning:**
+- **Fatal**: Compilation stops with `!` error, PDF not generated, undefined control sequence, missing file errors
+- **Warning**: Overfull/underfull hbox boxes, citation warnings, font warnings — these are acceptable for draft
+
+If compilation fails, check the `.log` file for specific error messages and fix accordingly.
+
+### Step 7: Troubleshooting
+
+**If upstream files are missing:**
+- `2_scoring/ranked_questions.json` — Re-run the score-and-rank stage
+- `3_analysis/analysis_results.json` — Re-run the statistical-analysis stage
+- `4_figures/manifest.json` — Re-run the generate-figures stage
+- `5_references/references.bib` — Re-run the literature-review stage
+- `template.tex` — Verify `workflow/skills/write-paper/templates/template.tex` exists
+
+**If LaTeX compilation fails:**
+1. Check `paper.log` for the specific error (search for `!` which indicates errors)
+2. Common issues:
+   - Undefined control sequence: Usually a typo or missing package
+   - File not found: Check `\includegraphics{}` and `\input{}` paths
+   - Missing `$`: Math symbols outside math mode
+   - Unicode character: Replace with LaTeX command (see Section 3.12)
+3. Fix the error and recompile
+
+**If citation keys don't resolve:**
+1. Verify the key in `\cite{key}` matches an `@entry{key,}` in `references.bib`
+2. Check for typos in citation keys (case-sensitive)
+3. Ensure `references.bib` is in the same directory as `paper.tex`
+4. Re-run bibtex after modifying the bibliography
+
+**If figures/tables don't appear:**
+1. Verify files exist in `6_paper/figures/` or `6_paper/tables/`
+2. Check file paths in `\includegraphics{}` and `\input{}` are relative to `6_paper/`
+3. For tables, ensure the `.tex` file is valid LaTeX table code
 
 **Progress checkpoint - Mark stage complete:**
 ```python

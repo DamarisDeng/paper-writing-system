@@ -6,4 +6,9 @@ exam_folder/
 experiments/
 exam_paper/
 
+# LaTeX output files in sample/tex
+sample/tex/template.bbl
+sample/tex/template.pdf
+sample/tex/template.synctex.gz
+
 *.security-scan-passed
