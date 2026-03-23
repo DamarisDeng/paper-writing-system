@@ -45,13 +45,13 @@ def create_panel_a(ax):
                  color=colors, edgecolor='#323232', linewidth=0.8, alpha=0.85)
 
     ax.set_ylabel('Outcome Value (units)')
-    ax.set_title('Panel A', fontweight='bold', fontsize=10)
+    ax.set_title('Panel A', fontweight='bold')
 
     # Add n values above bars
     for bar, val, err in zip(bars, values_a, errors_a):
         ax.text(bar.get_x() + bar.get_width()/2, val + err + 0.5,
                f'n={np.random.randint(20, 50)}', ha='center', va='bottom',
-               fontsize=8, color='#5A5A5A')
+               color='#5A5A5A')
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -68,7 +68,7 @@ def create_panel_b(ax):
 
     ax.set_xlabel('Time (days)')
     ax.set_ylabel('Response (units)')
-    ax.set_title('Panel B', fontweight='bold', fontsize=10)
+    ax.set_title('Panel B', fontweight='bold')
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -78,14 +78,14 @@ def create_panel_b(ax):
 
 def create_panel_c(ax):
     """Create Panel C: Scatter plot."""
-    color = get_colors(1, palette='okabe-ito')[1]
+    color = get_colors(2, palette='okabe-ito')[1]  # Need 2 colors to get index 1
 
     ax.scatter(x_c, y_c, color=color, alpha=0.6, s=30,
               edgecolor='#323232', linewidth=0.5)
 
     ax.set_xlabel('Independent Variable (units)')
     ax.set_ylabel('Dependent Variable (units)')
-    ax.set_title('Panel C', fontweight='bold', fontsize=10)
+    ax.set_title('Panel C', fontweight='bold')
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)

@@ -191,6 +191,9 @@ def set_jama_style():
 def create_figure(width_type='single', height_ratio=None, nrows=1, ncols=1):
     """Create a figure with publication-quality dimensions.
 
+    Automatically scales font sizes for multipanel figures to maintain
+    legibility. More panels = larger scaling factor.
+
     Args:
         width_type: 'single', 'double', 'half', or 'abstract'
         height_ratio: height/width ratio (None for golden ratio)
@@ -199,7 +202,29 @@ def create_figure(width_type='single', height_ratio=None, nrows=1, ncols=1):
     Returns:
         fig, axes: Figure and axes objects
     """
+    # Apply base style first
     set_jama_style()
+
+    # Auto-scale fonts for multipanel figures
+    # More panels = more scaling to maintain legibility
+    n_panels = nrows * ncols
+    if n_panels > 1:
+        # Progressive scaling based on panel count
+        if n_panels <= 3:
+            scale_factor = 1.2
+        elif n_panels <= 6:
+            scale_factor = 1.3
+        else:
+            scale_factor = 1.4
+
+        # Scale all relevant font parameters
+        plt.rcParams['font.size'] = int(10 * scale_factor)
+        plt.rcParams['axes.labelsize'] = int(10 * scale_factor)
+        plt.rcParams['axes.titlesize'] = int(12 * scale_factor)
+        plt.rcParams['xtick.labelsize'] = int(9 * scale_factor)
+        plt.rcParams['ytick.labelsize'] = int(9 * scale_factor)
+        plt.rcParams['legend.fontsize'] = int(9 * scale_factor)
+
     width = get_figure_width(width_type)
     height = get_figure_height(width_type, height_ratio)
 
@@ -217,6 +242,9 @@ def create_figure(width_type='single', height_ratio=None, nrows=1, ncols=1):
 def add_subplot_labels(axes, labels=None, offset_x=-0.1, offset_y=1.05):
     """Add panel labels (A, B, C...) to subplots.
 
+    Uses the current axes.titlesize for scaling, so panel labels
+    scale automatically with multipanel font scaling.
+
     Args:
         axes: Array of axes objects
         labels: List of labels (default: A, B, C, ...)
@@ -225,9 +253,13 @@ def add_subplot_labels(axes, labels=None, offset_x=-0.1, offset_y=1.05):
     if labels is None:
         labels = [chr(65 + i) for i in range(len(axes))]
 
+    # Use current rcParams for consistent scaling
+    label_fontsize = plt.rcParams.get('axes.titlesize', 12)
+
     for ax, label in zip(axes.flat, labels):
         ax.text(offset_x, offset_y, label, transform=ax.transAxes,
-                fontsize=12, fontweight='bold', va='bottom', ha='right')
+                fontsize=label_fontsize, fontweight='bold',
+                va='bottom', ha='right')
 
 
 def format_axis_labels(ax, xlabel=None, ylabel=None, title=None):

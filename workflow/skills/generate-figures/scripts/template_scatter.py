@@ -74,7 +74,8 @@ def calculate_regression_ci(x, y, confidence=0.95):
 
 def create_scatter_plot(x, y, xlabel, ylabel):
     """Create a publication-quality scatter plot with regression line."""
-    fig, ax = create_figure(width_type='single')
+    fig, axes = create_figure(width_type='single')
+    ax = axes.flat[0]  # Handle array return for single panel
 
     # Get colors
     colors = get_colors(2, palette='okabe-ito')
@@ -101,7 +102,7 @@ def create_scatter_plot(x, y, xlabel, ylabel):
     ax.set_ylabel(ylabel)
 
     # Add R² and p-value to legend
-    ax.legend(loc='upper left', frame=True,
+    ax.legend(loc='upper left', frameon=True,
              title=f"R\u00b2 = {reg['r_squared']:.2f}, \u0070 = {reg['p_value']:.3f}",
              title_fontsize=9)
 

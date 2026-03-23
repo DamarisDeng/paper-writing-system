@@ -11,8 +11,10 @@ Usage:
 
 import sys
 sys.path.insert(0, "workflow/skills/generate-figures/scripts")
-from jama_style import create_figure, get_colors, save_figure
+from jama_style import get_figure_width, get_colors, save_figure, set_jama_style
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 
 # =============================================================================
@@ -48,11 +50,23 @@ logrank_p = 0.003
 # =============================================================================
 
 def create_km_curve(survival_curves, time_points, groups, n_at_risk, logrank_p):
-    """Create a publication-quality Kaplan-Meier curve."""
-    fig, (ax_main, ax_risk) = create_figure(width_type='single',
-                                             height_ratio=0.9,
-                                             nrows=2, ncols=1)
-    plt.subplots_adjust(hspace=0.3)
+    """Create a publication-quality Kaplan-Meier curve.
+
+    Uses GridSpec for precise height control (80% plot, 20% risk table)
+    with minimal vertical spacing (hspace=0.05) for tight visual association.
+    """
+    set_jama_style()
+    width = get_figure_width('single')
+    height = width * 1.0  # Slightly taller for the two panels
+
+    fig = plt.figure(figsize=(width, height))
+
+    # GridSpec: 4 parts for main plot, 1 part for risk table (80/20 split)
+    # hspace=0.05 creates very tight spacing between plot and table
+    gs = GridSpec(2, 1, figure=fig, height_ratios=[4, 1], hspace=0.05)
+
+    ax_main = fig.add_subplot(gs[0])
+    ax_risk = fig.add_subplot(gs[1])
 
     colors = get_colors(len(groups), palette='okabe-ito')
 
@@ -77,7 +91,7 @@ def create_km_curve(survival_curves, time_points, groups, n_at_risk, logrank_p):
                 transform=ax_main.transAxes, fontsize=9,
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
-    ax_main.legend(loc='upper right', frame=True)
+    ax_main.legend(loc='upper right', frameon=True)
     ax_main.spines['top'].set_visible(False)
     ax_main.spines['right'].set_visible(False)
     ax_main.set_axisbelow(True)
@@ -106,7 +120,7 @@ def create_km_curve(survival_curves, time_points, groups, n_at_risk, logrank_p):
                 cell.set_facecolor('#E8E8E8')
                 cell.set_text_props(weight='bold')
 
-    ax_risk.set_title('Number at Risk', fontsize=9, pad=-5)
+    ax_risk.set_title('Number at Risk', fontsize=9, pad=-10)
 
     return fig
 
