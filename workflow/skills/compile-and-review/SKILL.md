@@ -20,7 +20,7 @@ Compile `paper.tex` to PDF, fix any errors, run a self-review checklist, revise,
 /compile-and-review <output_folder>
 ```
 
-Reads from `<output_folder>/6_paper/`. Writes final PDF to `<output_folder>/paper.pdf`.
+Reads from `<output_folder>/6_paper/`. Writes final PDF to `<output_folder>/paper.pdf` while keeping `<output_folder>/6_paper/paper.pdf`.
 
 ## Progress Tracking
 
@@ -150,7 +150,7 @@ Common revision tasks:
 
 ### Step 5: Finalize
 
-1. **Copy the final PDF** to the output root:
+1. **Copy the final PDF** to the output root (keeping the original in 6_paper/):
    ```bash
    cp <output_folder>/6_paper/paper.pdf <output_folder>/paper.pdf
    ```
@@ -183,7 +183,7 @@ Common revision tasks:
 from progress_utils import complete_stage
 
 complete_stage(output_folder, "compile_and_review",
-               expected_outputs=["paper.pdf"])  # The primary deliverable at root
+               expected_outputs=["paper.pdf", "6_paper/paper.pdf"])  # PDF at root and in stage folder
 ```
 
 ### Step 6: Handle Edge Cases
@@ -201,9 +201,9 @@ complete_stage(output_folder, "compile_and_review",
 
 ## Output Contract
 
-**`<output_folder>/paper.pdf`** — The final compiled paper. This is the primary deliverable of the entire pipeline.
+**`<output_folder>/paper.pdf`** — The final compiled paper at output root (copied from stage folder).
 
-**`<output_folder>/6_paper/paper.pdf`** — Same PDF in the stage directory.
+**`<output_folder>/6_paper/paper.pdf`** — The same PDF remains in the stage folder for reference.
 
 **`<output_folder>/6_paper/compilation_report.json`** — Compilation and review report:
 ```json

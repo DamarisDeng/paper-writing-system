@@ -236,7 +236,7 @@ Run each stage in order. For each stage:
 | 6 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
 | 7 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |
 | 8 | write-paper | `paper.tex` exists and is >5KB | Generate a minimal paper with abstract + methods + results |
-| 9 | compile-and-review | `paper.pdf` exists in `<output_folder>/` | Return the `.tex` file as final output |
+| 9 | compile-and-review | `paper.pdf` exists in `<output_folder>/` and `<output_folder>/6_paper/` | Return the `.tex` file as final output |
 
 ### Step 1b: Feedback Loop After Stage 5
 
@@ -432,7 +432,7 @@ Stage 9 → paper.pdf (compiles paper.tex)
 
 ### Step 4: Finalize
 
-1. **Copy final PDF** to `<output_folder>/paper.pdf` (if not already there).
+1. **Copy final PDF** to `<output_folder>/paper.pdf` (keeping `<output_folder>/6_paper/paper.pdf` as reference).
 
 2. **Mark pipeline complete**:
    ```python
@@ -493,4 +493,6 @@ Stage 9 → paper.pdf (compiles paper.tex)
 ]
 ```
 
-**`<output_folder>/paper.pdf`** — The final deliverable. Must exist unless stage 9 failed after 3 retries.
+**`<output_folder>/paper.pdf`** — The final deliverable at output root. Must exist unless stage 9 failed after 3 retries.
+
+**`<output_folder>/6_paper/paper.pdf`** — The same PDF remains in the stage folder for reference.
