@@ -10,7 +10,7 @@ Usage:
     fig, ax = create_figure(width_type='single')
     colors = get_colors(3)
     ax.plot([1, 2, 3], [1, 4, 9], color=colors[0])
-    save_figure(fig, 'output/figure1')
+    save_figure(fig, 'output/figure1')  # Saves as figure1.png (300 DPI)
 """
 
 import matplotlib.pyplot as plt
@@ -321,8 +321,8 @@ def add_reference_line(ax, value=0, orientation='horizontal', style='--',
                   linewidth=linewidth, alpha=alpha, zorder=0)
 
 
-def save_figure(fig, filepath_stem, formats=['png', 'pdf'], dpi=300):
-    """Save figure in multiple formats for publication.
+def save_figure(fig, filepath_stem, formats=['png'], dpi=300):
+    """Save figure in specified formats for publication.
 
     Args:
         fig: Figure object

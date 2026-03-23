@@ -3,7 +3,7 @@ name: generate-figures
 model: medium
 description: >
   Generate publication-quality JAMA-style figures and LaTeX tables from
-  analysis_results.json. Produces at least 2 figures (.png + .pdf) and
+  analysis_results.json. Produces at least 2 figures (.png) and
   1 table (.tex). Uses colorblind-safe palettes, golden-ratio dimensions,
   and JAMA formatting standards.
   Triggers on: "generate figures", "create tables", "make plots",
@@ -62,7 +62,7 @@ Copy and import `workflow/skills/generate-figures/scripts/jama_style.py` to your
 - `create_figure(width_type, nrows, ncols)` — Golden-ratio dimensions
 - `add_subplot_labels(axes)` — Panel labels (A, B, C...)
 - `add_reference_line(ax)` — Null value reference lines
-- `save_figure(fig, path)` — Multi-format export (PNG, PDF)
+- `save_figure(fig, path)` — PNG export (300 DPI)
 
 ### Step 3: Generate Table 1 (Required)
 
@@ -110,7 +110,7 @@ Save `<output_folder>/4_figures/manifest.json`:
 
 ```json
 {
-  "figures": [{"id": "figure1", "title": "...", "files": {"png": "...", "pdf": "..."}}],
+  "figures": [{"id": "figure1", "title": "...", "file": "..."}],
   "tables": [{"id": "table1", "title": "...", "file": "..."}]
 }
 ```
@@ -118,7 +118,7 @@ Save `<output_folder>/4_figures/manifest.json`:
 ### Step 8: Validate Checklist
 
 **File Existence:**
-- [ ] ≥2 figure files exist in `4_figures/figures/` (both .png and .pdf for each)
+- [ ] ≥2 figure files exist in `4_figures/figures/` (.png)
 - [ ] ≥1 table file exists in `4_figures/tables/` (.tex)
 - [ ] `manifest.json` exists and lists all generated figures and tables
 - [ ] `jama_style.py` was copied/created in output folder
@@ -157,7 +157,7 @@ complete_stage(output_folder, "generate_figures",
 
 ## Output Contract
 
-**`4_figures/figures/`** — PNG and PDF files
+**`4_figures/figures/`** — PNG files
 **`4_figures/tables/`** — LaTeX table files
 **`4_figures/scripts/`** — Python scripts that generated figures
 **`4_figures/manifest.json`** — Figure/table listing
