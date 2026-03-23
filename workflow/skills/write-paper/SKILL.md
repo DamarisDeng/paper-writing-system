@@ -114,7 +114,7 @@ Fill the three fields in the `keypointsbox`:
 - **Findings**: Main quantitative result with effect size and CI.
 - **Meaning**: Clinical/policy implication in one sentence.
 
-#### 3.5 Introduction (3-5 Paragraphs)
+#### 3.5 Introduction (Target: 1.0-1.25 pages, ~400-500 words; 3-5 paragraphs)
 
 Structure:
 1. **Opening**: Broad context — burden of disease, prevalence, public health significance.
@@ -122,7 +122,7 @@ Structure:
 3. **Gap**: What is not known — identify the specific knowledge gap.
 4. **Objective**: Clear statement of what this study aims to do.
 
-#### 3.6 Methods
+#### 3.6 Methods (Target: 1.5-1.75 pages, ~600-700 words)
 
 Subsections:
 - **Data**: Source, time period, population, sample selection, IRB status ("This study used publicly available, deidentified data and was exempt from institutional review board approval.").
@@ -131,14 +131,16 @@ Subsections:
 - **Covariates**: List all adjustment variables with justification.
 - **Statistical Analysis**: Describe methods from `analysis_results.json` → `primary_analysis.method`. State software ("Analyses were performed using Python version 3.x with statsmodels and pandas."), significance level ("Statistical significance was set at 2-sided P < .05."), and any special techniques.
 
-#### 3.7 Results
+#### 3.7 Results (Target: 2.5-3.5 pages, ~1,000-1,400 words)
+
+Note: Figures and tables within this section will occupy ~0.5-1 page, reducing available word space.
 
 Structure:
 1. **Sample description**: Reference Table 1. Report total N, exposure group sizes, key demographics.
 2. **Primary analysis**: Report the main finding with effect size, CI, and P value. Reference the primary results figure.
 3. **Secondary/sensitivity analyses**: Report additional findings. Reference supplementary tables/figures.
 
-#### 3.8 Discussion (4-6 Paragraphs)
+#### 3.8 Discussion (Target: 2.5-3.0 pages, ~1,000-1,200 words; 4-6 paragraphs)
 
 Structure:
 1. **Summary**: Restate the main finding in context.
@@ -148,7 +150,7 @@ Structure:
 5. **Limitations** subsection: Honest assessment from `research_questions.json` → `feasibility_assessment.limitations`.
 6. **Future directions**: 1-2 sentences on what research should follow.
 
-#### 3.9 Conclusions
+#### 3.9 Conclusions (Target: ~0.25 pages, ~75-100 words)
 
 2-3 sentences. Summarize the main finding and its primary implication. Do not overstate.
 
@@ -213,7 +215,7 @@ grep -n '[²³¹₀₁₂₃₄₅₆₇₈₉]' paper.tex
 - **Abbreviations**: Define on first use. Standard abbreviations (CI, OR, HR, SD) need not be defined.
 - **Citations**: Use `\cite{key}` which produces superscript numbers via natbib.
 - **Figures/Tables**: Reference as "Figure 1", "Table 1", "eTable 1" in text. Include figures/tables using `\input{tables/table1.tex}` for tables and `\includegraphics` for figures.
-- **Page limit**: Main text ≤10 pages (excluding references and supplement).
+- **Page limit**: Main text ≤10 pages (~3,500-4,000 words excluding references and supplement). Target ~400 words per page accounting for headings, figures, and tables.
 
 ### Step 5: Include Figures and Tables
 
