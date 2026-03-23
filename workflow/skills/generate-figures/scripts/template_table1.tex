@@ -1,0 +1,107 @@
+% =============================================================================
+% Table 1: Baseline Characteristics Template for JAMA Network Open
+% =============================================================================
+%
+% Instructions:
+% 1. Copy this file to your output folder: output_folder/4_figures/tables/table1.tex
+% 2. Replace placeholder data with your actual data
+% 3. Ensure all abbreviations are defined in footnotes
+% 4. Use consistent decimal places within columns
+% 5. Include units in row headers, not data cells
+%
+% Statistical reporting guidelines:
+% - Continuous normal: mean (SD)
+% - Continuous skewed: median (IQR) or median [Q1-Q3]
+% - Categorical: N (%) with % calculated from column n, not total N
+% - P values: report exact if >=0.001, otherwise <0.001
+% =============================================================================
+
+\begin{table}[H]
+\centering
+\sffamily\fontsize{8.5}{11}\selectfont
+\captionsetup{font={small,sf,bf}, textfont={normalfont,sf,color=jamadarkgray}}
+\caption{Baseline Characteristics of Study Participants}
+\label{tab:baseline}
+
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{4cm}
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X
+  >{\centering\arraybackslash}X @{}}
+
+\arrayrulecolor{jamadarkgray}
+\toprule[0.8pt]
+\textbf{Characteristic} & \textbf{Overall (N=1\,000)} & \textbf{Group 1 (n=500)} & \textbf{Group 2 (n=500)} & \textbf{\textit{P} Value} \\
+\midrule[0.5pt]
+
+% --- DEMOGRAPHICS ---
+% Format: mean (SD) for normally distributed continuous variables
+Age, mean (SD), y & 45.2 (12.3) & 44.8 (11.9) & 45.6 (12.7) & .32 \\
+
+% Format: N (%) for categorical variables
+Female sex, No. (\%) & 512 (51.2) & 248 (49.6) & 264 (52.8) & .38 \\
+
+% For multi-category variables, list first row with data, subsequent rows blank first column
+Race/ethnicity & & & & .04 \\
+\hspace{0.5em} White & 650 (65.0) & 340 (68.0) & 310 (62.0) & \\
+\hspace{0.5em} Black & 200 (20.0) & 90 (18.0) & 110 (22.0) & \\
+\hspace{0.5em} Hispanic & 100 (10.0) & 50 (10.0) & 50 (10.0) & \\
+\hspace{0.5em} Other & 50 (5.0) & 20 (4.0) & 30 (6.0) & \\
+
+\midrule[0.5pt]
+
+% --- CLINICAL CHARACTERISTICS ---
+% Include units in row header
+BMI, mean (SD) & 27.5 (5.2) & 27.8 (5.4) & 27.2 (5.0) & .12 \\
+SBP, mean (SD), mm Hg & 128 (15) & 127 (14) & 129 (16) & .08 \\
+DBP, mean (SD), mm Hg & 82 (10) & 81 (9) & 83 (11) & .15 \\
+
+% Categorical variable with categories
+Smoking status & & & & .21 \\
+\hspace{0.5em} Never & 600 (60.0) & 310 (62.0) & 290 (58.0) & \\
+\hspace{0.5em} Former & 250 (25.0) & 120 (24.0) & 130 (26.0) & \\
+\hspace{0.5em} Current & 150 (15.0) & 70 (14.0) & 80 (16.0) & \\
+
+\midrule[0.5pt]
+
+% --- COMORBIDITIES ---
+% Use consistent format for all yes/no variables
+Diabetes, No. (\%) & 150 (15.0) & 75 (15.0) & 75 (15.0) & >.99 \\
+Hypertension, No. (\%) & 300 (30.0) & 145 (29.0) & 155 (31.0) & .52 \\
+Hyperlipidemia, No. (\%) & 280 (28.0) & 140 (28.0) & 140 (28.0) & >.99 \\
+
+\midrule[0.5pt]
+
+% --- LABORATORY VALUES ---
+% For skewed data, use median (IQR) format
+Total cholesterol, mean (SD), mg/dL & 198 (38) & 195 (35) & 201 (41) & .03 \\
+HDL-C, median (IQR), mg/dL & 48 (40-58) & 47 (39-56) & 49 (41-60) & .12 \\
+LDL-C, mean (SD), mg/dL & 125 (32) & 122 (30) & 128 (34) & .08 \\
+Glucose, mean (SD), mg/dL & 102 (18) & 101 (17) & 103 (19) & .25 \\
+Creatinine, median (IQR), mg/dL & 0.9 (0.8-1.1) & 0.9 (0.8-1.0) & 1.0 (0.8-1.2) & .08 \\
+
+\midrule[0.5pt]
+
+% --- MEDICATION USE ---
+% Report as N (\%)
+Statin use, No. (\%) & 220 (22.0) & 110 (22.0) & 110 (22.0) & >.99 \\
+Antihypertensive use, No. (\%) & 350 (35.0) & 170 (34.0) & 180 (36.0) & .52 \\
+
+\bottomrule[0.8pt]
+\multicolumn{5}{@{}l@{}}{\footnotesize
+Abbreviations: BMI, body mass index; SBP, systolic blood pressure; DBP, diastolic blood pressure;
+HDLC, high-density lipoprotein cholesterol; LDL-C, low-density lipoprotein cholesterol; SD, standard deviation; IQR, interquartile range.
+SI conversion factors: To convert cholesterol to mmol/L, multiply by 0.0259; glucose to mmol/L, multiply by 0.0555; creatinine to \textmu{}mol/L, multiply by 88.4.
+Continuous variables presented as mean (SD) unless noted otherwise. \textit{P} values from 2-sample \textit{t} test, Wilcoxon rank sum test, or $\chi^2$ test as appropriate.}
+\end{tabularx}
+\end{table}
+
+% =============================================================================
+% NOTES:
+% 1. Use \, for thousands separator in numbers (e.g., 1\,000)
+% 2. Italicize P: \textit{P} Value
+% 3. For median (IQR), use format: 48 (40-58) or 48 [40-58]
+% 4. For very small p values, use <.001
+% 5. Use \hspace{0.5em} for indenting subcategories
+% 6. Use >.99 for p > 0.99, not 1.00
+% =============================================================================
