@@ -83,31 +83,15 @@ update_step(output_folder, "load_and_profile", "step_3_run_profiling", "complete
 
 ### Step 4: Review & Enrich the Output
 
-Read the generated `<output_folder>/1_data_profile/profile.json` and `<output_folder>/1_data_profile/variable_types.json`. Use your judgment to:
+Read the generated `profile.json` and `variable_types.json`. Use your judgment to:
 
-1. **Fix misclassified variable types** in `variable_types.json`:
-   - Zip codes, FIPS codes, phone numbers detected as `numeric` → change to `categorical` or `identifier`
-   - Date strings that failed parsing → change to `datetime`
-   - IDs or codes that are semantically categorical → reclassify
-   - Apply domain knowledge from the data description
+1. **Fix misclassified variable types** in `variable_types.json`
+2. **Add a `data_context` field** to the top level of `profile.json`
+3. **Flag data quality issues**
 
-2. **Add a `data_context` field** to the top level of `profile.json`:
-   ```json
-   {
-     "data_context": {
-       "summary": "Brief description of what this data collection is about",
-       "dataset_relationships": "How the datasets relate to each other (e.g., linkable by state, joinable on date)",
-       "research_directions": ["Potential research question 1", "Potential research question 2"],
-       "data_quality_notes": ["Any issues found: missing data patterns, suspicious values, etc."]
-     },
-     "datasets": { ... }
-   }
-   ```
+See `references/REFERENCE.md: Variable Type Rules` for common reclassifications and type definitions.
 
-3. **Flag data quality issues**:
-   - Columns with >50% missing values
-   - Unexpected value ranges
-   - Datasets that may need filtering (e.g., metadata rows in what should be data)
+See `references/REFERENCE.md: Data Context Structure` for the `data_context` field schema.
 
 **Progress checkpoint:**
 ```python

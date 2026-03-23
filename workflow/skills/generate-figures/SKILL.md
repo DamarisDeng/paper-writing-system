@@ -66,83 +66,23 @@ Copy and import `workflow/skills/generate-figures/scripts/jama_style.py` to your
 
 ### Step 3: Generate Table 1 (Required)
 
-Use `scripts/template_table1.tex` as a starting point. Key requirements:
+Use `scripts/template_table1.tex` as a starting point.
 
-- Continuous normal: mean (SD); Continuous skewed: median (IQR)
-- Categorical: N (%) with % from column n, not total
-- P-values: exact if ≥0.001, otherwise `<0.001`
-- Include units in row headers, not data cells
-- Define all abbreviations in footnotes
+See `references/REFERENCE.md: JAMA Style Guide` and `Figure Types` for complete Table 1 requirements and visualization templates.
 
-Save as `<output_folder>/4_figures/tables/table1.tex`.
+### Step 4-6: Generate Additional Figures and Tables
 
-### Step 4: Generate Primary Results Figure (Required)
+Select appropriate visualization based on analysis type.
 
-Select appropriate visualization based on analysis type:
-
-| Analysis Type | Recommended Figure | Template |
-|--------------|-------------------|----------|
-| Logistic/Cox regression | Forest plot | `template_forest.py` |
-| Linear regression | Coefficient plot | `template_forest.py` |
-| Survival analysis | Kaplan-Meier curve | `template_km.py` |
-| Continuous outcome | Scatter + regression | `template_scatter.py` |
-| Correlation matrix | Heatmap | `template_heatmap.py` |
-| Multi-panel | Combined figure | `template_multipanel.py` |
-
-Copy the relevant template to `<output_folder>/4_figures/scripts/`, modify the data section, and run it.
-
-### Step 5: Generate Additional Figures
-
-Create at least 1 more figure using any template. Consider:
-
-- Subgroup forest plot (`template_forest.py`)
-- Distribution plot (histogram/density)
-- Sensitivity analysis comparison
-- Dose-response curve
-
-### Step 6: Generate Additional Tables
-
-As needed: regression results table, sensitivity analysis, or full model output.
+See `references/REFERENCE.md: Figure Types` for the complete template mapping table.
 
 ### Step 7: Create Manifest
 
-Save `<output_folder>/4_figures/manifest.json`:
-
-```json
-{
-  "figures": [{"id": "figure1", "title": "...", "file": "..."}],
-  "tables": [{"id": "table1", "title": "...", "file": "..."}]
-}
-```
+Save `<output_folder>/4_figures/manifest.json` with figures and tables listings.
 
 ### Step 8: Validate Checklist
 
-**File Existence:**
-- [ ] ≥2 figure files exist in `4_figures/figures/` (.png)
-- [ ] ≥1 table file exists in `4_figures/tables/` (.tex)
-- [ ] `manifest.json` exists and lists all generated figures and tables
-- [ ] `jama_style.py` was copied/created in output folder
-- [ ] At least one figure script exists in `4_figures/scripts/`
-
-**Publication Quality — Figures:**
-- [ ] Uses colorblind-safe palette (Okabe-Ito)
-- [ ] Colors remain distinct when converted to grayscale
-- [ ] Axis labels include units in parentheses (e.g., "Age (years)")
-- [ ] Error bars or confidence intervals shown for all estimates
-- [ ] Reference line at null value where applicable (OR=1, β=0)
-- [ ] No title text in image (titles go in LaTeX captions)
-- [ ] Legend entries are descriptive (not cryptic codes)
-- [ ] Fonts ≥9pt (labels), ≥8pt (tick marks) for readability
-- [ ] PNG files are 300 DPI (check with `file` command or PIL)
-- [ ] Panel labels (A, B, C...) present for multi-panel figures
-
-**Publication Quality — Tables:**
-- [ ] booktabs used (`\toprule`, `\midrule`, `\bottomrule`)
-- [ ] No vertical lines
-- [ ] Consistent decimal places within columns
-- [ ] Units in row headers, not data cells
-- [ ] P-values formatted correctly (exact if ≥0.001, otherwise `<0.001`)
-- [ ] Abbreviations defined in footnotes
+See `references/REFERENCE.md: Publication Quality Checklist` for the complete validation checklist.
 
 **Progress checkpoint:**
 ```python

@@ -119,316 +119,72 @@ You are a senior research automation engineer. Your job is to execute the entire
 
 ### Step 0.5: Execute Stage 0 — Acquire Documented Data
 
-**Before profiling**, acquire datasets documented in `Data_Description.md`:
+**Before profiling**, acquire datasets documented in `<data_folder>/Data_Description.md`:
 
-1. **Read `Data_Description.md`** from `<data_folder>`:
-   ```python
-   data_desc_path = Path(data_folder) / "Data_Description.md"
-   if data_desc_path.exists():
-       with open(data_desc_path) as f:
-           data_desc_content = f.read()
-   ```
+1. Read `Data_Description.md` and parse for datasets with URLs or download instructions
+2. Build a manifest JSON with dataset names, URLs, and extraction settings
+3. Check what's already on disk in `<output_folder>/data/` and include only missing datasets
+4. Call `/acquire-data <output_folder> <output_folder>/0_data_acquisition/manifest.json`
+5. Verify: downloaded files exist, `data/README.md` updated, `download_report.json` created
 
-2. **Parse the description** and build a download manifest for each dataset that includes download instructions. For datasets with URLs or download instructions:
-   ```python
-   import json
+See `references/REFERENCE.md: Data Acquisition Manifest` for manifest schema example.
 
-   manifest = []
-
-   # Example: If Data_Description.md documents HPS_PUF with URLs
-   manifest.append({
-       "name": "HPS_PUF",
-       "description": "Household Pulse Survey microdata weeks 31-39",
-       "target_dir": "HPS_PUF",
-       "downloads": [
-           {
-               "url": "https://www2.census.gov/programs-surveys/demo/datasets/hhp/2021/wk31/HPS_Week31_PUF_CSV.zip",
-               "extract": True
-           }
-       ],
-       "verify_patterns": ["*.csv"],
-       "skip_patterns": ["*repwgt*", "*dictionary*"]
-   })
-
-   # Write manifest to file
-   manifest_path = Path(output_folder) / "0_data_acquisition" / "manifest.json"
-   manifest_path.parent.mkdir(parents=True, exist_ok=True)
-   with open(manifest_path, "w") as f:
-       json.dump(manifest, f, indent=2)
-   ```
-
-3. **Check what's already on disk** in `<output_folder>/data/` and include only missing datasets in the manifest.
-
-4. **Call acquire-data** with the manifest:
-   ```
-   /acquire-data <output_folder> <output_folder>/0_data_acquisition/manifest.json
-   ```
-
-5. **Verify outputs**:
-   - `<output_folder>/data/<target_dir>/` contains downloaded files
-   - `<output_folder>/data/README.md` exists
-   - `<output_folder>/0_data_acquisition/download_report.json` exists
-
-**If `Data_Description.md` doesn't exist or has no download instructions**, skip this stage and proceed to profiling with whatever data is on disk.
+**If `Data_Description.md` doesn't exist or has no download instructions**, skip this stage.
 
 ### Step 1: Execute Stages Sequentially
 
 Run each stage in order. For each stage:
 
-1. **Log stage start** using the PipelineTracker:
-   ```python
-   tracker.start_stage(stage_number, stage_name)
-   ```
-
-2. **Update Claude Code task** to in_progress (if task was created):
-   ```
-   TaskUpdate(task_id, status="in_progress")
-   ```
-
-3. **Execute the stage** by following the corresponding skill instructions.
-   Each skill will manage its own `progress.json` using `progress_utils.py`.
-
-4. **Read stage progress** after execution:
-   ```python
-   from progress_utils import get_progress, is_stage_complete
-   stage_complete = is_stage_complete(output_folder, stage_name)
-   progress = get_progress(output_folder, stage_name)
-   ```
-
-5. **Validate outputs** against the stage's output contract.
-
-6. **Log stage completion** with context management:
-   ```python
-   status = "success" if stage_complete else "degraded"
-
-   # Use context-aware completion if enabled
-   if context_mode != "off":
-       context_result = complete_stage_with_context(
-           output_folder=output_folder,
-           stage_name=stage_name,
-           context_mode=context_mode,
-           validate_outputs=False,  # Already validated above
-           expected_outputs=progress.get("outputs", []),
-           summary=f"Completed {stage_name} with status {status}"
-       )
-   else:
-       # Fallback to standard completion
-       tracker.complete_stage(stage_number, stage_name, status,
-                             outputs=progress.get("outputs", []),
-                             notes=progress.get("notes", ""))
-   ```
-
-7. **Update Claude Code task** to completed (or failed):
-   ```
-   TaskUpdate(task_id, status="completed")
-   ```
+1. Log stage start: `tracker.start_stage(stage_number, stage_name)`
+2. Update Claude Code task to `in_progress` (if created)
+3. Execute the stage by following its skill instructions
+4. Read stage progress with `get_progress()` and `is_stage_complete()`
+5. Validate outputs against the stage's output contract
+6. Log completion with `complete_stage_with_context()` or `tracker.complete_stage()`
+7. Update Claude Code task to `completed`
 
 #### Stage Execution Table
 
-| Stage | Skill | Validation Check | Degraded Fallback |
-|-------|-------|-----------------|-------------------|
-| 0 | acquire-data (Stage 0) | `data/README.md` exists, documented datasets downloaded | Skip — proceed with available data only |
-| 1 | load-and-profile | `profile.json` and `variable_types.json` exist with >0 datasets | Generate minimal profile from file headers only |
-| 2 | generate-research-questions | `research_questions.json` has `candidate_questions` array with ≥2 candidates | Use first numeric column as outcome, first categorical as exposure |
-| 3 | score-and-rank | `ranked_questions.json` exists with `primary_question` and `selection_metadata` | Use first candidate from `research_questions.json` as-is |
-| 4 | acquire-data (Stage 4) | Downloaded files exist (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
-| 5 | statistical-analysis | `analysis_results.json` exists with `descriptive_statistics` and `primary_analysis` | Run descriptive stats only, skip regression |
-| 6 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
-| 7 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |
-| 8 | write-paper | `paper.tex` exists and is >5KB | Generate a minimal paper with abstract + methods + results |
-| 9 | compile-and-review | `paper.pdf` exists in `<output_folder>/` and `<output_folder>/6_paper/` | Return the `.tex` file as final output |
+See `references/REFERENCE.md` for the complete stage execution table with validation checks and degraded fallbacks.
+
+**Summary**: Each stage validates its outputs and provides a fallback for degraded execution.
 
 ### Step 1b: Feedback Loop After Stage 5
 
-**After Stage 5 (statistical-analysis) completes**, check for structural analysis failures:
+**After Stage 5 (statistical-analysis) completes**, check for structural analysis failures and trigger a feedback loop if needed.
 
-```python
-from feedback_utils import build_feedback_signal
-from progress_utils import get_cycle_state, save_cycle_state, reset_stage_progress
+See `references/REFERENCE.md: Feedback Loop Logic` for complete implementation details.
 
-cycle_state = get_cycle_state(output_folder)
-feedback_signal = build_feedback_signal(output_folder)
+**Summary**: If structural failures are detected and cycle limit not reached:
+1. Increment cycle counter and record failure
+2. Reset progress for stages 3-5
+3. Re-run Stage 3 (score-and-rank) in fast-track mode (skip web searches, apply penalty)
+4. Re-run Stage 4 (acquire-data) if needed
+5. Re-run Stage 5 (statistical-analysis) in fast-track mode (primary model + Table 1 only)
 
-if feedback_signal is not None and feedback_signal["recommendation"] == "retry_next_candidate":
-    if cycle_state["current_cycle"] < cycle_state["max_cycles"]:
-        # --- FEEDBACK LOOP: Re-rank and retry ---
-        print(f"[FEEDBACK] Structural issues detected: {[i['check'] for i in feedback_signal['issues']]}")
-        print(f"[FEEDBACK] Initiating cycle {cycle_state['current_cycle'] + 1}")
-
-        # 1. Record the failure in cycle state
-        cycle_state["current_cycle"] += 1
-        cycle_state["feedback_history"].append({
-            "cycle": cycle_state["current_cycle"] - 1,
-            "failed_candidate_id": feedback_signal["failed_candidate_id"],
-            "issues": feedback_signal["issues"]
-        })
-        save_cycle_state(output_folder, cycle_state)
-
-        # 2. Reset progress for stages 3-5
-        reset_stage_progress(output_folder, "score_and_rank")
-        reset_stage_progress(output_folder, "acquire_data")
-        reset_stage_progress(output_folder, "statistical_analysis")
-
-        # 3. Update context bundle with feedback cycle
-        #    (pruning is automatically disabled for feedback stages)
-        if context_mode != "off":
-            import context_manager
-            bundle = context_manager.get_context_bundle(output_folder)
-            if bundle:
-                bundle["meta"]["cycle"] = cycle_state["current_cycle"]
-                bundle["meta"]["in_feedback_loop"] = True
-                context_manager._save_bundle(
-                    os.path.join(output_folder, "context_bundle.json"),
-                    bundle
-                )
-
-        # 4. Re-run Stage 3 (score-and-rank) in FAST-TRACK mode
-        #    The skill reads cycle_state.json and skips web searches,
-        #    applies penalty to failed candidate, re-ranks.
-        #    → Execute /score-and-rank <output_folder>
-
-        # 5. Re-run Stage 4 (acquire-data) — mostly skipped if data unchanged
-        #    → Execute /acquire-data <output_folder>
-
-        # 6. Re-run Stage 5 (statistical-analysis) in FAST-TRACK mode
-        #    Run primary model + Table 1 only, skip sensitivity analyses.
-        #    → Execute /statistical-analysis <output_folder>
-
-        # 7. Clear feedback loop flag after re-run completes
-        if context_mode != "off":
-            import context_manager
-            bundle = context_manager.get_context_bundle(output_folder)
-            if bundle:
-                bundle["meta"]["in_feedback_loop"] = False
-                context_manager._save_bundle(
-                    os.path.join(output_folder, "context_bundle.json"),
-                    bundle
-                )
-    else:
-        print(f"[FEEDBACK] Issues detected but max cycles ({cycle_state['max_cycles']}) reached — proceeding with current results")
-else:
-    # No structural issues or only minor issues — proceed normally
-    pass
-```
-
-**Context Management Note**: During feedback loop cycles, pruning of stages 3-5 is automatically disabled regardless of `context_mode` setting. This preserves files needed for re-ranking and re-analysis.
-
-**Fast-track mode details:**
-- **Stage 3 re-run**: Skips web searches, reuses prior `scoring_details.json`, applies score penalty (0.0) to failed candidate, re-ranks remaining candidates.
-- **Stage 4 re-run**: Mostly skipped if data acquisition requirements are the same.
-- **Stage 5 re-run**: Run primary model + Table 1 only, skip sensitivity analyses. Target: 10 min.
-- **Total feedback re-run budget**: 14 min.
+**Fast-track budget**: 14 min total.
 
 ### Step 1c: Execute Stage 4 — Acquire Supplementary Data
 
-**After Stage 3 (score-and-rank) completes**, check if supplementary data is needed:
+**After Stage 3 (score-and-rank) completes**, check `data_acquisition_requirements` in `ranked_questions.json`:
 
-1. **Read `data_acquisition_requirements`** from `<output_folder>/2_scoring/ranked_questions.json`:
-   ```python
-   with open(f"{output_folder}/2_scoring/ranked_questions.json") as f:
-       ranked = json.load(f)
+1. If non-empty, build manifest from the requirements
+2. Call `/acquire-data <output_folder> <output_folder>/2_research_question/download_manifest.json`
+3. Verify: files downloaded to `<output_folder>/data/`, `README.md` updated, `download_report.json` created
 
-   data_reqs = ranked.get("data_acquisition_requirements", [])
-   ```
-
-2. **If `data_acquisition_requirements` is non-empty**, build a manifest:
-   ```python
-   import json
-   from pathlib import Path
-
-   manifest = []
-   for req in data_reqs:
-       manifest.append({
-           "name": req.get("variable", "unknown"),
-           "description": req.get("action", "Supplementary data for analysis"),
-           "target_dir": req.get("target_dir", req.get("variable", "unknown")),
-           "downloads": [
-               {
-                   "url": req.get("url", ""),
-                   "extract": req.get("extract", False)
-               }
-           ]
-       })
-
-   # Write manifest
-   manifest_path = Path(output_folder) / "2_research_question" / "download_manifest.json"
-   with open(manifest_path, "w") as f:
-       json.dump(manifest, f, indent=2)
-   ```
-
-3. **Call acquire-data** with the manifest:
-   ```
-   /acquire-data <output_folder> <output_folder>/2_research_question/download_manifest.json
-   ```
-
-4. **Verify outputs**:
-   - `<output_folder>/data/<target_dir>/` contains downloaded files (same location as Stage 0)
-   - `<output_folder>/data/README.md` is updated with new file descriptions
-   - `<output_folder>/2_research_question/download_report.json` exists
-
-**If `data_acquisition_requirements` is empty**, skip this stage and proceed directly to Stage 5.
+**If `data_acquisition_requirements` is empty**, skip this stage.
 
 ### Step 2: Time Budget Management
 
-Allocate time across stages approximately:
+Target completion is 61 min happy path, up to 75 min with feedback loop.
 
-| Stage | Happy Path | With Feedback |
-|-------|-----------|---------------|
-| 0. Acquire Documented Data | 5 min | 5 min |
-| 1. Load & Profile | 5 min | 5 min |
-| 2. Research Questions | 5 min | 5 min |
-| 3. Score & Rank | 3 min | 3 min |
-| 4. Acquire Supplementary Data | 3 min | 3 min |
-| 5. Statistical Analysis | 13 min | 13 min |
-| *Feedback re-run (3-5)* | — | *14 min* |
-| 6. Generate Figures | 8 min | 8 min |
-| 7. Literature Review | 8 min | 8 min |
-| 8. Write Paper | 8 min | 8 min |
-| 9. Compile & Review | 3 min | 3 min |
-| **Total** | **61 min** | **75 min** |
-
-If a stage exceeds its budget by 2x, produce a simplified version and move on. The goal is a complete (even if imperfect) paper, not a perfect partial paper.
+See `references/REFERENCE.md: Time Budgets` for detailed per-stage breakdown.
 
 ### Step 3: Inter-Stage Data Flow
 
-Ensure correct data flow between stages:
+Both Stage 0 and Stage 4 write to the same `<output_folder>/data/` directory. The profiler (Stage 1) reads everything in that directory, including data from both acquisition passes.
 
-```
-Data_Description.md (in <data_folder>)
-  ↓ (orchestrator parses, builds manifest)
-0_data_acquisition/manifest.json
-  ↓ (acquire-data downloads to <output_folder>/data/)
-<output_folder>/data/HPS_PUF/*.csv
-<output_folder>/data/README.md
-0_data_acquisition/download_report.json
-  ↓
-Stage 1: load-and-profile → profiles <output_folder>/data/ (all CSV/XLSX)
-  → profile.json, variable_types.json
-  ↓
-Stage 2: generate-research-questions → research_questions.json
-  ↓
-Stage 3: score-and-rank → ranked_questions.json
-  ↓ (orchestrator extracts data_acquisition_requirements, builds manifest)
-2_research_question/download_manifest.json
-  ↓ (acquire-data downloads to SAME <output_folder>/data/)
-<output_folder>/data/covid_deaths/*.csv (supplementary)
-<output_folder>/data/README.md (updated)
-2_research_question/download_report.json
-  ↓
-Stage 5: statistical-analysis → analysis_results.json
-  ↓                                    ↑
-  ↓  ← ← ← FEEDBACK LOOP ← ← ← ← ← ← ← ↑  (if structural failure: re-score → re-acquire → re-analyze)
-  ↓
-Stage 6 → figures/*.png, tables/*.tex (reads 3_analysis/analysis_results)
-  ↓
-Stage 7 → references.bib (reads 2_scoring/ranked_questions for topic context)
-  ↓
-Stage 8 → paper.tex (reads ALL upstream outputs + template + decision_log.json)
-  ↓
-Stage 9 → paper.pdf (compiles paper.tex)
-```
-
-**Key point:** Both Stage 0 and Stage 4 write to the same `<output_folder>/data/` directory. The profiler (Stage 1) reads everything in that directory, including data from both acquisition passes.
+See `references/REFERENCE.md: Data Flow Diagram` for the complete data flow diagram.
 
 ### Step 4: Finalize
 
@@ -448,51 +204,10 @@ Stage 9 → paper.pdf (compiles paper.tex)
 
 ## Output Contract
 
-**`<output_folder>/pipeline_log.json`** — Execution log:
-```json
-{
-  "started_at": "2024-01-01T00:00:00Z",
-  "completed_at": "2024-01-01T00:45:00Z",
-  "data_folder": "sample/data",
-  "output_folder": "exam_paper",
-  "overall_status": "success|degraded|failed",
-  "stages": {
-    "1_load_and_profile": {
-      "status": "success",
-      "started_at": "...",
-      "completed_at": "...",
-      "outputs": ["1_data_profile/profile.json", "1_data_profile/variable_types.json"],
-      "notes": ""
-    }
-  }
-}
-```
+**Output files:**
+- `<output_folder>/pipeline_log.json` — Overall pipeline status, stage timing
+- `<output_folder>/cycle_state.json` — Feedback loop cycle counter
+- `<output_folder>/decision_log.json` — Question selection audit trail
+- `<output_folder>/paper.pdf` — The final deliverable
 
-**`<output_folder>/cycle_state.json`** — Feedback loop state:
-```json
-{
-  "current_cycle": 1,
-  "max_cycles": 2,
-  "feedback_history": []
-}
-```
-
-**`<output_folder>/decision_log.json`** — Question selection audit trail:
-```json
-[
-  {
-    "cycle": 1,
-    "timestamp": "ISO-8601",
-    "candidates_scored": [
-      { "candidate_id": "CQ1", "composite": 0.78 },
-      { "candidate_id": "CQ2", "composite": 0.65 }
-    ],
-    "selected": "CQ1",
-    "feedback_signal": null
-  }
-]
-```
-
-**`<output_folder>/paper.pdf`** — The final deliverable at output root. Must exist unless stage 9 failed after 3 retries.
-
-**`<output_folder>/6_paper/paper.pdf`** — The same PDF remains in the stage folder for reference.
+See `references/REFERENCE.md: Output Contracts` for complete JSON schemas.

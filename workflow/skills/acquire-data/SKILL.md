@@ -42,37 +42,11 @@ This skill uses `progress_utils.py` for stage-level progress tracking.
 
 ## Manifest Schema
 
-The manifest is a JSON array where each entry has:
+The manifest is a JSON array where each entry has `name`, `description`, `target_dir`, `downloads`, `verify_patterns`, and `skip_patterns`.
 
-```json
-[
-  {
-    "name": "HPS_PUF",
-    "description": "Household Pulse Survey microdata weeks 31-39",
-    "target_dir": "HPS_PUF",
-    "downloads": [
-      {
-        "url": "https://www2.census.gov/programs-surveys/demo/datasets/hhp/2021/wk31/HPS_Week31_PUF_CSV.zip",
-        "extract": true
-      }
-    ],
-    "verify_patterns": ["*.csv"],
-    "skip_patterns": ["*repwgt*", "*dictionary*"]
-  }
-]
-```
+See `references/REFERENCE.md: Manifest Schema` for the complete manifest structure and field definitions.
 
-**Fields:**
-- `name`: Dataset identifier (used in reporting)
-- `description`: What this data is for (included in README)
-- `target_dir`: Subdirectory name inside `<output_folder>/data/`
-- `downloads`: Array of download objects with:
-  - `url`: Download URL
-  - `extract`: Boolean, whether to extract archives
-- `verify_patterns`: Optional glob patterns to verify expected files
-- `skip_patterns`: Optional glob patterns to exclude certain files
-
-**Important:** All downloads go to `<output_folder>/data/<target_dir>/`. Both Stage 0 and Stage 4 write to the same location. Example: `target_dir: "HPS_PUF"` → files downloaded to `<output_folder>/data/HPS_PUF/`.
+**Important:** All downloads go to `<output_folder>/data/<target_dir>/`. Both Stage 0 and Stage 4 write to the same location.
 
 ## Instructions
 
@@ -141,87 +115,18 @@ update_step(output_folder, stage_name, "step_2_check_existing", "completed")
 ### Step 3: Download Missing Files
 
 For each entry that needs downloading:
+1. Create target directory
+2. Download with timeout=30 seconds
+3. Extract archives if `extract: true`
+4. Retry once on failure
 
-1. Create target directory: `<output_folder>/data/<target_dir>/`
-2. For each download URL:
-   - Download with timeout=30 seconds
-   - If `extract: true`, extract the archive
-   - Retry once on failure
-
-```python
-import requests
-import zipfile
-from io import BytesIO
-
-def download_entry(entry, output_folder):
-    """Download a single manifest entry."""
-    target_dir = Path(output_folder) / "data" / entry["target_dir"]
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    downloaded_files = []
-
-    for dl in entry.get("downloads", []):
-        url = dl["url"]
-        should_extract = dl.get("extract", False)
-
-        try:
-            print(f"Downloading {url}...")
-            r = requests.get(url, timeout=30)
-            r.raise_for_status()
-
-            filename = url.split("/")[-1]
-            temp_path = target_dir / filename
-
-            with open(temp_path, "wb") as f:
-                f.write(r.content)
-
-            if should_extract:
-                print(f"  Extracting {filename}...")
-                with zipfile.ZipFile(temp_path, 'r') as zf:
-                    zf.extractall(target_dir)
-                temp_path.unlink()  # Remove archive after extraction
-
-            downloaded_files.append(filename)
-        except Exception as e:
-            print(f"  ERROR: {e}")
-            continue
-
-    return downloaded_files
-```
-
-**Progress checkpoint:**
-```python
-downloaded_files = []
-for entry in missing_downloads:
-    files = download_entry(entry, output_folder)
-    downloaded_files.extend(files)
-
-update_step(output_folder, stage_name, "step_3_download", "completed",
-             outputs=[f"data/{entry['target_dir']}" for entry in missing_downloads])
-```
+See `references/REFERENCE.md: Download Logic` for the complete download function implementation.
 
 ### Step 4: Verify Downloads
 
-For each downloaded entry, verify files against `verify_patterns` if provided:
+For each downloaded entry, verify files against `verify_patterns` if provided.
 
-```python
-def verify_entry(entry, output_folder):
-    """Verify downloaded files match expected patterns."""
-    target_dir = Path(output_folder) / "data" / entry["target_dir"]
-
-    verify_patterns = entry.get("verify_patterns", [])
-    if not verify_patterns:
-        return True  # No verification required
-
-    # Check that at least one file matches each pattern
-    for pattern in verify_patterns:
-        matching = list(target_dir.glob(pattern))
-        if not matching:
-            print(f"  WARNING: No files matching pattern '{pattern}'")
-            return False
-
-    return True
-```
+See `references/REFERENCE.md: Verification` for the verification function.
 
 **Progress checkpoint:**
 ```python
@@ -276,26 +181,9 @@ else:
 complete_stage(output_folder, stage_name, expected_outputs=expected_outputs)
 ```
 
-## Fallback Logic for Common Sources
-
-While the manifest-driven design removes the need for source-specific logic from the main flow, you can maintain a helper function for known COVID data sources. This is optional but useful for Stage 4 when supplementary data is needed:
-
-```python
-COVID_FALLBACKS = {
-    "nytimes": "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
-    "jhu": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports_us.csv",
-}
-
-def get_fallback_url(variable_name: str) -> str | None:
-    """Return a fallback URL for common public health data."""
-    if "covid" in variable_name.lower() or "mortality" in variable_name.lower():
-        return COVID_FALLBACKS["nytimes"]
-    return None
-```
-
-This helper can be used when building the manifest in the orchestrator, not here.
-
 ## Output Contract
+
+See `references/REFERENCE.md: Output Contract` for files created and behavior notes.
 
 **Files created:**
 
