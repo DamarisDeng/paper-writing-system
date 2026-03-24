@@ -21,7 +21,7 @@ Draft a complete JAMA Network Open research paper in LaTeX, integrating all upst
 /write-paper <output_folder>
 ```
 
-Reads from all upstream stage outputs in `<output_folder>/` and the template at `workflow/skills/write-paper/templates/template.tex`. Writes to `<output_folder>/6_paper/`.
+Reads from all upstream stage outputs in `<output_folder>/` and the template at `sample/tex/template.tex`. Writes to `<output_folder>/6_paper/`.
 
 ## Progress Tracking
 
@@ -64,7 +64,7 @@ Read these files:
 2. **`<output_folder>/3_analysis/analysis_results.json`** — All statistical results.
 3. **`<output_folder>/4_figures/manifest.json`** — List of figures and tables with titles and file paths.
 4. **`<output_folder>/5_references/references.bib`** — Bibliography entries.
-5. **`workflow/skills/write-paper/templates/template.tex`** — The JAMA Network Open LaTeX template.
+5. **`sample/tex/template.tex`** — The JAMA Network Open LaTeX template.
 6. **`<output_folder>/1_data_profile/profile.json`** — Dataset context for data description.
 
 ### Step 2: Copy Assets
@@ -75,7 +75,7 @@ Read these files:
 
 ### Step 3: Draft the Paper
 
-Using the template structure from `workflow/skills/write-paper/templates/template.tex`, write `<output_folder>/6_paper/paper.tex` with these sections:
+Using the template structure from `sample/tex/template.tex`, write `<output_folder>/6_paper/paper.tex` with these sections:
 
 #### 3.1 Preamble and Metadata
 
@@ -91,7 +91,7 @@ Full Title of the Paper: A Descriptive Subtitle\par}
 ```
 
 - Title: Concise, informative, ≤20 words. Include study design if space permits.
-- Authors: List "AI-Generated Research Paper; Claude, Anthropic" as the author line.
+- Authors: List "Junyang Deng; Shupeng Luxu; Nuo Ding; Claude" as the author line.
 
 #### 3.3 Abstract (Structured, 7 Subsections)
 
@@ -163,21 +163,224 @@ Structure:
 }
 ```
 
-#### 3.11 Supplement
+#### 3.11 Supplement (Auto-Generated from Analysis Results)
+
+**CRITICAL**: The supplement must be populated with actual statistical content from `analysis_results.json`, NOT placeholder text. Extract information and generate well-written supplementary content using the LLM.
 
 On a new page after references:
 ```latex
 \clearpage
 \section*{Supplement 1}
-\subsection*{eAppendix 1. Statistical Models and Methods Details}
-% Detailed model specifications, equations, assumption checks
-
-\subsection*{eTable 1. Supplementary Table Title}
-% Additional table from analysis
-
-\subsection*{eFigure 1. Supplementary Figure Title}
-% Additional figure from analysis
 ```
+
+Then generate these sections by extracting from `analysis_results.json`:
+
+---
+
+**eAppendix 1: Statistical Model Specification**
+
+Extract from `analysis_results.json` → `primary_analysis`:
+- `method` (e.g., "OLS Linear Regression", "Logistic Regression", "Poisson Regression")
+- `outcome` (primary outcome variable)
+- `exposure` (primary exposure variable)
+- `models[].covariates` (list of adjustment variables)
+
+Generate:
+1. **Model equation in proper LaTeX math format** — Use the appropriate form for the method:
+   - OLS: `$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_k X_k + \epsilon$`
+   - Logistic: `$\operatorname{logit}[P(Y=1)] = \beta_0 + \sum_{j=1}^{k} \beta_j X_j$`
+   - Poisson: `$\log(\mathbb{E}[Y]) = \beta_0 + \sum_{j=1}^{k} \beta_j X_j$`
+   - Cox: `$h(t|X) = h_0(t) \exp(\sum_{j=1}^{k} \beta_j X_j)$`
+
+2. **Variable definitions** — Define each term in the equation:
+   - Outcome variable ($Y$): [from `primary_analysis.outcome`]
+   - Exposure variable ($X_1$): [from `primary_analysis.exposure`]
+   - Covariates ($X_2, \ldots, X_k$): [list from `primary_analysis.models[].covariates`]
+
+3. **Software and packages** — State software used:
+   - "Analyses were performed using Python [version] with statsmodels [version] and pandas [version]."
+   - Version info can be inferred from typical pipeline setup or use generic "Python 3.x" if not specified
+
+4. **Estimation method** — Brief description:
+   - OLS: "Ordinary least squares estimation was used to fit the linear regression model."
+   - Logistic: "Maximum likelihood estimation was used to fit the logistic regression model."
+   - Include any special techniques (robust standard errors, clustering, etc.)
+
+Example LaTeX structure:
+```latex
+\subsection*{eAppendix 1. Statistical Model Specification}
+
+The primary analysis used [method] to examine the association between [exposure] and [outcome]. The model was specified as:
+
+\[
+\operatorname{logit}[P(Y=1)] = \beta_0 + \beta_1 \text{[Exposure]} + \beta_2 \text{[Covariate}_1] + \beta_3 \text{[Covariate}_2] + \cdots + \beta_k \text{[Covariate}_{k-1}]
+\]
+
+where $Y$ represents [outcome description], $\text{[Exposure]}$ indicates [exposure description], and the remaining terms represent adjustment variables: [list covariates from model].
+
+Model parameters were estimated using maximum likelihood. All analyses were performed using Python 3.x with statsmodels.
+```
+
+---
+
+**eAppendix 2: Model Assumption Checks and Diagnostic Results**
+
+Extract from `analysis_results.json` → look for any assumption-related fields:
+- Check `primary_analysis.assumption_checks` if it exists
+- Look for `primary_analysis.model_fit` (R², AIC, BIC, etc.)
+- Use `primary_analysis.models[].r_squared`, `adj_r_squared`, `df_resid` for fit statistics
+
+Generate:
+1. **Model fit statistics** — Report for each model:
+   - Sample size ($N$)
+   - Residual degrees of freedom
+   - $R^2$ (for OLS) or pseudo-$R^2$ (for logistic)
+   - AIC/BIC if available
+
+2. **Assumption checks** — If available in the results, report:
+   - Name of each assumption checked
+   - Result (passed/failed)
+   - Interpretation in plain language
+   - Any remedial actions taken
+
+3. **If no formal assumption checks in JSON**, still document:
+   - The assumptions inherent to the chosen method
+   - "Formal diagnostic tests were not performed; this is a limitation."
+
+Example LaTeX structure:
+```latex
+\subsection*{eAppendix 2. Model Fit and Assumption Checks}
+
+\textbf{Model Fit Statistics.} Table eTable 1 presents the full model results for all specifications. The primary model (Model [n]) achieved an $R^2$ of [value], indicating that [percent]\% of the variance in [outcome] was explained by the included predictors.
+
+\textbf{Assumption Checks.} [If available: "The following assumptions were evaluated: [list]. [Assumption name] was assessed using [test name]; results indicated [passed/failed] (P = [value])."]
+
+[If assumptions failed: "To address [issue], [remedial action taken] was used."]
+```
+
+---
+
+**eTable 1: Full Model Results**
+
+Extract from `analysis_results.json` → `primary_analysis.models[]` and generate a complete coefficient table.
+
+For each model in the array, create rows showing:
+- Variable name
+- Estimate ($\beta$)
+- Standard error (SE)
+- 95\% Confidence interval (CI)
+- P-value
+
+Use JAMA table style (no vertical rules, booktabs, `\toprule`, `\midrule`, `\bottomrule`):
+
+```latex
+\subsection*{eTable 1. Full Model Results for Association Between [Exposure] and [Outcome]}
+
+\begin{table}[H]
+\centering
+\sffamily\fontsize{8.5}{11}\selectfont
+\caption{Complete Regression Results for All Model Specifications}
+\label{tab:e1}
+
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{4.5cm}
+  *{4}{>{\centering\arraybackslash}X} @{}}
+
+\toprule
+\textbf{Variable} & \textbf{Model 1\newline(Unadjusted)} & \textbf{Model 2\newline(Region Adjusted)} & \textbf{Model 3\newline(Fully Adjusted)} \\
+\cmidrule(lr){1-1} \cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4}
+& $\beta$ (SE) & $\beta$ (SE) & $\beta$ (SE) \\
+\midrule
+
+Intercept & [estimate] ([SE]) & [estimate] ([SE]) & [estimate] ([SE]) \\
+[Exposure] & [estimate] ([SE]) & [estimate] ([SE]) & [estimate] ([SE]) \\
+[Covariate 1] & & [estimate] ([SE]) & [estimate] ([SE]) \\
+[Covariate 2] & & [estimate] ([SE]) & [estimate] ([SE]) \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Model fit}} \\
+$N$ & [n] & [n] & [n] \\
+$R^2$ & [r2] & [r2] & [r2] \\
+\bottomrule
+\end{tabularx}
+
+\vspace{4pt}
+\begin{flushleft}
+\fontsize{7.5}{9.5}\selectfont\rmfamily\color{jamagray}
+SE indicates standard error. Model 1 includes [exposure] only. Model 2 adjusts for [covariates]. Model 3 adds [additional covariates].
+\end{flushleft}
+
+\end{table}
+```
+
+**Important formatting rules:**
+- Use `\beta` for the coefficient symbol, never `β`
+- Use SE for standard error, CI for confidence interval
+- For p-values, use the format from the JSON (e.g., "<0.001" or actual value)
+- Escape percent signs: `95\%` not `95%`
+
+---
+
+**eTable 2: Sensitivity Analysis Summary** (if applicable)
+
+Extract from `analysis_results.json` → `sensitivity_analyses[]`
+
+If sensitivity analyses exist, create a comparison table:
+
+```latex
+\subsection*{eTable 2. Sensitivity Analysis Results}
+
+\begin{table}[H]
+\centering
+\sffamily\fontsize{8.5}{11}\selectfont
+\caption{Comparison of Primary Analysis With Sensitivity Analyses}
+\label{tab:e2}
+
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{5cm}
+  *{2}{>{\centering\arraybackslash}X} @{}}
+
+\toprule
+\textbf{Analysis} & \textbf{Estimate (95\% CI)} & \textbf{P Value} \\
+\midrule
+Primary analysis & [estimate] ([CI]) & [p-value] \\
+[Sensitivity 1 name] & [estimate] ([CI]) & [p-value] \\
+[Sensitivity 2 name] & [estimate] ([CI]) & [p-value] \\
+\bottomrule
+\end{tabularx}
+
+\vspace{4pt}
+\begin{flushleft}
+\fontsize{7.5}{9.5}\selectfont\rmfamily\color{jamagray}
+CI indicates confidence interval. [Sensitivity analysis descriptions from JSON].
+\end{flushleft}
+
+\end{table}
+```
+
+If no sensitivity analyses exist, omit this section entirely.
+
+---
+
+**eFigure 1 (Optional)** — If there are supplementary figures in `4_figures/`, include them:
+```latex
+\subsection*{eFigure 1. [Figure Title]}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/figureX.pdf}
+\caption{[Caption from manifest.json]}
+\label{fig:e1}
+\end{figure}
+```
+
+---
+
+**Content Generation Guidelines:**
+
+1. **Write in natural prose**, not just data dumps. The supplement should be readable.
+2. **Use exact values** from `analysis_results.json` — no fabrication.
+3. **Interpret results** where appropriate (e.g., "The association remained significant after adjustment...").
+4. **Follow LaTeX math rules** from Section 3.12 — use `\beta`, `\leq`, etc., never Unicode.
+5. **No placeholder text** — Every section must have actual content based on the analysis.
+6. **If a data field is missing**, state what was done instead (e.g., "Formal assumption tests were not conducted.") rather than leaving blanks.
 
 #### 3.12 LaTeX Math and Symbol Rules
 
@@ -248,6 +451,10 @@ Before saving, verify:
 - [ ] No placeholder text remains (search for "TODO", "XXX", "PLACEHOLDER")
 - [ ] `references.bib` is copied to `<output_folder>/6_paper/`
 - [ ] No Unicode math symbols (check with grep commands above)
+- [ ] **Supplement section is populated** (eAppendix 1 contains actual model equations, not placeholder text)
+- [ ] **Model equations present in LaTeX math format** (using `\beta`, `\logit`, etc., not Unicode)
+- [ ] **Assumption checks are documented** with interpretations
+- [ ] **eTable 1 contains full model results** with all covariates from `analysis_results.json`
 
 **LaTeX compilation validation:**
 
@@ -278,7 +485,7 @@ If compilation fails, check the `.log` file for specific error messages and fix 
 - `3_analysis/analysis_results.json` — Re-run the statistical-analysis stage
 - `4_figures/manifest.json` — Re-run the generate-figures stage
 - `5_references/references.bib` — Re-run the literature-review stage
-- `template.tex` — Verify `workflow/skills/write-paper/templates/template.tex` exists
+- `template.tex` — Verify `sample/tex/template.tex` exists
 
 **If LaTeX compilation fails:**
 1. Check `paper.log` for the specific error (search for `!` which indicates errors)
