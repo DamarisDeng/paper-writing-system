@@ -12,8 +12,6 @@ repo/
 ├── Readme.md                  # Project documentation, tutorial links
 ├── workflow/                  # GENERIC reusable assets (skills, templates, scripts)
 │   ├── skills/                # Claude Code SKILL.md files (one per pipeline stage)
-│   ├── templates/
-│   │   └── template.tex       # JAMA Network Open LaTeX template
 │   ├── scripts/               # Reusable Python/R scripts called by skills
 │   │   ├── progress_utils.py  # Stage progress tracking, cycle state management
 │   │   ├── feedback_utils.py  # Feedback signal detection, decision logging
