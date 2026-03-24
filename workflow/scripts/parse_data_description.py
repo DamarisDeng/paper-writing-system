@@ -17,6 +17,35 @@ import re
 import sys
 from pathlib import Path
 
+# JSON schema for manifest validation
+MANIFEST_SCHEMA = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": ["name", "target_dir"],
+        "properties": {
+            "name": {"type": "string"},
+            "description": {"type": "string"},
+            "target_dir": {"type": "string"},
+            "downloads": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["url"],
+                    "properties": {
+                        "url": {"type": "string", "format": "uri"},
+                        "extract": {"type": "boolean"}
+                    }
+                }
+            },
+            "verify_patterns": {
+                "type": "array",
+                "items": {"type": "string"}
+            }
+        }
+    }
+}
+
 
 def parse_data_description(data_desc_path: Path) -> list[dict]:
     """Parse Data_Description.md and extract dataset information.
@@ -85,28 +114,63 @@ def parse_data_description(data_desc_path: Path) -> list[dict]:
             patterns = re.findall(r'[\w.*]+\.?\w*', files_text)
             dataset_info["verify_patterns"] = [p for p in patterns if '*' in p or '.' in p]
 
-        # Generate target_dir from dataset name (sanitize for folder name)
-        if dataset_name.lower().startswith("household"):
-            dataset_info["target_dir"] = "HPS_PUF"
-            dataset_info["verify_patterns"] = ["pulse2021_puf_*.csv"]
-        elif "population" in dataset_name.lower():
-            dataset_info["target_dir"] = ""
-            dataset_info["file_patterns"].append("NST-EST2024-POP.xlsx")
-        elif "covid" in dataset_name.lower() and "death" in dataset_name.lower():
-            dataset_info["target_dir"] = ""
-            dataset_info["file_patterns"].append("United_States_COVID-19_Cases_and_Deaths_by_State_over_Time*.csv")
-        elif "policy" in dataset_name.lower() or "mandate" in dataset_name.lower():
-            dataset_info["target_dir"] = ""
-            dataset_info["file_patterns"].append("hcw_mandates_table.csv")
+        # Extract target_dir from markdown (data-driven approach)
+        # Look for patterns like "to the folder `data/HPS_PUF`" or "in the folder `HPS_PUF`"
+        target_dir_match = re.search(
+            r'(?:to|in)\s+the\s+folder\s+[`\'"]?data/([^\s\'"`]+)[`\'"]?',
+            section,
+            re.IGNORECASE
+        )
+        if target_dir_match:
+            dataset_info["target_dir"] = target_dir_match.group(1)
         else:
-            # Use sanitized name as target_dir
-            safe_name = re.sub(r'[^\w\s-]', '', dataset_name).strip().replace(' ', '_')
-            dataset_info["target_dir"] = safe_name
+            # Also check for "in the folder `FOLDER_NAME`" pattern (without data/ prefix)
+            target_dir_match = re.search(
+                r'in\s+the\s+folder\s+[`\'"]?([^/`\s\'"]+)[`\'"]?',
+                section,
+                re.IGNORECASE
+            )
+            if target_dir_match:
+                dataset_info["target_dir"] = target_dir_match.group(1)
+            else:
+                # Default: use sanitized name as target_dir
+                safe_name = re.sub(r'[^\w\s-]', '', dataset_name).strip().replace(' ', '_')
+                dataset_info["target_dir"] = safe_name
+
+        # Extract verify patterns from specific patterns mentioned in text
+        # This captures patterns like "pulse2021_puf_*.csv" that may appear in the description
+        verify_pattern_match = re.search(r'([a-zA-Z0-9_]+_\*\\\.[a-z]{3})', section)
+        if verify_pattern_match:
+            pattern = verify_pattern_match.group(1).replace('\\.', '.')
+            if pattern not in dataset_info["verify_patterns"]:
+                dataset_info["verify_patterns"].append(pattern)
 
         if dataset_info["downloads"] or dataset_info["file_patterns"]:
             datasets.append(dataset_info)
 
     return datasets
+
+
+def validate_manifest(manifest: list[dict]) -> bool:
+    """Validate manifest against JSON schema.
+
+    Returns True if valid, False if invalid (or jsonschema not available).
+    """
+    try:
+        import jsonschema
+    except ImportError:
+        print("Warning: jsonschema not installed. Skipping manifest validation.")
+        print("  Install with: pip install jsonschema")
+        return True  # Allow proceeding without validation
+
+    try:
+        jsonschema.validate(instance=manifest, schema=MANIFEST_SCHEMA)
+        print("Manifest validation: PASSED")
+        return True
+    except jsonschema.ValidationError as e:
+        print(f"Manifest validation FAILED: {e.message}")
+        print(f"  Path: {'.'.join(str(p) for p in e.path)}")
+        return False
 
 
 def check_availability(datasets: list[dict], data_folder: Path) -> tuple[list[dict], list[dict]]:
@@ -205,6 +269,11 @@ def main():
             if ds.get("verify_patterns"):
                 entry["verify_patterns"] = ds["verify_patterns"]
             manifest.append(entry)
+
+        # Validate manifest before writing
+        if manifest and not validate_manifest(manifest):
+            print("ERROR: Manifest validation failed. Aborting.")
+            sys.exit(2)
 
     # Write manifest
     manifest_path = output_folder / "0_data_acquisition" / "manifest.json"

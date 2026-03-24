@@ -62,7 +62,6 @@ You are a senior research automation engineer. Your job is to execute the entire
    mkdir -p <output_folder>/2_research_question/downloaded
    mkdir -p <output_folder>/2_scoring
    mkdir -p <output_folder>/3_analysis/scripts
-   mkdir -p <output_folder>/3_analysis/models
    mkdir -p <output_folder>/4_figures/figures
    mkdir -p <output_folder>/4_figures/tables
    mkdir -p <output_folder>/5_references
@@ -70,7 +69,7 @@ You are a senior research automation engineer. Your job is to execute the entire
    mkdir -p <output_folder>/data
    ```
 
-2. **Record start time** for time budgeting. The entire pipeline should target completion within 70 minutes (56 min happy path, up to 70 min if feedback loop triggers).
+2. **Record start time** for time budgeting. The entire pipeline should target completion within 70 minutes (56 min happy path, up to 70 min if feedback loop triggers). 
 
 3. **Initialize progress tracking** using the PipelineTracker from `progress_utils.py`:
 
