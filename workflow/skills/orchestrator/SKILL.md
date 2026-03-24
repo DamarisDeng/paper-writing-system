@@ -121,55 +121,39 @@ You are a senior research automation engineer. Your job is to execute the entire
 
 **Before profiling**, acquire datasets documented in `Data_Description.md`:
 
-1. **Read `Data_Description.md`** from `<data_folder>`:
-   ```python
-   data_desc_path = Path(data_folder) / "Data_Description.md"
-   if data_desc_path.exists():
-       with open(data_desc_path) as f:
-           data_desc_content = f.read()
+**IMPORTANT: Use the automated parser script** to properly check for missing datasets. Do NOT manually check for files — the parser handles this correctly.
+
+1. **Run the data description parser:**
+   ```bash
+   python workflow/scripts/parse_data_description.py <data_folder> <output_folder>
    ```
 
-2. **Parse the description** and build a download manifest for each dataset that includes download instructions. For datasets with URLs or download instructions:
-   ```python
-   import json
+   This script:
+   - Reads `Data_Description.md` from `<data_folder>`
+   - Extracts all documented datasets with download URLs
+   - Checks which datasets are actually present in `<data_folder>/data/`
+   - Generates `<output_folder>/0_data_acquisition/manifest.json` for missing datasets
+   - Exits with code 1 if downloads are needed, 0 if all present
 
-   manifest = []
-
-   # Example: If Data_Description.md documents HPS_PUF with URLs
-   manifest.append({
-       "name": "HPS_PUF",
-       "description": "Household Pulse Survey microdata weeks 31-39",
-       "target_dir": "HPS_PUF",
-       "downloads": [
-           {
-               "url": "https://www2.census.gov/programs-surveys/demo/datasets/hhp/2021/wk31/HPS_Week31_PUF_CSV.zip",
-               "extract": True
-           }
-       ],
-       "verify_patterns": ["*.csv"],
-       "skip_patterns": ["*repwgt*", "*dictionary*"]
-   })
-
-   # Write manifest to file
-   manifest_path = Path(output_folder) / "0_data_acquisition" / "manifest.json"
-   manifest_path.parent.mkdir(parents=True, exist_ok=True)
-   with open(manifest_path, "w") as f:
-       json.dump(manifest, f, indent=2)
+2. **Check the availability report:**
+   ```bash
+   cat <output_folder>/0_data_acquisition/availability_report.json
    ```
 
-3. **Check what's already on disk** in `<output_folder>/data/` and include only missing datasets in the manifest.
-
-4. **Call acquire-data** with the manifest:
+3. **If the parser indicated missing datasets**, call acquire-data:
    ```
    /acquire-data <output_folder> <output_folder>/0_data_acquisition/manifest.json
    ```
 
-5. **Verify outputs**:
+4. **Verify outputs**:
    - `<output_folder>/data/<target_dir>/` contains downloaded files
    - `<output_folder>/data/README.md` exists
    - `<output_folder>/0_data_acquisition/download_report.json` exists
 
-**If `Data_Description.md` doesn't exist or has no download instructions**, skip this stage and proceed to profiling with whatever data is on disk.
+**If `Data_Description.md` doesn't exist**, skip this stage and proceed to profiling with whatever data is on disk.
+
+**Why this matters:** The previous approach of checking "what files exist" was too simplistic. The parser correctly identifies ALL documented datasets and verifies they're complete, not just "some files are present." This prevents missing critical data like HPS_PUF which contains HCW vaccination variables.
+
 
 ### Step 1: Execute Stages Sequentially
 

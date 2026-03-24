@@ -70,11 +70,26 @@ update_step(output_folder, "load_and_profile", "step_2_inspect_files", "complete
 **Note:** This script is located within the skill directory at `workflow/skills/load-and-profile/`,
 not in the shared `workflow/scripts/` folder (which contains only shared utilities like `progress_utils.py`).
 
-Run the Python profiling script:
+**Choose the appropriate profiler:**
 
+**Option A: Standard profiler** (for small/medium datasets <100MB total):
 ```bash
 python workflow/skills/load-and-profile/load_and_profile.py <data_folder> <output_folder>/1_data_profile
 ```
+
+**Option B: Quick profiler** (for large datasets or when efficiency matters):
+```bash
+python workflow/scripts/quick_profile.py <data_folder> <output_folder>/1_data_profile
+```
+
+The quick profiler uses a smart sampling strategy:
+1. Reads `Data_Description.md` first for context
+2. Samples first 10K rows of each file for structure
+3. Reads data dictionary if available for variable meanings
+4. Uses dictionary info to guide interpretation
+5. Produces same output format with significantly less time
+
+**Recommendation:** Use quick_profile.py for HPS data, large surveys, or any dataset with accompanying data dictionaries. Use standard load_and_profile.py only for small, simple datasets without documentation.
 
 This produces `<output_folder>/1_data_profile/profile.json` and `<output_folder>/1_data_profile/variable_types.json` with mechanical profiling.
 
