@@ -217,7 +217,7 @@ Run each stage in order. For each stage:
 | 5 | statistical-analysis | `analysis_results.json` exists with `descriptive_statistics` and `primary_analysis` | Run descriptive stats only, skip regression |
 | 6 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
 | 7 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |
-| 8 | write-paper | `paper.tex` exists and is >5KB | Generate a minimal paper with abstract + methods + results |
+| 8 | write-paper | `paper.tex` exists and is >5KB; supplement section present (`\section*{Supplement`); no placeholder tokens (`[INSERT`, `TODO`, `PLACEHOLDER`, `TBD`) in supplement | Generate a minimal paper with abstract + methods + results; add stub eAppendix 1 with model equations extracted from `analysis_results.json` |
 | 9 | compile-and-review | `paper.pdf` exists in `<output_folder>/` and `<output_folder>/6_paper/` | Return the `.tex` file as final output |
 
 ### Step 1b: Feedback Loop After Stage 5
@@ -305,50 +305,33 @@ else:
 
 **After Stage 3 (score-and-rank) completes**, check if supplementary data is needed:
 
-1. **Read `data_acquisition_requirements`** from `<output_folder>/2_scoring/ranked_questions.json`:
-   ```python
-   with open(f"{output_folder}/2_scoring/ranked_questions.json") as f:
-       ranked = json.load(f)
-
-   data_reqs = ranked.get("data_acquisition_requirements", [])
+1. **Run the manifest builder script:**
+   ```bash
+   python workflow/skills/orchestrator/scripts/build_stage4_manifest.py <output_folder>
    ```
+   - Prints `NO_DOWNLOADS_NEEDED` → skip to Stage 5
+   - Prints `MANIFEST_WRITTEN <path>` → proceed to step 2
 
-2. **If `data_acquisition_requirements` is non-empty**, build a manifest:
-   ```python
-   import json
-   from pathlib import Path
-
-   manifest = []
-   for req in data_reqs:
-       manifest.append({
-           "name": req.get("variable", "unknown"),
-           "description": req.get("action", "Supplementary data for analysis"),
-           "target_dir": req.get("target_dir", req.get("variable", "unknown")),
-           "downloads": [
-               {
-                   "url": req.get("url", ""),
-                   "extract": req.get("extract", False)
-               }
-           ]
-       })
-
-   # Write manifest
-   manifest_path = Path(output_folder) / "2_research_question" / "download_manifest.json"
-   with open(manifest_path, "w") as f:
-       json.dump(manifest, f, indent=2)
-   ```
-
-3. **Call acquire-data** with the manifest:
+2. **Call acquire-data** with the manifest:
    ```
    /acquire-data <output_folder> <output_folder>/2_research_question/download_manifest.json
    ```
 
-4. **Verify outputs**:
+3. **Verify outputs**:
    - `<output_folder>/data/<target_dir>/` contains downloaded files (same location as Stage 0)
    - `<output_folder>/data/README.md` is updated with new file descriptions
    - `<output_folder>/2_research_question/download_report.json` exists
 
-**If `data_acquisition_requirements` is empty**, skip this stage and proceed directly to Stage 5.
+### Step 1d: Validate Stage 8 — Supplement Check
+
+**After Stage 8 (write-paper) completes**, run this validation before proceeding to Stage 9:
+
+```bash
+python workflow/skills/orchestrator/scripts/validate_supplement.py <output_folder>
+```
+
+- Exit 0 → proceed to Stage 9
+- Exit 1 → re-run Stage 8 once, passing the printed failure reason in the prompt so the model knows what to fix. If the second run also fails, proceed to Stage 9 and log a warning in `pipeline_log.json` — a paper with an incomplete supplement is better than no paper.
 
 ### Step 2: Time Budget Management
 
