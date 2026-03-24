@@ -11,4 +11,8 @@ sample/tex/template.bbl
 sample/tex/template.pdf
 sample/tex/template.synctex.gz
 
+# LaTeX output files in workflow/skills/write-paper/templates/
+workflow/skills/write-paper/templates/template.pdf
+workflow/skills/write-paper/templates/template.synctex.gz
+
 *.security-scan-passed
