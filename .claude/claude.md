@@ -4,13 +4,6 @@
 
 This project is an end-to-end automated research workflow that generates a JAMA Network Open–style paper from any public health dataset. The user triggers the entire pipeline with a single prompt. Claude Code executes all stages autonomously with zero human intervention.
 
-## Usage Guidelines
-
-**CRITICAL:** All skills in this repository are **local files**.
-- Do NOT invoke skills as global commands (e.g., `/acquire-data` or `/orchestrator`).
-- Instead, **read the skill definition file** at `workflow/skills/<skill-name>/SKILL.md`.
-- Execute the steps described in the skill file manually (e.g., running python scripts).
-
 ## Directory Structure
 
 ```

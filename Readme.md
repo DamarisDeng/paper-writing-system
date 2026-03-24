@@ -28,6 +28,12 @@ That's it. The pipeline will autonomously execute all stages (including an initi
 
 ---
 
+## Tutorial
+
+For a deep technical dive into research workflow design, including implementation details on progress tracking, token management, validation patterns, and real bug fixes, see [tutorial.md](tutorial.md).
+
+---
+
 ## Feasibility-First Approach
 
 This pipeline uses a **feasibility-first** approach to avoid wasting time on infeasible research questions:
