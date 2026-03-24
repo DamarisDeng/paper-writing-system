@@ -59,7 +59,6 @@ You are a senior research automation engineer. Your job is to execute the entire
    ```bash
    mkdir -p <output_folder>/0_data_acquisition
    mkdir -p <output_folder>/1_data_profile
-   mkdir -p <output_folder>/2_research_question/downloaded
    mkdir -p <output_folder>/2_scoring
    mkdir -p <output_folder>/3_analysis/scripts
    mkdir -p <output_folder>/4_figures/figures
@@ -69,7 +68,7 @@ You are a senior research automation engineer. Your job is to execute the entire
    mkdir -p <output_folder>/data
    ```
 
-2. **Record start time** for time budgeting. The entire pipeline should target completion within 70 minutes (56 min happy path, up to 70 min if feedback loop triggers). 
+2. **Record start time** for time budgeting. The entire pipeline should target completion within 75 minutes (61 min happy path, up to 75 min if feedback loop triggers). 
 
 3. **Initialize progress tracking** using the PipelineTracker from `progress_utils.py`:
 
@@ -214,7 +213,7 @@ Run each stage in order. For each stage:
 | 1 | load-and-profile | `profile.json` and `variable_types.json` exist with >0 datasets | Generate minimal profile from file headers only |
 | 2 | generate-research-questions | `research_questions.json` has `candidate_questions` array with ≥2 candidates | Use first numeric column as outcome, first categorical as exposure |
 | 3 | score-and-rank | `ranked_questions.json` exists with `primary_question` and `selection_metadata` | Use first candidate from `research_questions.json` as-is |
-| 4 | acquire-data (Stage 4) | Downloaded files exist (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
+| 4 | acquire-data (Stage 4) | Downloaded files exist in `data/` (or `data_acquisition_requirements` is empty) | Skip — proceed with available data only |
 | 5 | statistical-analysis | `analysis_results.json` exists with `descriptive_statistics` and `primary_analysis` | Run descriptive stats only, skip regression |
 | 6 | generate-figures | At least 2 `.png` files in `figures/` and 1 `.tex` file in `tables/` | Generate Table 1 only as a LaTeX table |
 | 7 | literature-review | `references.bib` has ≥10 `@article` entries | Use 10 foundational public health references |

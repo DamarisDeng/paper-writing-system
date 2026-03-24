@@ -106,6 +106,7 @@ After Stage 5 (statistical-analysis), the orchestrator checks for structural ana
 ### Progress Files
 
 Each stage creates a `progress.json` in its output folder:
+- `0_data_acquisition/progress.json`
 - `1_data_profile/progress.json`
 - `2_research_question/progress.json`
 - `2_scoring/progress.json`
@@ -156,7 +157,7 @@ Each skill specifies its required model level in its SKILL.md frontmatter (`mode
 | 4. Acquire Data | low | haiku | Simple downloads |
 | 5. Statistical Analysis | medium | sonnet | Code generation, models |
 | 6. Generate Figures | medium | sonnet | Visualization code |
-| 7. Literature Review | low | haiku | Search and format |
+| 7. Literature Review | medium | sonnet | Search, format, and verify citations |
 | 8. Write Paper | high | opus[1m] | Complex synthesis and writing |
 | 9. Compile & Review | low | haiku | Compilation, error handling |
 
