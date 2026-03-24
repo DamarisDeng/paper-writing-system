@@ -511,9 +511,13 @@ def _extract_descriptive_summary(analysis: Dict) -> Dict[str, Any]:
 
 def _extract_limitations(rq: Dict) -> List[str]:
     """Extract limitations from the research question feasibility assessment."""
-    primary = rq.get("primary_question", rq)
-    feasibility = primary.get("feasibility_assessment", {})
-    limitations = feasibility.get("limitations", [])
+    feasibility = rq.get("feasibility_assessment") or {}
+    limitations = list(feasibility.get("limitations", []))
+    if not limitations:
+        primary = rq.get("primary_question", rq)
+        if isinstance(primary, dict):
+            feasibility = primary.get("feasibility_assessment", {}) or {}
+            limitations = list(feasibility.get("limitations", []))
     return [lim for lim in limitations if isinstance(lim, str)]
 
 
