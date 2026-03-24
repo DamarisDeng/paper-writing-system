@@ -67,6 +67,9 @@ update_step(output_folder, "load_and_profile", "step_2_inspect_files", "complete
 
 ### Step 3: Run the Profiling Script
 
+**Note:** This script is located within the skill directory at `workflow/skills/load-and-profile/`,
+not in the shared `workflow/scripts/` folder (which contains only shared utilities like `progress_utils.py`).
+
 Run the Python profiling script:
 
 ```bash

@@ -12,9 +12,12 @@ repo/
 ├── Readme.md                  # Project documentation, tutorial links
 ├── workflow/                  # GENERIC reusable assets (skills, templates, scripts)
 │   ├── skills/                # Claude Code SKILL.md files (one per pipeline stage)
-│   ├── scripts/               # Reusable Python/R scripts called by skills
+│   │   ├── <skill-name>/      # Skill-specific scripts and helpers
+│   │   │   └── *.py           # Scripts specific to this skill
+│   └── scripts/               # SHARED utility scripts used by multiple skills
 │   │   ├── progress_utils.py  # Stage progress tracking, cycle state management
 │   │   ├── feedback_utils.py  # Feedback signal detection, decision logging
+│   │   ├── context_manager.py # Context bundle management for pipeline mode
 │   │   └── ...
 │   └── references/
 │       └── base_references.bib  # Pre-loaded common public health references (optional)
