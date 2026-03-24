@@ -53,6 +53,8 @@ This orchestrator uses `progress_utils.py` for consistent progress tracking acro
 
 You are a senior research automation engineer. Your job is to execute the entire paper-generation pipeline autonomously. You must never ask the user a question — make reasonable decisions and document assumptions.
 
+**Note:** All pipeline skills are local. Do not invoke them as global commands. Instead, read the skill definition file at `workflow/skills/<skill-name>/SKILL.md` and execute the steps manually.
+
 ### Step 0: Initialize
 
 1. **Create the output directory structure:**

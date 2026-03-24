@@ -87,100 +87,101 @@ Citations for the datasets used.
 - Original data source documentation or codebook citations.
 - Methodological papers describing the survey/dataset design.
 
-### Step 3: Search Methods
+### Step 3: Search and Fetch via API
 
-Use these approaches in order of preference:
+**CRITICAL RULE: You must NEVER write BibTeX entries by hand. All BibTeX must be produced by `fetch_references.py` from API-returned metadata. LLM-authored BibTeX is forbidden — it introduces hallucinated author names, fake DOIs, and wrong volume/page numbers.**
 
-1. **Semantic Scholar API** (most reliable for accurate citations):
+Your only job here is to supply search query strings. The script does the rest.
 
-   **Using the helper script** (`fetch_references.py`):
-   ```bash
-   # Get API key from https://www.semanticscholar.org/product/api#api-key
-   export S2_API_KEY=your_key_here
+Run one call per category using `search_and_collect`:
 
-   # Search and convert to BibTeX
-   python workflow/skills/literature-review/fetch_references.py \
-       "COVID-19 vaccine mandates healthcare workers" 10 references.bib
-   ```
+```python
+import sys
+sys.path.insert(0, "workflow/skills/literature-review/scripts")
+from fetch_references import search_and_collect
 
-   **Or use Python code directly**:
-   ```python
-   import sys; sys.path.insert(0, "workflow/skills/literature-review")
-   from fetch_references import search_semantic_scholar, semantic_scholar_to_bibtex
+# Build queries from your Step 1 keywords — strings only, no BibTeX
+queries = [
+    "COVID-19 vaccine mandates healthcare workers compliance",   # similar studies
+    "logistic regression observational study methodology",       # methodology
+    "COVID-19 vaccination coverage United States burden",        # clinical context
+    "Household Pulse Survey methodology design CDC",             # data source
+]
 
-   papers = search_semantic_scholar("COVID-19 vaccine mandates", limit=5)
-   for paper in papers:
-       bibtex = semantic_scholar_to_bibtex(paper)
-       print(bibtex)
-   ```
-
-   **Important:** Set `S2_API_KEY` environment variable for higher rate limits. Without a key, the API has strict rate limits (429 errors).
-
-2. **PubMed API** (via NCBI E-utilities):
-   ```python
-   import requests
-
-   def search_pubmed(query, limit=5):
-       base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
-       params = {"db": "pubmed", "term": query, "retmax": limit}
-       response = requests.get(base_url, params=params)
-       # Fetch summaries using esummary.fcgi
-       return response
-   ```
-
-3. **Web search** for peer-reviewed articles using targeted queries:
-   - `"[topic]" site:pubmed.ncbi.nlm.nih.gov`
-   - `"[topic]" JAMA OR Lancet OR NEJM OR BMJ`
-   - Search Google Scholar for highly cited papers.
-
-### Step 4: Format as BibTeX
-
-For each reference, create a BibTeX entry. Use this format:
-
-```bibtex
-@article{AuthorYear,
-  author  = {Last1, First1 and Last2, First2 and Last3, First3},
-  title   = {Full title of the article},
-  journal = {Journal Name},
-  year    = {2023},
-  volume  = {329},
-  number  = {12},
-  pages   = {1023--1034},
-  doi     = {10.1001/jama.2023.xxxxx},
-}
+# Fetches from Semantic Scholar first, then PubMed as fallback
+# Returns verified BibTeX strings with all fields from the API
+entries = search_and_collect(queries, per_query=5)
+print(f"Fetched {len(entries)} verified entries")
 ```
 
-Citation key convention: `FirstAuthorLastNameYear` (e.g., `Smith2023`). If multiple papers by same author in same year, append a/b (e.g., `Smith2023a`).
+Optional: set `S2_API_KEY` (Semantic Scholar) or `NCBI_API_KEY` (PubMed) env vars for higher rate limits.
 
-For reports and websites:
-```bibtex
-@misc{CDCReport2023,
-  author       = {{Centers for Disease Control and Prevention}},
-  title        = {Report Title},
-  year         = {2023},
-  howpublished = {\url{https://www.cdc.gov/...}},
-  note         = {Accessed January 15, 2024},
-}
+If the API call itself fails (network error, 5xx), fall back to web search to find the paper's DOI or PMID, then fetch by ID:
+
+```python
+import sys; sys.path.insert(0, "workflow/skills/literature-review/scripts")
+from fetch_references import search_semantic_scholar, semantic_scholar_to_bibtex
+# Search by exact title to get accurate metadata
+papers = search_semantic_scholar("Exact paper title here", limit=1)
+bib = semantic_scholar_to_bibtex(papers[0]) if papers else ""
+```
+
+For reports or institutional documents with no API record, use `@misc` manually **only** when the URL/author/date are directly copy-pasted from the source page — never recalled from memory.
+
+### Step 4: Deduplicate and Collect
+
+`search_and_collect` already calls `deduplicate_bibtex` internally. If you ran multiple separate calls, merge and deduplicate manually:
+
+```python
+import sys; sys.path.insert(0, "workflow/skills/literature-review/scripts")
+from fetch_references import deduplicate_bibtex
+all_entries = deduplicate_bibtex(entries_batch_1 + entries_batch_2)
 ```
 
 ### Step 5: Quality Checks for Each Reference
 
-Before including a reference, verify:
-- The citation is for a real, published work (not hallucinated).
-- Author names, journal, year, and title are accurate.
-- The DOI is correctly formatted (if available).
-- The reference is relevant to the paper's content.
+Run this check script on `entries` before writing the file:
 
-**If you cannot verify a reference is real, do not include it.** Use a known foundational reference instead.
+```python
+import re
+
+def validate_entries(entries: list[str]) -> list[str]:
+    """Drop entries that lack minimum required fields."""
+    good = []
+    for bib in entries:
+        has_author  = re.search(r"author\s*=", bib)
+        has_title   = re.search(r"title\s*=", bib)
+        has_year    = re.search(r"year\s*=\s*\{(\d{4})\}", bib)
+        # Reject entries whose author field contains obvious LLM artifacts
+        garbled = re.search(r"legality|undefined|unknown|et al\.", bib, re.I)
+        if has_author and has_title and has_year and not garbled:
+            good.append(bib)
+        else:
+            print(f"  [SKIP] dropped suspect entry", file=sys.stderr)
+    return good
+
+entries = validate_entries(entries)
+```
+
+**If you cannot confirm a reference came from an API call, do not include it.** Use a foundational reference from Step 6 instead.
 
 ### Step 6: Fallback Strategy
 
-If the search yields fewer than 10 verified references, supplement with foundational references appropriate to the domain:
+If the search yields fewer than 10 verified references, search for well-known foundational papers by name via the API (do not write them from memory):
 
-- **Public health methodology**: STROBE statement, relevant Cochrane handbook chapters.
-- **Statistical methods**: Original papers for the methods used (e.g., Cox 1972 for Cox regression, Rosenbaum & Rubin 1983 for propensity scores).
-- **Data sources**: Official documentation for major surveys (NHANES, BRFSS, Census).
-- **General epidemiology**: Textbook references from Rothman, Greenland, or Porta.
+```python
+fallback_queries = [
+    "STROBE statement strengthening reporting observational studies epidemiology",
+    "Rosenbaum Rubin central role propensity score observational studies",
+    "Cox regression survival analysis methodology",
+]
+import sys; sys.path.insert(0, "workflow/skills/literature-review/scripts")
+from fetch_references import search_and_collect, deduplicate_bibtex
+fallback_entries = search_and_collect(fallback_queries, per_query=2)
+all_entries = deduplicate_bibtex(entries + fallback_entries)
+```
+
+For official reports/websites with no indexed record, write one `@misc` entry per document, copying author/title/year/URL verbatim from the source page — not from memory.
 
 ### Step 7: Save Output
 

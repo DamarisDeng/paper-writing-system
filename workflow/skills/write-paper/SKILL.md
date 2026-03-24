@@ -80,6 +80,8 @@ Using the template structure from `sample/tex/template.tex`, write `<output_fold
 #### 3.1 Preamble and Metadata
 
 - Copy the full preamble from the template (all `\usepackage`, color definitions, style settings).
+- **Font encoding fix**: ensure the preamble contains `\usepackage[T1]{fontenc}` and `\usepackage{lmodern}` (before `\usepackage{times}`). This prevents font-size substitution warnings for fractional sizes (8.5pt, 7.5pt) used in JAMA-style captions.
+- **Remove `\usepackage{microtype}`** if present. The `times`/`helvet` fonts have no protrusion tables; loading microtype produces ~20 harmless but noisy warnings with no benefit for these fonts.
 - Update `\jamashorttitle{}` with a short version of the paper title.
 - Update `\jamasubject{}` with the appropriate subject area (e.g., "Public Health").
 
@@ -463,18 +465,30 @@ Run the following command to validate the LaTeX file compiles without fatal erro
 cd <output_folder>/6_paper && latexmk -pdf -interaction=nonstopmode paper.tex
 ```
 
-Alternatively, use the traditional pdflatex+bibtex workflow:
+Alternatively, use the traditional pdflatex+bibtex workflow. **You must run exactly 4 commands in sequence — do not skip passes:**
 ```bash
 cd <output_folder>/6_paper
-pdflatex -interaction=nonstopmode paper.tex
-bibtex paper
-pdflatex -interaction=nonstopmode paper.tex
-pdflatex -interaction=nonstopmode paper.tex
+pdflatex -interaction=nonstopmode paper.tex   # pass 1: builds aux, may show ?? in page numbers
+bibtex paper                                   # resolves citations
+pdflatex -interaction=nonstopmode paper.tex   # pass 2: reads citations + lastpage label
+pdflatex -interaction=nonstopmode paper.tex   # pass 3: resolves all cross-references, ?? disappears
 ```
+
+**Why 3 pdflatex passes are required:**
+- Pass 1: Writes `\newlabel{LastPage}` and citation labels to `.aux` — page numbers show `??`
+- Pass 2: Reads labels from `.aux`; resolves citations but may still have stale references
+- Pass 3: All labels stable — `\pageref{LastPage}` correctly shows total page count
+
+**After compilation, verify there are no `??` in the PDF:**
+```bash
+pdftotext paper.pdf - | grep "??"
+```
+If any `??` remain, run `pdflatex` one more time.
 
 **What constitutes a fatal error vs. warning:**
 - **Fatal**: Compilation stops with `!` error, PDF not generated, undefined control sequence, missing file errors
 - **Warning**: Overfull/underfull hbox boxes, citation warnings, font warnings — these are acceptable for draft
+- **`?? in page numbers`**: Not a warning — means too few pdflatex passes. Run another pass.
 
 If compilation fails, check the `.log` file for specific error messages and fix accordingly.
 
