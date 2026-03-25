@@ -1,0 +1,31 @@
+{
+  "stage_name": "generate_figures",
+  "stage_number": "6",
+  "current_step": "step_8_manifest",
+  "all_steps": [
+    "step_1_load",
+    "step_2_jama_style",
+    "step_3_figure1",
+    "step_4_figure2",
+    "step_5_table1",
+    "step_6_table2",
+    "step_7_run",
+    "step_8_manifest"
+  ],
+  "completed_steps": [
+    "step_1_load",
+    "step_2_jama_style",
+    "step_3_figure1",
+    "step_4_figure2",
+    "step_5_table1",
+    "step_6_table2",
+    "step_7_run",
+    "step_8_manifest"
+  ],
+  "started_at": "2026-03-24T12:40:56Z",
+  "last_updated": "2026-03-24T12:40:56Z",
+  "outputs": [],
+  "status": "completed",
+  "notes": "",
+  "completed_at": "2026-03-24T12:40:56Z"
+}

@@ -1,0 +1,1059 @@
+{
+  "datasets": {
+    "nih_terminations.csv": {
+      "file_path": "exam_folder/data/nih_terminations.csv",
+      "shape": [
+        5419,
+        57
+      ],
+      "columns": {
+        "status": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5,
+          "sample_values": [
+            "\ud83d\udeb0 Unfrozen Funding",
+            "\ud83d\udd04 Possibly Reinstated",
+            "\u274c Terminated",
+            "\ud83d\udca7 Possibly Unfrozen Funding",
+            "\ud83e\uddca Frozen Funding"
+          ],
+          "top_values": {
+            "\ud83d\udd04 Possibly Reinstated": 2174,
+            "\ud83d\udeb0 Unfrozen Funding": 2006,
+            "\u274c Terminated": 1116,
+            "\ud83d\udca7 Possibly Unfrozen Funding": 103,
+            "\ud83e\uddca Frozen Funding": 20
+          }
+        },
+        "core_award_number": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5395,
+          "sample_values": [
+            "AY2AX000005",
+            "AY2AX000012",
+            "AY2AX000031",
+            "C06OD030152",
+            "C06OD034040"
+          ]
+        },
+        "full_award_number": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5415,
+          "sample_values": [
+            "AY2AX000005",
+            "AY2AX000012",
+            "AY2AX000031",
+            "1C06OD030152-01",
+            "1C06OD034040-01"
+          ]
+        },
+        "hhs_web_reported": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "False",
+            "True"
+          ],
+          "top_values": {
+            "False": 3483,
+            "True": 1936
+          }
+        },
+        "hhs_pdf_reported": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "False",
+            "True"
+          ],
+          "top_values": {
+            "False": 3298,
+            "True": 2121
+          }
+        },
+        "self_reported": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "False",
+            "True"
+          ],
+          "top_values": {
+            "False": 5114,
+            "True": 305
+          }
+        },
+        "court_reported": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "False",
+            "True"
+          ],
+          "top_values": {
+            "False": 3785,
+            "True": 1634
+          }
+        },
+        "source_reported": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "False",
+            "True"
+          ],
+          "top_values": {
+            "False": 4297,
+            "True": 1122
+          }
+        },
+        "targeted_start_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2549,
+          "missing_pct": 47.04,
+          "unique_count": 5,
+          "sample_values": [
+            "2025-04-14T00:00:00",
+            "2025-04-08T00:00:00",
+            "2025-04-03T00:00:00",
+            "2025-07-29T00:00:00",
+            "2025-03-21T00:00:00"
+          ]
+        },
+        "targeted_end_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2569,
+          "missing_pct": 47.41,
+          "unique_count": 6,
+          "sample_values": [
+            "2025-09-03T00:00:00",
+            "2025-07-23T00:00:00",
+            "2025-11-28T00:00:00",
+            "2025-07-30T00:00:00",
+            "2025-11-07T00:00:00"
+          ]
+        },
+        "ever_frozen": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "True",
+            "False"
+          ],
+          "top_values": {
+            "True": 2870,
+            "False": 2549
+          }
+        },
+        "frozen_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2549,
+          "missing_pct": 47.04,
+          "unique_count": 5,
+          "sample_values": [
+            "2025-04-14T00:00:00",
+            "2025-04-08T00:00:00",
+            "2025-04-03T00:00:00",
+            "2025-07-29T00:00:00",
+            "2025-03-21T00:00:00"
+          ]
+        },
+        "unfrozen_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2576,
+          "missing_pct": 47.54,
+          "unique_count": 12,
+          "sample_values": [
+            "2025-09-30T00:00:00",
+            "2025-07-31T00:00:00",
+            "2025-11-30T00:00:00",
+            "2025-11-28T00:00:00",
+            "2025-08-31T00:00:00"
+          ]
+        },
+        "file_c_outlays": {
+          "dtype": "object",
+          "missing_count": 2549,
+          "missing_pct": 47.04,
+          "unique_count": 2866,
+          "sample_values": [
+            "- Oct/Nov 2024: $5,834,240\n- Dec 2024: $1,142,547\n- Jan 2025: $2,817,312\n- Feb 2025: $1,940,070\n- Mar 2025: $1,007,934\n- Apr 2025: $0\n- May 2025: $0\n- Jun 2025: $0\n- Jul 2025: $0\n- Aug 2025: $0\n- Sep 2025: $13,003,190\n- Oct/Nov 2025: $2,383,368\n- Dec 2025: $1,557,744",
+            "- Oct/Nov 2024: $1,016,422\n- Dec 2024: $533,127\n- Jan 2025: $533,127\n- Feb 2025: $474,865\n- Mar 2025: $0\n- Apr 2025: $0\n- May 2025: $0\n- Jun 2025: $0\n- Jul 2025: $2,239,950\n- Aug 2025: $1,398,545\n- Sep 2025: $750,935\n- Oct/Nov 2025: $706,520\n- Dec 2025: $709,020",
+            "- Dec 2024: $337,135\n- Jan 2025: $0\n- Feb 2025: $0\n- Mar 2025: $2,364,675\n- Apr 2025: $0\n- May 2025: $0\n- Jun 2025: $0\n- Jul 2025: $0\n- Aug 2025: $0\n- Sep 2025: $0\n- Oct/Nov 2025: $167,316\n- Dec 2025: $0",
+            "- Oct/Nov 2024: $100,141\n- Dec 2024: $7,096\n- Jan 2025: $10,434\n- Feb 2025: $50,080\n- Mar 2025: $9,199\n- Apr 2025: $0\n- May 2025: $0\n- Jun 2025: $0\n- Jul 2025: $0\n- Aug 2025: $0\n- Sep 2025: $0\n- Dec 2025: $85,289",
+            "- Dec 2024: $42,847\n- Jan 2025: $14,532\n- Feb 2025: $9,667\n- Mar 2025: $93,135\n- Apr 2025: $0\n- May 2025: $0\n- Jun 2025: $0\n- Jul 2025: $0\n- Aug 2025: $0\n- Sep 2025: $0\n- Dec 2025: $118,444"
+          ]
+        },
+        "termination_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2119,
+          "missing_pct": 39.1,
+          "unique_count": 149,
+          "sample_values": [
+            "2025-03-12T00:00:00",
+            "2025-03-21T00:00:00",
+            "2025-03-27T00:00:00",
+            "2025-06-09T00:00:00",
+            "2025-05-06T00:00:00"
+          ]
+        },
+        "cancellation_source": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5,
+          "sample_values": [
+            "No USAspending payments",
+            "HHS reported",
+            "Self reported",
+            "Court filing",
+            "Self and HHS reported"
+          ],
+          "top_values": {
+            "No USAspending payments": 2870,
+            "HHS reported": 1730,
+            "Court filing": 548,
+            "Self and HHS reported": 236,
+            "Self reported": 35
+          }
+        },
+        "reinstatement_indicator": {
+          "dtype": "object",
+          "missing_count": 3236,
+          "missing_pct": 59.72,
+          "unique_count": 28,
+          "sample_values": [
+            "Removed from TAGGS list",
+            "Termination removed from RePORTER",
+            "AAUP-Harvard v DOJ, Harvard v HHS",
+            "APHA v. NIH 2025-06-18, Removed from TAGGS list, Termination removed from RePORTER",
+            "Thakur v. Trump (Sep 2025)"
+          ],
+          "top_values": {
+            "AAUP-Harvard v DOJ, Harvard v HHS": 547,
+            "Thakur v. Trump (Sep 2025)": 483,
+            "Removed from TAGGS list, Termination removed from RePORTER": 374,
+            "MA v. RFK 2025-06-18, Removed from TAGGS list, Termination removed from RePORTER": 201,
+            "APHA v. NIH 2025-06-18, Removed from TAGGS list, Termination removed from RePORTER": 161,
+            "Termination removed from RePORTER": 102,
+            "Removed from TAGGS list": 73,
+            "MA v. RFK 2025-06-18, APHA v. NIH 2025-06-18, Removed from TAGGS list, Termination removed from RePORTER": 58,
+            "APHA v. NIH 2025-06-18": 33,
+            "MA v. RFK 2025-06-18, Removed from TAGGS list": 32
+          }
+        },
+        "reinstated_est_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 3236,
+          "missing_pct": 59.72,
+          "unique_count": 47,
+          "sample_values": [
+            "2025-04-11T00:00:00",
+            "2025-08-08T00:00:00",
+            "2026-02-13T00:00:00",
+            "2025-09-18T00:00:00",
+            "2025-06-18T00:00:00"
+          ]
+        },
+        "reinstatement_case": {
+          "dtype": "object",
+          "missing_count": 4360,
+          "missing_pct": 80.46,
+          "unique_count": 3,
+          "sample_values": [
+            "Undetermined",
+            "Washington v. Trump",
+            "Colorado v. HHS"
+          ],
+          "top_values": {
+            "Undetermined": 999,
+            "Colorado v. HHS": 49,
+            "Washington v. Trump": 11
+          }
+        },
+        "last_payment_month": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2550,
+          "missing_pct": 47.06,
+          "unique_count": 13,
+          "sample_values": [
+            "2025-12-01T00:00:00",
+            "2025-11-01T00:00:00",
+            "2025-09-01T00:00:00",
+            "2025-03-01T00:00:00",
+            "2025-01-01T00:00:00"
+          ]
+        },
+        "last_payment_date": {
+          "dtype": "datetime64[ns]",
+          "missing_count": 2550,
+          "missing_pct": 47.06,
+          "unique_count": 13,
+          "sample_values": [
+            "2025-12-31T00:00:00",
+            "2025-11-30T00:00:00",
+            "2025-09-30T00:00:00",
+            "2025-03-31T00:00:00",
+            "2025-01-31T00:00:00"
+          ]
+        },
+        "project_title": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 5379,
+          "sample_values": [
+            "Creation of an Institutional Biobanking Facility",
+            "Developing a Community-Based Facility to Support Next Generation Biomedical HIV Research",
+            "Meharry HIV/AIDS Research and Training Facility",
+            "Infection-Associated Cancer Research Training Program in Mali",
+            "Multidisciplinary NeuroAIDS Research and Training Program to Improve HIV Outcomes in Nigeria and Africa"
+          ]
+        },
+        "activity_code": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 91,
+          "sample_values": [
+            "C06",
+            "D43",
+            "DP1",
+            "DP2",
+            "DP5"
+          ],
+          "top_values": {
+            "R01": 2353,
+            "F31": 409,
+            "R21": 257,
+            "R35": 255,
+            "R25": 230,
+            "T32": 214,
+            "U01": 160,
+            "K99": 118,
+            "K01": 96,
+            "R00": 90
+          }
+        },
+        "org_name": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 441,
+          "sample_values": [
+            "COLUMBIA UNIVERSITY HEALTH SCIENCES",
+            "WHITMAN-WALKER INSTITUTE, INC.",
+            "MEHARRY MEDICAL COLLEGE",
+            "NORTHWESTERN UNIVERSITY AT CHICAGO",
+            "HARVARD UNIVERSITY D/B/A HARVARD SCHOOL OF PUBLIC HEALTH"
+          ],
+          "top_values": {
+            "COLUMBIA UNIVERSITY HEALTH SCIENCES": 979,
+            "NORTHWESTERN UNIVERSITY AT CHICAGO": 622,
+            "UNIVERSITY OF CALIFORNIA LOS ANGELES": 515,
+            "HARVARD MEDICAL SCHOOL": 352,
+            "BROWN UNIVERSITY": 257,
+            "CORNELL UNIVERSITY": 189,
+            "HARVARD UNIVERSITY D/B/A HARVARD SCHOOL OF PUBLIC HEALTH": 162,
+            "HARVARD UNIVERSITY": 144,
+            "NORTHWESTERN UNIVERSITY": 104,
+            "COLUMBIA UNIV NEW YORK MORNINGSIDE": 101
+          }
+        },
+        "org_type": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 32,
+          "sample_values": [
+            "SCHOOLS OF MEDICINE",
+            "Other Domestic Non-Profits",
+            "SCHOOLS OF PUBLIC HEALTH",
+            "Unavailable",
+            "Domestic Higher Education"
+          ],
+          "top_values": {
+            "SCHOOLS OF MEDICINE": 3038,
+            "SCHOOLS OF ARTS AND SCIENCES": 608,
+            "SCHOOLS OF PUBLIC HEALTH": 528,
+            "BIOMED ENGR/COL ENGR/ENGR STA": 173,
+            "UNIVERSITY-WIDE": 129,
+            "Independent Hospitals": 115,
+            "GRADUATE SCHOOLS": 107,
+            "SCHOOLS OF NURSING": 94,
+            "Other Domestic Non-Profits": 90,
+            "SCHOOLS OF VETERINARY MEDICINE": 69
+          }
+        },
+        "dept_type": {
+          "dtype": "object",
+          "missing_count": 364,
+          "missing_pct": 6.72,
+          "unique_count": 44,
+          "sample_values": [
+            "INTERNAL MEDICINE/MEDICINE",
+            "PUBLIC HEALTH & PREV MEDICINE",
+            "NEUROLOGY",
+            "MICROBIOLOGY/IMMUN/VIROLOGY",
+            "NONE"
+          ],
+          "top_values": {
+            "INTERNAL MEDICINE/MEDICINE": 768,
+            "PUBLIC HEALTH & PREV MEDICINE": 509,
+            "NONE": 321,
+            "MICROBIOLOGY/IMMUN/VIROLOGY": 282,
+            "BIOCHEMISTRY": 262,
+            "BIOLOGY": 219,
+            "NEUROLOGY": 214,
+            "PSYCHIATRY": 171,
+            "CHEMISTRY": 152,
+            "PSYCHOLOGY": 147
+          }
+        },
+        "program_office": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 25,
+          "sample_values": [
+            "OD",
+            "NCI",
+            "FIC",
+            "NIA",
+            "NIDA"
+          ],
+          "top_values": {
+            "NIGMS": 725,
+            "NIAID": 567,
+            "NCI": 491,
+            "NIA": 486,
+            "NIMH": 444,
+            "NHLBI": 368,
+            "NINDS": 365,
+            "NIDDK": 319,
+            "NICHD": 256,
+            "NIDA": 244
+          }
+        },
+        "org_state": {
+          "dtype": "object",
+          "missing_count": 23,
+          "missing_pct": 0.42,
+          "unique_count": 53,
+          "sample_values": [
+            "NY",
+            "DC",
+            "TN",
+            "IL",
+            "MA"
+          ],
+          "top_values": {
+            "NY": 1435,
+            "MA": 780,
+            "CA": 776,
+            "IL": 764,
+            "RI": 269,
+            "PA": 135,
+            "TX": 118,
+            "NC": 116,
+            "FL": 80,
+            "MD": 78
+          }
+        },
+        "org_city": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 267,
+          "sample_values": [
+            "NEW YORK",
+            "WASHINGTON",
+            "NASHVILLE",
+            "CHICAGO",
+            "BOSTON"
+          ],
+          "top_values": {
+            "NEW YORK": 1180,
+            "CHICAGO": 646,
+            "BOSTON": 596,
+            "LOS ANGELES": 527,
+            "PROVIDENCE": 262,
+            "ITHACA": 189,
+            "CAMBRIDGE": 149,
+            "Chicago": 113,
+            "PHILADELPHIA": 86,
+            "BALTIMORE": 62
+          }
+        },
+        "org_congdist": {
+          "dtype": "object",
+          "missing_count": 26,
+          "missing_pct": 0.48,
+          "unique_count": 213,
+          "sample_values": [
+            "NY-13",
+            "DC-98",
+            "TN-07",
+            "IL-05",
+            "MA-07"
+          ],
+          "top_values": {
+            "NY-13": 1115,
+            "IL-05": 727,
+            "MA-07": 585,
+            "CA-36": 520,
+            "RI-01": 260,
+            "NY-19": 190,
+            "MA-05": 151,
+            "NC-04": 95,
+            "PA-03": 76,
+            "MD-07": 62
+          }
+        },
+        "us_rep": {
+          "dtype": "object",
+          "missing_count": 101,
+          "missing_pct": 1.86,
+          "unique_count": 206,
+          "sample_values": [
+            "Adriano Espaillat (D)",
+            "Mark E. Green (R)",
+            "Mike Quigley (D)",
+            "Ayanna Pressley (D)",
+            "Gabe Amo (D)"
+          ],
+          "top_values": {
+            "Adriano Espaillat (D)": 1115,
+            "Mike Quigley (D)": 727,
+            "Ayanna Pressley (D)": 585,
+            "Ted Lieu (D)": 520,
+            "Gabe Amo (D)": 260,
+            "Josh Riley (D)": 190,
+            "Katherine M. Clark (D)": 151,
+            "Valerie P. Foushee (D)": 95,
+            "Dwight Evans (D)": 76,
+            "Kweisi Mfume (D)": 62
+          }
+        },
+        "us_rep_phone": {
+          "dtype": "object",
+          "missing_count": 101,
+          "missing_pct": 1.86,
+          "unique_count": 206,
+          "sample_values": [
+            "202-225-4365",
+            "202-225-2811",
+            "202-225-4061",
+            "202-225-5111",
+            "202-225-4911"
+          ],
+          "top_values": {
+            "202-225-4365": 1115,
+            "202-225-4061": 727,
+            "202-225-5111": 585,
+            "202-225-3976": 520,
+            "202-225-4911": 260,
+            "202-225-5441": 190,
+            "202-225-2836": 151,
+            "202-225-1784": 95,
+            "202-225-4001": 76,
+            "202-225-4741": 62
+          }
+        },
+        "flagged_words": {
+          "dtype": "object",
+          "missing_count": 470,
+          "missing_pct": 8.67,
+          "unique_count": 2457,
+          "sample_values": [
+            "institutional, trans",
+            "inequities, marginalize, marginalized, racial, socioeconomic, trans, underrepresented, underserved",
+            "barrier, barriers, bipoc, black, historically, inequities, institutional, minority, trans, underrepresented, underserved, vaccine, vaccines",
+            "trans",
+            "underserved"
+          ],
+          "top_values": {
+            "trans": 613,
+            "expression, trans": 259,
+            "race, trans": 108,
+            "expression": 76,
+            "diverse, trans": 66,
+            "race": 43,
+            "diverse": 38,
+            "barrier, trans": 37,
+            "diversity, trans": 36,
+            "expression, mrna, trans": 35
+          }
+        },
+        "study_section": {
+          "dtype": "object",
+          "missing_count": 98,
+          "missing_pct": 1.81,
+          "unique_count": 1746,
+          "sample_values": [
+            "Scientific and Technical Review Board on Biomedical and Behavioral Research Facilities[STOD]",
+            "ZCA1-SRB-T(J2)",
+            "Special Emphasis Panel[ZRG1-DCAI-S(55)S]",
+            "Special Emphasis Panel[ZRG1-DCAI-D(56)]",
+            "Special Emphasis Panel[ZRG1-OTC1-M(57)R]"
+          ],
+          "top_values": {
+            "Training and Workforce Development Study Section - C[TWD-C]": 103,
+            "Training and Workforce Development Study Section - D[TWD-D]": 89,
+            "NSS": 60,
+            "HIV/AIDS Intra- and Inter-personal Determinants and Behavioral Interventions Study Section[HIBI]": 44,
+            "Social Psychology, Personality and Interpersonal Processes Study Section[SPIP]": 33,
+            "Population and Public Health Approaches to HIV/AIDS Study Section[PPAH]": 31,
+            "Maximizing Investigators' Research Award A Study Section[MRAA]": 31,
+            "Psychosocial Development, Risk and Prevention Study Section[PDRP]": 30,
+            "Social Sciences and Population Studies B Study Section[SSPB]": 26,
+            "Community Influences on Health Behavior Study Section[CIHB]": 24
+          }
+        },
+        "foa": {
+          "dtype": "object",
+          "missing_count": 19,
+          "missing_pct": 0.35,
+          "unique_count": 1030,
+          "sample_values": [
+            "PAR-20-086",
+            "PAR-21-238",
+            "RFA-CA-20-031",
+            "PAR-22-151",
+            "PAR-19-283"
+          ],
+          "top_values": {
+            "PA-20-185": 1123,
+            "PA-23-189": 234,
+            "PA-19-056": 232,
+            "PA-21-052": 193,
+            "PA-20-195": 112,
+            "PA-21-051": 108,
+            "PA-20-183": 80,
+            "PAR-19-367": 76,
+            "PA-20-142": 73,
+            "PA-20-188": 70
+          }
+        },
+        "foa_title": {
+          "dtype": "object",
+          "missing_count": 59,
+          "missing_pct": 1.09,
+          "unique_count": 907,
+          "sample_values": [
+            "Biomedical Research Facilities (C06 Clinical Trial Not Allowed)",
+            "Limited Competition: Development and Renovation of Research Space for HIV/AIDS Research at Institutions Serving Underrepresented Populations or Located in Institutional Development Award (IDeA)-eligible States (C06 Clinical Trial Not Allowed)",
+            "Strengthening Institutional Capacity to Conduct Global Cancer Research in Low- and Middle-Income Countries (D43 Clinical Trial Not Allowed)",
+            "Fogarty HIV Research Training Program for Low-and Middle-Income Country Institutions (D43 Clinical Trial Optional)",
+            "Change of Recipient Organization (Type 7 Parent Clinical Trial Optional)"
+          ]
+        },
+        "abstract_text": {
+          "dtype": "object",
+          "missing_count": 19,
+          "missing_pct": 0.35,
+          "unique_count": 5382,
+          "sample_values": [
+            "PROJECT SUMMARY This institutional grant proposal for Columbia University Irving Medical Center (CUIMC) aims to build a centralized biobanking facility that consolidates processing and storage activities for human biospecimens obtained from participants in research studies and clinical patients across the CUIMC campus. The use of such a biorepository to collect, manage and dispense human samples and clinical data will lead to more robust research efforts and an efficient use of research dollars. The main purpose of this proposal is to construct the appropriate infrastructure to support the installation of up to two automated ultra-low temperature freezer systems that can be used to store over 9 million biospecimens. The centralized freezer system will replace the use of aging -80 C freezers that are dispersed across campus, allowing for greater space and energy efficiency, aligning with CUIMC sustainability and environmental initiatives. Engineering and mechanical redundancies will be incorporated that ensure biosamples can be securely stored at a constant temperature for the 20+ year lifetime of the facility. As part of this proposal, CUIMC will install one freezer system immediately with the ability to add an additional freezer system to support CUIMC\u2019s biobanking efforts as they continue to grow. The facility will also contain laboratory space to support the rapid processing of fluid biosamples that will be deposited into the biobank. This centralized processing will ensure that specimens entered into the bank are high quality and uniform, and can be accurately inventoried. Overall, the biobanking facility will provide biospecimens for use in research studies conducted across biomedical disciplines. Biosamples that will be banked in the facility are critical to support research into the basis of Alzheimer\u2019s and other neurological disease, human immunity and transplant rejection, and the health effects of exposure to environmental toxins. Aligning well with Columbia\u2019s long-term Precision Medicine Initiative, these biosamples will enable precision medicine studies to identify the underlying genetic basis for susceptibility and effectiveness of treatments for cardiovascular diseases, cancer, and a number of other maladies. The large number of human samples stored in this biobank will provide NIH- funded researchers with indispensable raw materials and the necessary large sample sizes to advance biotechnology and human health, ensuring the biobank will remain useful far beyond the lifespan of currently- funded research.",
+            "Project Summary/Abstract Wards 7 and 8 in Washington, DC are home to some of the nation\u2019s most stark racial inequities in health and socioeconomic indicators, with residents of these wards being underserved in healthcare and underrepresented public health research. Among these health inequities is a significantly higher burden of HIV, yet none of the major HIV-related research facilities in DC are located within these wards. Two central hubs for HIV research within DC\u2014the DC Center for AIDS Research and the DC Clinical Trials Unit\u2014both operate primarily out of facilities in Ward 2, and the efficacy of this research would be enhanced by stronger representation of marginalized communities in protocols to optimize the impact of this work on the neighborhoods in DC that are the hardest hit by HIV, its co-morbidities/co-infections, and other co-occurring health inequities. Thus, the goal of the proposed HIV research facilities award is to fund the build-out of a new state-of-the-art, community-centered clinical and translational HIV research facility located within the new flagship Whitman-Walker building currently being constructed in DC\u2019s Ward 8, to be used jointly by HIV investigators at both Whitman-Walker and George Washington University (GWU). The proposed facility would add 10,300 square feet of dedicated research space, including a state-of-the-art research lab and a research pharmacy with capacity for sterile compounding of investigational products, more than doubling the available space for research in this building and serving as the primary collaborative hub for HIV-focused research in Southeast DC. Doing so will significantly: (1) increase the overall volume of research able to be conducted; (2) enhance the collaboration of Whitman-Walker and GWU investigators, bolstering the strategic integration of both research programs; (3) expand the scope and technical capabilities of the work that is possible not only for both institutions but also within these specific neighborhoods of DC; (4) indirectly expand the available space for social/behavioral and public health research as well by relocating all clinical and translational research to the new facility; (5) provide local communities with greater access to and representation in cutting- edge HIV science and new opportunities to help inform these collaborative research agendas; (6) facilitate greater translation and dissemination of breakthroughs in HIV science within local and national policy contexts that will benefit both local DC communities and communities across the country; and (7) promote new opportunities for training and mentorship. In sum, the proposed project will have a multiplicative impact on both local and national HIV research through this unique plan to increase the size and scope of facilities available and co-locate two of DC\u2019s top HIV research institutions to leverage existing partnerships and forge new, community-centered collaborative research agendas. In doing so, the award will bring cutting-edge breakthroughs in HIV treatment and prevention science directly to underserved communities most impacted by the HIV epidemic in DC and has significant potential for public health impact for decades to come.",
+            "Project Summary  The goal of the proposed HIV/AIDS Research and Training Facility grant is to renovate and develop the a cutting-edge and modern HIV research space at the Meharry Medical College (MMC). Meharry is one of the nation's oldest and largest private, historically Black academic health sciences centers. Since 1876, Meharry has been dedicated in educating healthcare professionals and biomedical scientists with a singular mission of addressing health inequities of underserved populations. For instance, MMC is playing a vital role in combatting the COVID-19 pandemic by spearheading the operations of the testing sites in Nashville and Davidson County in Tennessee (TN). MMC also conducted the adult and pediatric clinical trials of COVID-19 vaccines in minority populations. Importantly, the Meharry Center for AIDS Health Disparities Research (CAHDR), established in 2005 through NIH support, has been a leader in HIV/AIDS research and training of minority scientists, physicians, students, fellows and trainees. The scientific focus of the CAHDR is to identify, understand, and eliminate factors responsible for the profoundly disproportionate burden of HIV/AIDS among minority populations. The Center is charged to reduce the burden of AIDS in local minority communities through basic, clinical, and translational research. The HIV/AIDS-focused research environment at MMC has also been facilitated by the Meharry AIDS Center of Excellence clinic at the Meharry Community Wellness Center (MCWC). Both the CAHDR and MCWC are part of the TN Center for AIDS Research (TN-CFAR), a multi-institutional collaborative center involving Vanderbilt University Medical Center (VUMC), MMC, the TN Department of Health and Nashville CARES. Additionally, our HIV/AIDS research and training environment is also enriched by our long-standing partnership with VUMC through the Meharry Vanderbilt Alliance (MVA). Therefore, the proposed HIV/AIDS Research and Training Facility will allow us to further leverage our existing partnerships to emerge as a global leader in HIV/AIDS health disparities research and training. Currently, there are only four laboratories that are physically located within the CAHDR and several other HIV/AIDS investigators are housed in other buildings. This physical separation between our HIV/AIDS investigators poses barriers for interaction, training, access, and collaboration. Furthermore, our current lack of modern and cutting-edge laboratory space and facility severely impedes our ability to attract new faculty to the CAHDR. To address these gaps, this proposal outlines the development of cutting-edge HIV/AIDS laboratory facility adjacent to the CAHDR that will include space for four to six new investigators in an open lab space format. Together, this renovation proposal will provide unprecedented opportunity to bring all Meharry HIV/AIDS researchers to the CAHDR Floor and expand our HIV/AIDS research program into cutting-edge new areas. Most importantly, a modern and cutting-edge HIV research space will allow us to prepare and increase the number of underrepresented minority (URM) and Black, Indigenous, and People of Color (BIPOC) researchers participating in HIV-focused research.",
+            "PROJECT SUMMARY The Northwestern University (NU) and Mali\u2019s University of Sciences, Techniques, and Technologies of Bamako (USTTB)\u2019s Infection-Associated Cancer (NM-IAC) Research Training Program addresses a National Cancer Institute (NCI) high research priority and a significant and growing source of morbidity and mortality in sub-Saharan Africa, particularly in Mali. In 2018, the four most common infection-associated cancers (IACs; cervical, liver, gastric and lung cancers) represented more than a quarter (27%) of all registered cancers in Mali. The NM-IAC Program seeks to build an interdisciplinary, collaborative, research training program to train researchers in the conduct of population-based cancer epidemiology and molecular studies and advance the discovery of unique population-specific risk factors and biomarkers for the development of risk stratification and screening tools of individuals with underlying infections at increased risk of associated cancers, with the ultimate goal of improving detection, treatment, and outcomes. The NM-IAC Program will leverage our team\u2019s extensive experience in conducting NIH-funded global health research training programs in Africa, program refinements, and highly successful training resources and outcomes from our decade-long, research-training collaboration between USTTB and NU. Our central hypothesis is that building capacity in the key disciplines involved in IACs will empower Malian and US investigators to develop and implement novel, contextually appropriate, and culturally adapted risk stratification and screening tools. To achieve our goals, our specific aims are to (1) Train two (2) PhD-level cancer epidemiologists, each with a focus on one of the four IACs and capable of (i) designing and conducting population-based cancer epidemiology studies; (ii) developing protocols for biospecimen collection, processing, and storage; and (iii) evaluating population-specific biomarkers for use in screening and identifying \u201cat-risk\u201d populations; and Two master\u2019s-level molecular pathologists, one biostatistician, and one bio-informatician, capable of (i) collecting and managing clinical, laboratory, and population-level specimens and data; (ii) using virtual modalities for training, education, and mentoring and telepathology for distance microscopic diagnostics and training; and (iii) performing comprehensive biostatistical and bioinformatics analyses, generated from population-level studies; (2) Enhance the knowledge and skills of existing faculty, particularly early career faculty, to contribute to and participate in interdisciplinary research teams of mechanistic and population-based studies of IACs through medium-term intensive workshops and mentored research projects led by the scientists trained in Aim 1; and (3) Optimize engagement of public health scientists, clinicians, and health system stakeholders through workshops and seminars to disseminate knowledge about the novel epidemiological and biomarker tools and strategies, for use in new programs focused on the prevention and detection of IACs in Mali.",
+            "HIV-related brain disorders (NeuroAIDS), including psychological, emotional, and social well-being, neurocognitive, and neurological problems, remain common globally. Over the past 10 years, the Multidisciplinary NeuroAIDS Research and Training Program to Improve HIV Outcomes has developed new NeuroAIDS research capacity at the University of Ibadan, Nigeria (UI) in three interacting cores: the Psychological, Emotional, and Social Well-Being Core, Translational and Clinical Sciences Core, and the Neuropsychological Infrastructure Core. Our overarching goal in the current 5 years of this training program is to bridge the residual gaps necessary for UI to become a Center of Excellence for NeuroAIDS Research, not only for Nigeria but for Africa. This will require 1) developing UI\u2019s capacity in two previously unaddressed NeuroAIDS research areas of high public health significance, 2) increasing the local mass of externally funded NeuroAIDS researchers and mentors, and 3) continuing the progressive transfer of the program\u2019s leadership to UI. The strategic approach capitalizes on the momentum from our NICHD-funded research, iCARE Nigeria (UG3/UH3HD096920; MPIs: Babafemi Taiwo and Robert Garofalo), through which we have built trust with Nigeria\u2019s stigmatized special populations with high rates of HIV. We will also leverage previously untapped, outstanding psychological, emotional, and social well-being and stroke research resources at UI. Specific aims have been articulated. Aim 1a is focused on special populations with high rates of HIV and psychological, emotional, and social well-being. Here, we will add new trainees to the existing Psychological, Emotional, and Social Well-Being Core and develop expertise in psychological, emotional, and social well-being research and biobehavioral interventions and strategies to improve the health outcomes of special populations with high rates of HIV and living with or predisposed to developing HIV. Training will span clinical, epidemiological, sociobehavioral, network, and implementation science. We will enroll 2 postdoctoral faculty members (physicians or PhDs) each 2.5 years of the grant cycle, mainly from psychiatry or medical social science into customized 2-year curricula that include tailored didactics, skill building, and mentored research. In Aim 1b, we will tackle stroke in people living with HIV (PLWH) by adding new trainees to the Clinical and Translational Sciences Core to unravel the local epidemiology, mechanisms, and interventions for stroke among PLWH. One postdoctoral faculty per year will be enrolled from neurology, medicine, radiology, or other fields into customized 2-year curricula as in Aim 1a. Aim 2 is to develop more NeuroAIDS leaders in UI from the best early-career investigators among those we have trained previously AND by attracting established investigators from other fields to NeuroAIDS. Here, we will implement \u201cExtended Protected Time\u201d for two competitively selected previous trainees per year and an innovative \u201cMentor the Mentor\u201d initiative. In Aim 3, we will advance our commitment to transfer program ownership and management to UI. Thus, we will implement an MPI structure with UI co-leadership and new Ibadan NeuroAIDS Grant Writers Coaching Groups. Finally, UI will lead a regional NeuroAIDS Week every 2-3 years to extend the program\u2019s impact beyond UI and cement UI\u2019s capacity and capability as a Center of Excellence for NeuroAIDS research and capacity development in Africa."
+          ]
+        },
+        "phr_text": {
+          "dtype": "object",
+          "missing_count": 55,
+          "missing_pct": 1.01,
+          "unique_count": 5338,
+          "sample_values": [
+            "NARRATIVE In Mali, the 8th largest African country, a low- and middle-income countries (LMICs) located in West Africa, infection-associated cancers (IACs) are increasing and represent more than a quarter (27%) of all cancers. Few African scientists have the epidemiological, molecular pathology, biostatistics and bioinformatics training needed to design and conduct population-based and mechanistic studies on IACs. This research training program will capitalize on a decade of collaboration between Malian and US investigators to create capacity to develop and implement new contextually appropriate and culturally adaptive strategies to reduce in incidence, morbidity, and mortality of IAC in Mali and other LMICs in the region.",
+            "As the NeuroAIDS population lives longer due to treatment and prevention advances, stroke and neurocognitive disorders and psychological, emotional, and social wellbeing challenges will become more prevalent in the population. This training grant will position a next generation of well-trained scientists who will examine these challenges and carry out state-of-the-art studies to identify, prevent and treat these prevalent complications of NeuroAIDS to help relieve human suffering.",
+            "PROJECT NARRATIVE The Botswana-Harvard AIDS Institute Partnership (BHP), a partnership between the Harvard TH Chan School of Public Health and the Ministry of Health in Botswana, is the site of a mature training program in HIV genomic, treatment, and cure research. BHP has become the leading site for modern laboratory and epidemiologic training in HIV in the region, with an ongoing mission to train the next generation of scientific leaders in Botswana.",
+            "Project Narrative: Tanzania faces an unfinished HIV testing, treatment, and viral suppression agenda because of implementation gaps, particularly in children, adolescents, and young adults and is also in the early stages in determining how to best integrate prevention, screening, and care for non-communicable diseases into HIV programs. The long-term success of HIV care and treatment programs and achievement of the HIV targets in Tanzania can be ensured and improved through the HIV Implementation Science training program \u2013 a joint initiative by the Harvard T.H. Chan School of Public Health in Boston and Muhimbili University of Health and Allied Sciences (MUHAS) in Dar es Salaam that will build research capacity on rigorous Implementation Science, Impact Evaluation, and Health Systems Research methods to test the performance of approaches, structures, and programs in the delivery of HIV interventions.",
+            "Project narrative Expert statistical analysis is fundamental to generating high-quality research that ultimately informs evidence-based practices used to combat HIV in sub-Saharan Africa. This proposal responds to the acute need for building statistical and data analytic capacity for HIV research in Kenya and sub-Saharan Africa by laying the groundwork for a university program suitable for training the next generation of experts in HIV data science."
+          ]
+        },
+        "terms": {
+          "dtype": "object",
+          "missing_count": 55,
+          "missing_pct": 1.01,
+          "unique_count": 5334,
+          "sample_values": [
+            "AD dementia, Aging, Alzheimer, Alzheimer Type Dementia, Alzheimer disease, Alzheimer sclerosis, Alzheimer syndrome, Alzheimer's, Alzheimer's Disease, Alzheimer's disease dementia, Alzheimers Dementia, Alzheimers disease, Applications Grants, Biotech, Biotechnology, Cancers, Cardiovascular Diseases, Clinical, Clinical Data, Deposit, Deposition, Discipline, Engineering, Ensure, Environmental Toxin, Equipment and supply inventories, Exposure to, Freezing, Funding, Genetic, Graft Rejection, Grant Proposals, Health, Human, Human Activities, Immunity, Infrastructure, Inventory, Investigators, Laboratories, Length of Life, Liquid substance, Longevity, Malignant Neoplasms, Malignant Tumor, Mechanics, Medical center, Modern Man, NIH, National Institutes of Health, Nervous System Diseases, Neurologic Disorders, Neurological Disorders, Participant, Patients, Precision Medicine Initiative, Predisposition, Primary Senile Degenerative Dementia, Research, Research Personnel, Research Specimen, Research Support, Researchers, Sample Size, Sampling, Secure, Specimen, Susceptibility, System, Temperature, Toxic Environmental Agents, Toxic Environmental Substances, Transplant Rejection, Transplantation Rejection, Treatment Effectiveness, United States National Institutes of Health, Universities, biobank, biorepository, cardiovascular disorder, cold temperature, dementia of the Alzheimer type, environmental toxicant, fluid, life span, lifespan, liquid, low temperature, malignancy, mechanical, neoplasm/cancer, nervous system disorder, neurological disease, precision medicine, precision-based medicine, primary degenerative dementia, research study, senile dementia of the Alzheimer type",
+            "AIDS, AIDS Virus, Acquired Immune Deficiency, Acquired Immune Deficiency Syndrome, Acquired Immune Deficiency Syndrome Virus, Acquired Immuno-Deficiency Syndrome, Acquired Immunodeficiency Syndrome, Acquired Immunodeficiency Syndrome Virus, Acquired Immunologic Deficiency Syndrome, Award, Clinical Research, Clinical Study, Clinical Trials Unit, Collaborations, Communities, Country, Epidemic, Funding, Goals, HIV, Health Inequity, Healthcare, Home, Human Immunodeficiency Viruses, Inequalities in Health, Inequities in Health, Institution, Investigation, Investigators, LAV-HTLV-III, Lymphadenopathy-Associated Virus, Mentorship, Neighborhoods, Pharmacies, Pharmacy facility, Policies, Prevention, Protocol, Protocols documentation, Public Health, Research, Research Personnel, Researchers, Science, Sterility, Sum, Translational Research, Translational Science, Translations, Universities, Virus-HIV, Walkers, Washington, Work, base, behavioral health, clinical center, co-infection, co-morbid, co-morbidity, coinfection, community center, community marginalization, comorbidity, disparities in race, efficacy research, health care, health inequalities, marginalized community, next generation, programs, public health research, race disparity, racial disparity, racial inequality, racial inequity, racially unequal, research facility, social space, socio-economic, socio-economically, socioeconomically, socioeconomics, sq. ft, square foot, sterile, training opportunity, translation research, under served community, underserved community, ward",
+            "2019-nCoV vaccine, 21+ years old, AIDS, AIDS Virus, AIDS/HIV, AIDS/HIV problem, Academic Medical Centers, Acquired Immune Deficiency, Acquired Immune Deficiency Syndrome, Acquired Immune Deficiency Syndrome Virus, Acquired Immuno-Deficiency Syndrome, Acquired Immunodeficiency Syndrome, Acquired Immunodeficiency Syndrome Virus, Acquired Immunologic Deficiency Syndrome, Address, Adult, Adult Human, Area, BIPOC, Basic Research, Basic Science, Black, Black race, Black, Indigenous, People of Color, COVID crisis, COVID epidemic, COVID pandemic, COVID-19 crisis, COVID-19 epidemic, COVID-19 global health crisis, COVID-19 global pandemic, COVID-19 health crisis, COVID-19 pandemic, COVID-19 public health crisis, COVID-19 vaccine, COVID19 crisis, COVID19 epidemic, COVID19 global health crisis, COVID19 global pandemic, COVID19 health crisis, COVID19 pandemic, COVID19 public health crisis, COVID19 vaccine, Charge, Childhood, Clinic, Clinical Research, Clinical Study, Clinical Trials, Collaborations, Communities, County, Development, Environment, Faculty, Floor, Goals, Grant, HIV, HIV/AIDS, HIV/AIDS problem, Health, Health Care Professional, Health Disparities Research, Health Inequity, Health Professional, Health Sciences, Health disparities related research, Healthcare professional, Human Immunodeficiency Viruses, Inequalities in Health, Inequities in Health, Investigators, LAV-HTLV-III, Laboratories, Lymphadenopathy-Associated Virus, Minority Groups, Minority People, Minority Population, Minority individual, Mission, Modernization, NIH, National Institutes of Health, Physicians, Play, Privatization, Research, Research Personnel, Research Training, Researchers, Role, SARS-CoV-2 epidemic, SARS-CoV-2 global health crisis, SARS-CoV-2 global pandemic, SARS-CoV-2 pandemic, SARS-CoV-2 vaccine, SARS-CoV2 epidemic, SARS-CoV2 pandemic, SARS-CoV2 vaccine, SARS-coronavirus-2 epidemic, SARS-coronavirus-2 pandemic, SARS-coronavirus-2 vaccine, Severe Acute Respiratory Syndrome CoV 2 epidemic, Severe Acute Respiratory Syndrome CoV 2 pandemic, Severe Acute Respiratory Syndrome CoV 2 vaccine, Severe acute respiratory syndrome coronavirus 2 epidemic, Severe acute respiratory syndrome coronavirus 2 pandemic, Severe acute respiratory syndrome coronavirus 2 vaccine, Site, Students, Tennessee, Testing, Training, Translational Research, Translational Science, Underrepresented Ethnic Minority, Underrepresented Minority, Underserved Population, United States National Institutes of Health, University Medical Centers, Virus-HIV, Wellness Center, adulthood, biomedical scientist, corona virus disease 2019 epidemic, corona virus disease 2019 pandemic, corona virus disease 2019 vaccine, coronavirus disease 2019 crisis, coronavirus disease 2019 epidemic, coronavirus disease 2019 global health crisis, coronavirus disease 2019 global pandemic, coronavirus disease 2019 health crisis, coronavirus disease 2019 pandemic, coronavirus disease 2019 public health crisis, coronavirus disease 2019 vaccine, coronavirus disease crisis, coronavirus disease epidemic, coronavirus disease pandemic, coronavirus disease-19 global pandemic, coronavirus disease-19 pandemic, coronavirus disease-19 vaccine, developmental, health inequalities, laboratory facility, medical college, medical schools, minority communities, minority scientist, operation, pediatric, physical separation, programs, school of medicine, severe acute respiratory syndrome coronavirus 2 global health crisis, severe acute respiratory syndrome coronavirus 2 global pandemic, social role, translation research, under served group, under served people, under served population, under-representation of minorities, under-represented minority, underrepresentation of minorities, underserved group, underserved people, vaccine against 2019-nCov, vaccine against SARS-CoV-2, vaccine against SARS-CoV2, vaccine against SARS-coronavirus-2, vaccine against Severe Acute Respiratory Syndrome CoV 2, vaccine against Severe acute respiratory syndrome coronavirus 2, vaccine for novel coronavirus",
+            "Address, Africa, Africa South of the Sahara, Bioinformatics, Biological Markers, Biometrics, Biometry, Biostatistics, Cancers, Cervical Cancer, Cervix Cancer, Clinical Management, Collaborations, Collection, Data, Detection, Diagnostic, Discipline, Doctor of Philosophy, Education, Educational aspects, Educational workshop, Epidemiologic Research, Epidemiologic Studies, Epidemiological Studies, Epidemiologist, Epidemiology, Epidemiology Research, Faculty, Funding, Gastric Body Cancer, Gastric Cancer, Gastric Cardia Cancer, Gastric Fundus Cancer, Gastric Pylorus Cancer, Goals, Groups at risk, Health system, Hepatic Cancer, Individual, Infection, Interdisciplinary Research, Interdisciplinary Study, Investigators, Knowledge, Laboratories, Mali, Malignant Cervical Neoplasm, Malignant Cervical Tumor, Malignant Gastric Neoplasm, Malignant Gastric Tumor, Malignant Neoplasm of the Cervix, Malignant Neoplasms, Malignant Tumor, Malignant Tumor of the Cervix, Malignant Tumor of the Cervix Uteri, Malignant Tumor of the Lung, Malignant Uterine Cervix Neoplasm, Malignant Uterine Cervix Tumor, Malignant neoplasm of cervix uteri, Malignant neoplasm of liver, Malignant neoplasm of lung, Mentors, Microscopic, Modality, Molecular, Molecular Epidemiology of Cancer, Morbidity, Morbidity - disease rate, Multidisciplinary Collaboration, Multidisciplinary Research, NCI Organization, NIH, National Cancer Institute, National Institutes of Health, Outcome, Pathologist, People at risk, Persons at risk, Ph.D., PhD, Population, Population Study, Populations at Risk, Prevention, Protocol, Protocols documentation, Public Health, Pulmonary Cancer, Pulmonary malignant Neoplasm, R-Series Research Projects, R01 Mechanism, R01 Program, Research Grants, Research Personnel, Research Priority, Research Project Grants, Research Projects, Research Resources, Research Specimen, Research Training, Researchers, Resources, Risk, Risk Factors, Science, Scientist, Screening procedure, Source, Specimen, Stomach Cancer, Sub-Saharan Africa, Subsaharan Africa, Techniques, Technology, Telepathology, Training, Training Programs, United States National Institutes of Health, Universities, Uterine Cervix Cancer, Workshop, anti-cancer research, bio-markers, biologic marker, biomarker, biomarker development, cancer epidemiology, cancer research, design, designing, early-career faculty, empowerment, epidemiologic, epidemiologic investigation, epidemiological, epidemiology study, experience, gastric malignancy, global health, improved, liver cancer, liver malignancy, lung cancer, malignancy, malignant liver tumor, malignant stomach neoplasm, malignant stomach tumor, mortality, neoplasm/cancer, novel, population based, population-based study, population-level study, programs, risk stratification, screening, screening tools, screenings, skills, specific biomarkers, stomach fundus cancer, stomach pylorus cancer, stratify risk, studies of populations, study of the population, tool, virtual",
+            "AIDS Virus, Acquired Immune Deficiency Syndrome Virus, Acquired Immunodeficiency Syndrome Virus, Africa, Apoplexy, Area, Articulation, Brain Diseases, Brain Disorders, Brain Vascular Accident, Cementation, Cerebral Stroke, Cerebrovascular Apoplexy, Cerebrovascular Stroke, Clinical, Clinical Sciences, Curriculum, Development, Doctor of Philosophy, Educational Curriculum, Emotional, Encephalon Diseases, Enrollment, Epidemiology, Faculty, Funding, General Radiology, Goals, Grant, HIV, HIV associated neurological disease, HIV associated neurological disorder, HIV individuals, HIV infected individuals, HIV infected persons, HIV people, HIV positive individuals, Health, Human Immunodeficiency Viruses, Infrastructure, Intervention, Intracranial CNS Disorders, Intracranial Central Nervous System Disorders, Investigators, LAV-HTLV-III, Lead, Leadership, Lymphadenopathy-Associated Virus, Medical, Medicine, Mentors, NICHD, National Institute of Child Health and Human Development, Neurocognitive, Neurologic, Neurological, Neurology, Neuropsychologies, Neuropsychology, Nigeria, Outcome, Ownership, PLWH, PWH, Pb element, Ph.D., PhD, Physicians, Postdoc, Postdoctoral Fellow, Psychiatry, Public Health, Radiology, Radiology Specialty, Research, Research Associate, Research Personnel, Research Resources, Researchers, Residual, Residual state, Resources, Social Behavior, Social Sciences, Social Well-Being, Special Population, Stigmatization, Stroke, Structure, Time, Training, Training Programs, Translational Research, Translational Science, Trust, Universities, Virus-HIV, biobehavior, biobehavioral, brain attack, career, cerebral vascular accident, cerebrovascular accident, developmental, enroll, epidemiologic, epidemiological, heavy metal Pb, heavy metal lead, implementation science, improved, individuals infected with HIV, individuals with HIV, individuals with human immunodeficiency virus, innovate, innovation, innovative, lesson plans, member, multidisciplinary, neuro-AIDS, neuro-HIV, neuroAIDS, neuroHIV, neuropsychologic, people infected with HIV, people infected with human immunodeficiency virus, people living with HIV, people with HIV, people with human immunodeficiency virus, post-doc, post-doctoral, post-doctoral trainee, programs, psychologic, psychological, research associates, skills, social wellbeing, sociobehavior, sociobehavioral, stroke intervention, stroked, strokes, translation research, translational investigation"
+          ]
+        },
+        "total_award": {
+          "dtype": "float64",
+          "missing_count": 9,
+          "missing_pct": 0.17,
+          "unique_count": 5167,
+          "sample_values": [
+            "69867044.0",
+            "15533132.0",
+            "22010380.0",
+            "8000000.0",
+            "2000000.0"
+          ],
+          "mean": 3176349.2651,
+          "std": 13251901.0553,
+          "min": -42741.19,
+          "max": 700632880.71,
+          "median": 1628672.0
+        },
+        "total_estimated_outlays": {
+          "dtype": "float64",
+          "missing_count": 20,
+          "missing_pct": 0.37,
+          "unique_count": 5373,
+          "sample_values": [
+            "43020211.58",
+            "12041179.0",
+            "-113346.0",
+            "8000000.0",
+            "618137.31"
+          ],
+          "mean": 1857673.3585,
+          "std": 7319681.2181,
+          "min": -113346.0,
+          "max": 268387316.54,
+          "median": 1039774.0
+        },
+        "total_estimated_remaining": {
+          "dtype": "float64",
+          "missing_count": 20,
+          "missing_pct": 0.37,
+          "unique_count": 5115,
+          "sample_values": [
+            "26846832.42",
+            "3491953.0",
+            "22123726.0",
+            "0.0",
+            "1381862.69"
+          ],
+          "mean": 1324548.5321,
+          "std": 7270466.7726,
+          "min": -751296.79,
+          "max": 432245564.17,
+          "median": 413590.82
+        },
+        "spending_categories": {
+          "dtype": "object",
+          "missing_count": 164,
+          "missing_pct": 3.03,
+          "unique_count": 4553,
+          "sample_values": [
+            "Clinical Research,  Precision Medicine,  Aging,  Bioengineering",
+            "HIV/AIDS",
+            "Cancer,  Clinical Research,  Prevention,  Rare Diseases,  Women's Health,  Digestive Diseases,  Lung,  Health Services,  Lung Cancer",
+            "HIV/AIDS,  Clinical Research,  Prevention,  Behavioral and Social Science,  Brain Disorders,  Neurosciences,  Dissemination and Implementation Research,  Mental Health,  Neurodegenerative",
+            "Clinical Research,  Coronaviruses,  Emerging Infectious Diseases,  Genetics,  HIV/AIDS,  Human Genome,  Infectious Diseases"
+          ]
+        },
+        "categories_predicted": {
+          "dtype": "bool",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 2,
+          "sample_values": [
+            "False",
+            "True"
+          ],
+          "top_values": {
+            "True": 2756,
+            "False": 2663
+          }
+        },
+        "notes": {
+          "dtype": "object",
+          "missing_count": 5288,
+          "missing_pct": 97.58,
+          "unique_count": 131,
+          "sample_values": [
+            "Includes D43TW012274-03S1, D43TW012274-03S2, D43TW012274-03S3",
+            "Includes DP2MH132938-01S1",
+            "Includes K01HL151902-04S1",
+            "Includes K01HL166369-02S1",
+            "Includes K01MH120258-05S1"
+          ],
+          "top_values": {
+            "Includes D43TW012274-03S1, D43TW012274-03S2, D43TW012274-03S3": 1,
+            "Includes R37CA253279-05S1": 1,
+            "Includes R33HL161752-03S1": 1,
+            "Includes R25DK118761-07S1": 1,
+            "Includes R24NS132283-01S1, R24NS132283-01S1": 1,
+            "Includes R21DE032798-01A1S1": 1,
+            "Includes R13HL173969-01S1": 1,
+            "Includes R01TW012392-03S1": 1,
+            "Includes R01NS123639-04S1": 1,
+            "Includes R01NR019417-03S1": 1
+          }
+        },
+        "org_traits": {
+          "dtype": "object",
+          "missing_count": 326,
+          "missing_pct": 6.02,
+          "unique_count": 42,
+          "sample_values": [
+            "For-profit",
+            "Private, R1",
+            "Land grant, Public, R1, Tribal/Native Serving",
+            "Public, R1",
+            "Public"
+          ],
+          "top_values": {
+            "Private, R1": 3243,
+            "Land grant, Public, R1, Tribal/Native Serving": 616,
+            "Public, R1": 294,
+            "Land grant, Private, R1": 189,
+            "Land grant, Public, R1": 162,
+            "Private, R2": 78,
+            "Hispanic Serving, Public, R1, Tribal/Native Serving": 74,
+            "Public": 65,
+            "Hispanic Serving, Land grant, Public, R1, Tribal/Native Serving": 52,
+            "Public, R1, Tribal/Native Serving": 45
+          }
+        },
+        "pct_ugrad_pellgrant": {
+          "dtype": "float64",
+          "missing_count": 697,
+          "missing_pct": 12.86,
+          "unique_count": 62,
+          "sample_values": [
+            "0.23",
+            "0.19",
+            "0.16",
+            "0.13",
+            "0.27"
+          ],
+          "mean": 0.2157,
+          "std": 0.0718,
+          "min": 0.0,
+          "max": 0.81,
+          "median": 0.19
+        },
+        "pct_ugrad_fedloan": {
+          "dtype": "float64",
+          "missing_count": 697,
+          "missing_pct": 12.86,
+          "unique_count": 65,
+          "sample_values": [
+            "0.14",
+            "0.19",
+            "0.05",
+            "0.09",
+            "0.06"
+          ],
+          "mean": 0.1825,
+          "std": 0.1169,
+          "min": 0.03,
+          "max": 0.93,
+          "median": 0.18
+        },
+        "appl_id": {
+          "dtype": "float64",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 5401,
+          "sample_values": [
+            "10129786.0",
+            "10547892.0",
+            "10547968.0",
+            "11112429.0",
+            "11290348.0"
+          ],
+          "mean": 10972062.6585,
+          "std": 191983.9075,
+          "min": 9496881.0,
+          "max": 11477674.0,
+          "median": 11011429.0
+        },
+        "prog_office_code": {
+          "dtype": "float64",
+          "missing_count": 29,
+          "missing_pct": 0.54,
+          "unique_count": 24,
+          "sample_values": [
+            "205.0",
+            "110.0",
+            "148.0",
+            "102.0",
+            "114.0"
+          ],
+          "mean": 111.3395,
+          "std": 29.0581,
+          "min": 45.0,
+          "max": 264.0,
+          "median": 114.0
+        },
+        "funding_category": {
+          "dtype": "object",
+          "missing_count": 121,
+          "missing_pct": 2.23,
+          "unique_count": 5,
+          "sample_values": [
+            "Construction and Modernization",
+            "Research Training and Career Development",
+            "Research and Development",
+            "Other Transactions",
+            "Small Business"
+          ],
+          "top_values": {
+            "Research and Development": 3677,
+            "Research Training and Career Development": 1569,
+            "Other Transactions": 34,
+            "Small Business": 15,
+            "Construction and Modernization": 3
+          }
+        },
+        "nih_activity": {
+          "dtype": "object",
+          "missing_count": 14,
+          "missing_pct": 0.26,
+          "unique_count": 90,
+          "sample_values": [
+            "Research Facilities Construction Grant",
+            "International Research Training Grants",
+            "NIH Director\u2019s Pioneer Award (NDPA)",
+            "NIH Director\u2019s New Innovator Awards",
+            "Early Independence Award"
+          ],
+          "top_values": {
+            "Research Project": 2353,
+            "Predoctoral Individual National Research Service Award": 409,
+            "Exploratory/Developmental Grants": 257,
+            "Outstanding Investigator Award": 255,
+            "Education Projects": 230,
+            "Institutional National Research Service Award": 214,
+            "Research Project--Cooperative Agreements": 160,
+            "Career Transition Award": 126,
+            "Research Scientist Development Award - Research & Training": 96,
+            "Research Transition Award": 90
+          }
+        },
+        "court_restoration_url": {
+          "dtype": "object",
+          "missing_count": 3785,
+          "missing_pct": 69.85,
+          "unique_count": 14,
+          "sample_values": [
+            "https://www.courtlistener.com/docket/69881741/american-association-of-university-professors-harvard-faculty-chapter-v/?order_by=desc",
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.2.pdf",
+            "https://storage.courtlistener.com/recap/gov.uscourts.cand.450653/gov.uscourts.cand.450653.134.0.pdf",
+            "https://president.columbia.edu/content/our-resolution-federal-government",
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282917/gov.uscourts.mad.282917.147.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.2.pdf"
+          ],
+          "top_values": {
+            "https://www.courtlistener.com/docket/69881741/american-association-of-university-professors-harvard-faculty-chapter-v/?order_by=desc": 548,
+            "https://storage.courtlistener.com/recap/gov.uscourts.cand.450653/gov.uscourts.cand.450653.134.0.pdf": 484,
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282917/gov.uscourts.mad.282917.147.1.pdf": 263,
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.2.pdf": 139,
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.2.pdf": 71,
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282917/gov.uscourts.mad.282917.147.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.2.pdf": 49,
+            "https://president.columbia.edu/content/our-resolution-federal-government": 30,
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282917/gov.uscourts.mad.282917.147.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.mad.282821/gov.uscourts.mad.282821.137.2.pdf": 19,
+            "https://statements.cornell.edu/2025/documents/cornell-settlement-agreement.pdf": 13,
+            "https://storage.courtlistener.com/recap/gov.uscourts.mad.282917/gov.uscourts.mad.282917.147.1.pdf; https://storage.courtlistener.com/recap/gov.uscourts.cand.450653/gov.uscourts.cand.450653.134.0.pdf": 7
+          }
+        },
+        "usaspending_url": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5395,
+          "sample_values": [
+            "https://www.usaspending.gov/award/ASST_NON_AY2AX000005_7529",
+            "https://www.usaspending.gov/award/ASST_NON_AY2AX000012_7529",
+            "https://www.usaspending.gov/award/ASST_NON_AY2AX000031_7529",
+            "https://www.usaspending.gov/award/ASST_NON_C06OD030152_7529",
+            "https://www.usaspending.gov/award/ASST_NON_C06OD034040_7529"
+          ]
+        },
+        "taggs_url": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5395,
+          "sample_values": [
+            "https://taggs.hhs.gov/Detail/AwardDetail?arg_AwardNum=AY2AX000005&arg_ProgOfficeCode=NA",
+            "https://taggs.hhs.gov/Detail/AwardDetail?arg_AwardNum=AY2AX000012&arg_ProgOfficeCode=NA",
+            "https://taggs.hhs.gov/Detail/AwardDetail?arg_AwardNum=AY2AX000031&arg_ProgOfficeCode=NA",
+            "https://taggs.hhs.gov/Detail/AwardDetail?arg_AwardNum=C06OD030152&arg_ProgOfficeCode=205",
+            "https://taggs.hhs.gov/Detail/AwardDetail?arg_AwardNum=C06OD034040&arg_ProgOfficeCode=205"
+          ]
+        },
+        "reporter_url": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5402,
+          "sample_values": [
+            "https://reporter.nih.gov/project-details/NA",
+            "https://reporter.nih.gov/project-details/10129786",
+            "https://reporter.nih.gov/project-details/10547892",
+            "https://reporter.nih.gov/project-details/10547968",
+            "https://reporter.nih.gov/project-details/11112429"
+          ]
+        },
+        "record_sha1": {
+          "dtype": "object",
+          "missing_count": 0,
+          "missing_pct": 0.0,
+          "unique_count": 5418,
+          "sample_values": [
+            "f07037c6ef8b7c9af924d2d828a88cfa315c465c",
+            "57674e5dfbbc2dd820eee94899be07acc25a2dd0",
+            "0ec3eaf08327e1c6d9892a0b3d05dceb99ec2077",
+            "255a21723695bed5960061abaacf66f92b50beff",
+            "16d6a6646168c4109acea732d10d5fdcfbb23496"
+          ]
+        }
+      }
+    }
+  },
+  "data_context": {
+    "summary": "NIH Grant Witness termination snapshot covering 5,419 NIH award records primarily from 2025. Tracks grant terminations, freezes, reinstatements, and court-ordered restorations under the 2025 Trump administration policy that terminated or froze ~$17.2B in NIH research funding. Key outcomes include termination status, dollar amounts at risk, reinstatement pathways, and institutional/geographic distribution of impact.",
+    "dataset_relationships": "Single primary dataset (nih_terminations.csv). Can be linked to NIH RePORTER via `appl_id` and `core_award_number`. USAspending linkage via `usaspending_url`. OpenAlex/PubMed linkage possible via PI/grant identifiers. Reinstatement cases (e.g., AAUP-Harvard v DOJ, Thakur v Trump) create natural comparison groups.",
+    "research_directions": [
+      "Institutional equity: Do terminations disproportionately affect certain org_type (e.g., Schools of Medicine vs. HBCU vs. community colleges)?",
+      "Geographic disparities: Do certain states (org_state) face greater funding loss relative to total_award or total_estimated_remaining?",
+      "Reinstatement predictors: What grant/institution characteristics predict successful reinstatement (reinstatement_indicator not null)?",
+      "Court intervention effects: Did court-ordered reinstatement cases (reinstatement_case) restore more funding than administrative reinstatement?",
+      "Funding category analysis: Do DEIA, DEI, or specific funding_category grants face higher termination rates vs. reinstatement rates?",
+      "Timeline of action: How did termination dates cluster over time (termination_date), and what triggered the freeze-then-terminate pattern?"
+    ],
+    "data_quality_notes": [
+      "termination_date: 39.1% missing \u2014 missing means the award was frozen/unfrozen but not yet formally terminated",
+      "reinstatement_indicator: 59.7% missing \u2014 expected, only applies to reinstated grants",
+      "reinstatement_case: 80.5% missing \u2014 only coded for grants with specific legal case linkage",
+      "file_c_outlays: 47% missing \u2014 only present for frozen grants with monthly spending data",
+      "targeted_start_date / targeted_end_date: ~47% missing \u2014 only for freeze-targeted grants",
+      "total_award: 9 records missing, one record has negative value (-$42,741) indicating data entry issue",
+      "total_estimated_outlays/remaining: 20 records missing, some negative values indicate corrections",
+      "status values use emoji strings (e.g., '\u274c Terminated') \u2014 may need normalization for analysis",
+      "org_congdist and us_rep are U.S. congressional district identifiers \u2014 treat as categorical/geographic"
+    ]
+  }
+}

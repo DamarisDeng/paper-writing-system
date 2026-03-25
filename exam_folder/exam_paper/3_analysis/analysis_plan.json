@@ -1,0 +1,63 @@
+{
+  "analysis_plan": {
+    "version": "1.0",
+    "date": "2026-03-24",
+    "research_question": "Among NIH grants affected by 2025 federal funding actions, are research training and career development grants associated with higher odds of permanent termination compared to R&D grants?",
+    "outcome": {
+      "variable": "terminated_binary",
+      "coding": "1=Terminated, 0=Reinstated/Unfrozen",
+      "type": "binary"
+    },
+    "exposure": {
+      "variable": "is_training_grant",
+      "coding": "1=Research Training and Career Development, 0=Research and Development",
+      "reference": "Research and Development (0)"
+    },
+    "model": {
+      "type": "logistic_regression",
+      "software": "statsmodels Logit via formula API",
+      "formula": "terminated_binary ~ is_training_grant + C(org_type_grouped, Treatment('University-Medical')) + log_total_award + C(org_state_region, Treatment('Northeast'))",
+      "covariates": {
+        "org_type_grouped": {
+          "type": "categorical",
+          "reference": "University-Medical",
+          "levels": ["University-Medical", "University-Other", "Hospital-NonProfit", "Other"]
+        },
+        "log_total_award": {
+          "type": "continuous",
+          "transformation": "log(total_award + 1)"
+        },
+        "org_state_region": {
+          "type": "categorical",
+          "reference": "Northeast",
+          "levels": ["Northeast", "Midwest", "South", "West", "Unknown"]
+        }
+      }
+    },
+    "sensitivity_analyses": {
+      "SA1": {
+        "name": "Subgroup by institution type",
+        "description": "Run logistic regression separately within each org_type_grouped stratum"
+      },
+      "SA2": {
+        "name": "Model without region adjustment",
+        "description": "is_training_grant + C(org_type_grouped) + log_total_award only (no region covariate)"
+      },
+      "SA3": {
+        "name": "State fixed effects (top 15 states)",
+        "description": "Replace region with dummy coding for top 15 states by N; remainder as 'Other'"
+      }
+    },
+    "assumption_checks": [
+      "Check for complete separation",
+      "Hosmer-Lemeshow goodness-of-fit test",
+      "Check predicted probability distribution",
+      "Variance inflation factor for multicollinearity"
+    ],
+    "reporting": {
+      "primary_estimate": "OR with 95% CI and two-sided p-value for is_training_grant",
+      "all_covariates": "Report all OR, 95% CI, p-value",
+      "format": "JAMA style"
+    }
+  }
+}

@@ -1,0 +1,87 @@
+[
+  {
+    "name": "OpenAlex",
+    "description": "",
+    "target_dir": "OpenAlex",
+    "downloads": [
+      {
+        "url": "https://api.openalex.org/works?filter=institutions.display_name.search:Harvard,from_publication_date:2024-01-01,to_publication_date:2025-12-31&per-page=25",
+        "extract": false
+      }
+    ]
+  },
+  {
+    "name": "NIH RePORTER / ExPORTER",
+    "description": "",
+    "target_dir": "NIH_RePORTER__ExPORTER",
+    "downloads": [
+      {
+        "url": "https://api.reporter.nih.gov/v2/projects/search",
+        "extract": false
+      }
+    ]
+  },
+  {
+    "name": "USAspending",
+    "description": "",
+    "target_dir": "USAspending",
+    "downloads": [
+      {
+        "url": "https://api.usaspending.gov/api/v2/search/spending_by_award/",
+        "extract": false
+      }
+    ]
+  },
+  {
+    "name": "PubMed + NIH iCite",
+    "description": "",
+    "target_dir": "PubMed__NIH_iCite",
+    "downloads": [
+      {
+        "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=Harvard%5BAffiliation%5D+AND+2025%5Bpdat%5D&retmode=json&retmax=20",
+        "extract": false
+      }
+    ]
+  },
+  {
+    "name": "ClinicalTrials.gov API",
+    "description": "",
+    "target_dir": "ClinicalTrialsgov_API",
+    "downloads": [
+      {
+        "url": "https://clinicaltrials.gov/api/query/studies?expr=AREA[Condition]cancer&min_rnk=1&max_rnk=20&fmt=json",
+        "extract": false
+      }
+    ]
+  },
+  {
+    "name": "BLS QCEW",
+    "description": "",
+    "target_dir": "BLS_QCEW",
+    "downloads": [
+      {
+        "url": "https://data.bls.gov/cew/data/api/{year}/{quarter}/area/{area_code}.csv",
+        "extract": false
+      },
+      {
+        "url": "https://data.bls.gov/cew/data/api/2024/1/area/26000.csv",
+        "extract": false
+      },
+      {
+        "url": "https://data.bls.gov/cew/data/api/{year}/{quarter}/industry/{industry_code}.csv",
+        "extract": false
+      }
+    ]
+  },
+  {
+    "name": "PatentsView",
+    "description": "",
+    "target_dir": "PatentsView",
+    "downloads": [
+      {
+        "url": "https://search.patentsview.org/api/v1/patent/",
+        "extract": false
+      }
+    ]
+  }
+]

@@ -1,0 +1,49 @@
+{
+  "scored_at": "2026-03-24T12:30:00Z",
+  "cycle": 1,
+  "candidates": [
+    {
+      "candidate_id": "CQ1",
+      "status": "feasible",
+      "preliminary_scores": {
+        "data_feasibility": 0.92,
+        "significance": 0.90,
+        "novelty": 0.80,
+        "rigor": 0.85
+      },
+      "literature_scores": {
+        "novelty": 0.45,
+        "support": 0.85
+      },
+      "search_results_summary": "A PNAS study (2026) found NIH grant terminations disproportionately affected women and early-career researchers. Fellowship grants for Black researchers dropped 40% in 2025. NIH nixed funding for pre- and postdoctoral training programs. Key difference from our question: existing work focuses on PI demographics (sex, race), while our question examines grant funding category (training vs. R&D) as the exposure, controlling for institutional type and award size using the Grant Witness termination dataset. This adds distinct value as a structural analysis.",
+      "final_composite": 0.778,
+      "rank": 1
+    },
+    {
+      "candidate_id": "CQ2",
+      "status": "feasible",
+      "preliminary_scores": {
+        "data_feasibility": 0.85,
+        "significance": 0.85,
+        "novelty": 0.75,
+        "rigor": 0.80
+      },
+      "literature_scores": {
+        "novelty": 0.65,
+        "support": 0.70
+      },
+      "search_results_summary": "Reporting confirms hospitals and community institutions face disproportionate impact (St. Jude alone could lose $78M). Geographic disparities noted (27 states receive 94% of NIH funding). However, no systematic empirical analysis of termination vs. reinstatement rates comparing independent hospitals to medical schools was found. Makes this moderately novel but with less rigorous empirical support in the literature compared to CQ1.",
+      "final_composite": 0.7625,
+      "rank": 2
+    },
+    {
+      "candidate_id": "CQ3",
+      "status": "infeasible",
+      "preliminary_scores": null,
+      "literature_scores": null,
+      "search_results_summary": "Excluded from scoring — infeasible (no control group). Would require full NIH portfolio data.",
+      "final_composite": 0.0,
+      "rank": 3
+    }
+  ]
+}

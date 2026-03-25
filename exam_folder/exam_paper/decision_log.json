@@ -1,0 +1,22 @@
+[
+  {
+    "cycle": 1,
+    "candidates_scored": [
+      {
+        "candidate_id": "CQ1",
+        "composite": 0.778
+      },
+      {
+        "candidate_id": "CQ2",
+        "composite": 0.763
+      },
+      {
+        "candidate_id": "CQ3",
+        "composite": 0.0
+      }
+    ],
+    "selected": "CQ1",
+    "feedback_signal": null,
+    "timestamp": "2026-03-24T12:27:20Z"
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "compilation_attempts": 2,
+  "errors_fixed": [
+    {
+      "error": "First-person pronoun 'Our analysis' in Discussion",
+      "fix": "Changed to 'The present analysis' (JAMA style: no first-person)",
+      "line": 395
+    }
+  ],
+  "warnings_remaining": [
+    "BibTeX: empty author/editor in NIHBudget2025, GrantWitness2025, NIHReporter2025 (expected for institutional/web @misc entries)",
+    "BibTeX: missing publisher in NIHBudget2025, GrantWitness2025, NIHReporter2025 (non-fatal; URLs provided)",
+    "LaTeX Font: T1/cmtt/m/n at 8.5pt substituted to 8pt (non-fatal, monospace font in supplement)",
+    "Overfull \\hbox (21.1207pt) at line 454 — long logistic regression equation in eAppendix 1 (non-fatal)"
+  ],
+  "review_checklist": {
+    "content_complete": true,
+    "title_present": true,
+    "abstract_7_sections": true,
+    "key_points_complete": true,
+    "introduction_with_objective": true,
+    "methods_complete": true,
+    "results_with_table1": true,
+    "discussion_with_prior_literature": true,
+    "limitations_present": true,
+    "conclusions_present": true,
+    "formatting_correct": true,
+    "page_count_within_limit": true,
+    "figures_render": true,
+    "tables_render": true,
+    "references_vancouver": true,
+    "no_unresolved_references": true,
+    "no_unresolved_citations": true,
+    "statistics_consistent": true,
+    "abstract_matches_results": true,
+    "keypoints_matches_analysis": true,
+    "sample_sizes_consistent": true,
+    "pvalue_format_correct": true,
+    "ci_format_correct": true,
+    "jama_style_compliant": true,
+    "no_first_person_pronouns": true,
+    "past_tense_methods_results": true
+  },
+  "final_page_count": 11,
+  "main_body_pages": 8,
+  "reference_pages": 1,
+  "supplement_pages": 2,
+  "pdf_size_bytes": 354584,
+  "output_path": "exam_paper/paper.pdf",
+  "compilation_date": "2026-03-24"
+}

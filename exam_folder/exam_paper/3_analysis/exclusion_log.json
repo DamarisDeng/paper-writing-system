@@ -1,0 +1,21 @@
+{
+  "n_raw": 5419,
+  "exclusions": {
+    "frozen_funding": 20,
+    "other_funding_category": 173,
+    "missing_total_award": 6,
+    "missing_funding_category": 0
+  },
+  "n_excluded_total": 199,
+  "n_analytic": 5220,
+  "outcome_distribution": {
+    "terminated": 1063,
+    "non_terminated": 4157,
+    "pct_terminated": 20.36
+  },
+  "exposure_distribution": {
+    "training_grants": 1559,
+    "rd_grants": 3661,
+    "pct_training": 29.87
+  }
+}

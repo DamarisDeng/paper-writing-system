@@ -1,0 +1,24 @@
+{
+  "datasets": [
+    {
+      "name": "nih_terminations",
+      "status": "already_present",
+      "files_acquired": [
+        "nih_terminations.csv"
+      ],
+      "source": "Provided in exam_folder/data/",
+      "purpose": "Primary dataset: NIH grant terminations snapshot from Grant Witness (5,419 records, 57 columns)"
+    },
+    {
+      "name": "harvard_reports",
+      "status": "already_present",
+      "files_acquired": [
+        "Harvard amends lawsuit...pdf",
+        "How progress happens...pdf"
+      ],
+      "source": "Provided in exam_folder/data/harvard_reports/",
+      "purpose": "Context: Harvard Gazette reports on NIH funding disputes"
+    }
+  ],
+  "note": "Supplementary API-based datasets (OpenAlex, NIH RePORTER, etc.) not bulk-downloaded at Stage 0; will be queried as needed in Stage 4."
+}

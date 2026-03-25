@@ -1,0 +1,49 @@
+{
+  "total_datasets": 7,
+  "available_count": 0,
+  "missing_count": 7,
+  "datasets": [
+    {
+      "name": "OpenAlex",
+      "status": "missing",
+      "description": "",
+      "target_dir": "OpenAlex"
+    },
+    {
+      "name": "NIH RePORTER / ExPORTER",
+      "status": "missing",
+      "description": "",
+      "target_dir": "NIH_RePORTER__ExPORTER"
+    },
+    {
+      "name": "USAspending",
+      "status": "missing",
+      "description": "",
+      "target_dir": "USAspending"
+    },
+    {
+      "name": "PubMed + NIH iCite",
+      "status": "missing",
+      "description": "",
+      "target_dir": "PubMed__NIH_iCite"
+    },
+    {
+      "name": "ClinicalTrials.gov API",
+      "status": "missing",
+      "description": "",
+      "target_dir": "ClinicalTrialsgov_API"
+    },
+    {
+      "name": "BLS QCEW",
+      "status": "missing",
+      "description": "",
+      "target_dir": "BLS_QCEW"
+    },
+    {
+      "name": "PatentsView",
+      "status": "missing",
+      "description": "",
+      "target_dir": "PatentsView"
+    }
+  ]
+}

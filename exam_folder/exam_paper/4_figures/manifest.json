@@ -1,0 +1,26 @@
+{
+  "figures": [
+    {
+      "file": "figures/figure1.png",
+      "file_pdf": "figures/figure1.pdf",
+      "title": "Figure 1. Adjusted Odds Ratios for NIH Grant Termination, 2025",
+      "caption": "Figure 1. Adjusted Odds Ratios for NIH Grant Termination, 2025. Forest plot of odds ratios from multivariable logistic regression (N = 5,219). Reference categories: University-Medical institutions and Northeast region. Error bars indicate 95% confidence intervals."
+    },
+    {
+      "file": "figures/figure2.png",
+      "file_pdf": "figures/figure2.pdf",
+      "title": "Figure 2. NIH Grant Termination Rates by Institutional Type, 2025",
+      "caption": "Figure 2. NIH Grant Termination Rates by Institutional Type, 2025. Bars show percentage of grants permanently terminated within each institutional category. Error bars indicate 95% confidence intervals using Wilson score method. Dashed line indicates overall mean termination rate."
+    }
+  ],
+  "tables": [
+    {
+      "file": "tables/table1.tex",
+      "title": "Table 1. Baseline Characteristics of NIH Grants by Funding Category"
+    },
+    {
+      "file": "tables/table2.tex",
+      "title": "Table 2. Multivariable Logistic Regression: Predictors of NIH Grant Termination"
+    }
+  ]
+}

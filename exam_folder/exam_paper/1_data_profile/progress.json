@@ -1,0 +1,28 @@
+{
+  "stage_name": "load_and_profile",
+  "stage_number": "1",
+  "current_step": "step_5_save_final",
+  "all_steps": [
+    "step_1_read_description",
+    "step_2_inspect_files",
+    "step_3_run_profiling",
+    "step_4_enrich_output",
+    "step_5_save_final"
+  ],
+  "completed_steps": [
+    "step_1_read_description",
+    "step_2_inspect_files",
+    "step_3_run_profiling",
+    "step_4_enrich_output",
+    "step_5_save_final"
+  ],
+  "started_at": "2026-03-24T12:16:53Z",
+  "last_updated": "2026-03-24T12:16:53Z",
+  "outputs": [
+    "1_data_profile/profile.json",
+    "1_data_profile/variable_types.json"
+  ],
+  "status": "completed",
+  "notes": "",
+  "completed_at": "2026-03-24T12:16:53Z"
+}

@@ -1,0 +1,33 @@
+{
+  "stage_name": "statistical_analysis",
+  "stage_number": "5",
+  "current_step": "step_6_compile",
+  "all_steps": [
+    "step_1_load_inputs",
+    "step_2_prepare_data",
+    "step_3_descriptive_stats",
+    "step_3b_analysis_plan",
+    "step_4_primary_analysis",
+    "step_5_sensitivity",
+    "step_6_compile"
+  ],
+  "completed_steps": [
+    "step_1_load_inputs",
+    "step_2_prepare_data",
+    "step_3_descriptive_stats",
+    "step_3b_analysis_plan",
+    "step_4_primary_analysis",
+    "step_5_sensitivity",
+    "step_6_compile"
+  ],
+  "started_at": "2026-03-24T12:36:38Z",
+  "last_updated": "2026-03-24T12:36:38Z",
+  "outputs": [
+    "3_analysis/analytic_dataset.csv",
+    "3_analysis/analysis_results.json",
+    "3_analysis/analysis_plan.json"
+  ],
+  "status": "completed",
+  "notes": "Logistic regression selected; binary outcome, no clustering",
+  "completed_at": "2026-03-24T12:36:38Z"
+}

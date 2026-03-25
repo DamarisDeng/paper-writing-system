@@ -1,0 +1,122 @@
+{
+  "stage": "literature_review",
+  "date": "2026-03-24",
+  "paper_topic": "NIH grant termination patterns in 2025 — training vs R&D grants and role of institutional type",
+  "primary_result_context": "OR = 1.11 (95% CI: 0.90–1.36) training vs R&D; Hospital/NonProfit institutions OR ~10.5 vs University-Medical",
+  "data_source": "NIH Grant Witness termination dataset (grantwitness.com), n=5,219 grants",
+  "search_strategy": {
+    "tool": "fetch_references.py (Semantic Scholar + PubMed API)",
+    "api_status": "heavily rate-limited — S2 returned limited results; supplement with verified @misc entries",
+    "total_queries_run": 20
+  },
+  "queries": {
+    "primary": [
+      "NIH grant termination federal funding research 2025",
+      "NIH funding cuts scientific workforce biomedical research",
+      "federal research funding disruption university early career researchers",
+      "academic research grant termination institutional impact",
+      "logistic regression observational study cross-sectional binary outcome epidemiology methods",
+      "STROBE reporting observational epidemiology checklist",
+      "NIH biomedical research funding United States policy",
+      "research training fellowship funding early career scientist biomedical",
+      "NIH indirect costs overhead funding institutional type",
+      "NIH RePORTER grant database funding federal research"
+    ],
+    "fallback": [
+      "STROBE statement strengthening reporting observational studies epidemiology von Elm",
+      "logistic regression odds ratio confidence interval interpretation epidemiology Hosmer",
+      "biomedical research funding NIH extramural grants United States history",
+      "scientific workforce diversity training federal funding NIH"
+    ],
+    "extra": [
+      "NIH grant termination DOGE research funding cuts Trump administration 2025",
+      "NIH training grant T32 F31 fellowship termination funding",
+      "research funding policy United States biomedical innovation workforce development",
+      "von Elm STROBE checklist observational study 2007 annals internal medicine",
+      "Hosmer Lemeshow logistic regression textbook applied",
+      "NIH R01 R21 award mechanism success rate funding trends"
+    ]
+  },
+  "api_results_raw": {
+    "primary_fetched": 4,
+    "fallback_fetched": 4,
+    "extra_fetched": 4,
+    "total_raw": 12
+  },
+  "entries_excluded": [
+    {
+      "key": "Borlaug2025",
+      "reason": "Irrelevant — heart failure clinical trial, not NIH funding or methods"
+    },
+    {
+      "key": "Fujiki2021",
+      "reason": "Irrelevant — vocal fatigue physiology study"
+    },
+    {
+      "key": "Benchimol2016",
+      "reason": "Partially relevant — RECORD statement for pharmacoepidemiology, superseded by STROBE-Equity and Langan2018 already included"
+    },
+    {
+      "key": "HuetePerez2025",
+      "reason": "Marginally relevant — Latin America biomedical capacity, not directly about NIH US termination patterns"
+    },
+    {
+      "key": "Dewidar2025a",
+      "reason": "Duplicate — same article as Dewidar2025, different journal (simultaneous JAMA Network Open / BMJ publication)"
+    }
+  ],
+  "manually_added_misc": [
+    {
+      "key": "GrantWitness2025",
+      "reason": "Primary data source for the study — verifiable at grantwitness.com"
+    },
+    {
+      "key": "NIHReporter2025",
+      "reason": "Official NIH grant database — verifiable at reporter.nih.gov"
+    },
+    {
+      "key": "NIHBudget2025",
+      "reason": "NIH official budget page — verifiable at officeofbudget.od.nih.gov"
+    },
+    {
+      "key": "VonElm2007",
+      "reason": "Classic STROBE methods paper (PMID 17938396) — well-known, search confirmed relevance; manually added as API did not return it directly"
+    },
+    {
+      "key": "Rockey2010",
+      "reason": "Rockey & Collins 2010 Science commentary on managing NIH support — cited in NIH funding policy context (PMID 20798295)"
+    }
+  ],
+  "final_entries": {
+    "total": 12,
+    "citation_keys": [
+      "Miller2026",
+      "Jalali2025",
+      "Mastej2025",
+      "Gonsalves2025",
+      "Emamaullee2025",
+      "VonElm2007",
+      "Dewidar2025",
+      "Langan2018",
+      "GrantWitness2025",
+      "NIHReporter2025",
+      "NIHBudget2025",
+      "Rockey2010"
+    ],
+    "categories": {
+      "NIH_terminations_funding_cuts": ["Miller2026", "Jalali2025", "Mastej2025", "Gonsalves2025"],
+      "research_workforce_training": ["Emamaullee2025", "Mastej2025"],
+      "observational_methods_reporting": ["VonElm2007", "Dewidar2025", "Langan2018"],
+      "data_sources": ["GrantWitness2025", "NIHReporter2025"],
+      "policy_context": ["NIHBudget2025", "Rockey2010"]
+    }
+  },
+  "quality_check": {
+    "min_entries_required": 10,
+    "entries_with_author": 12,
+    "entries_with_title": 12,
+    "entries_with_year": 12,
+    "entries_with_doi_or_url": 12,
+    "passes_validation": true
+  }
+}

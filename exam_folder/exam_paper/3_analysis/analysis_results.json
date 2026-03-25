@@ -1,0 +1,266 @@
+{
+  "descriptive_statistics": {
+    "n_total": 5220,
+    "n_rd": 3661,
+    "n_training": 1559,
+    "total_award": {
+      "rd_median_usd": 2087857.0,
+      "rd_q25_usd": 1217300.0,
+      "rd_q75_usd": 3172917.0,
+      "training_median_usd": 274032.0,
+      "training_q25_usd": 98512.0,
+      "training_q75_usd": 999800.0,
+      "p_value_mannwhitney": 0.0
+    },
+    "org_type_grouped": {
+      "Hospital-NonProfit": {
+        "rd_n": 193,
+        "rd_pct": 5.3,
+        "training_n": 55,
+        "training_pct": 3.5
+      },
+      "Other": {
+        "rd_n": 18,
+        "rd_pct": 0.5,
+        "training_n": 4,
+        "training_pct": 0.3
+      },
+      "University-Medical": {
+        "rd_n": 2724,
+        "rd_pct": 74.4,
+        "training_n": 1063,
+        "training_pct": 68.2
+      },
+      "University-Other": {
+        "rd_n": 726,
+        "rd_pct": 19.8,
+        "training_n": 437,
+        "training_pct": 28.0
+      }
+    },
+    "org_type_grouped_pvalue": 0.0,
+    "org_state_region": {
+      "Midwest": {
+        "rd_n": 731,
+        "rd_pct": 20.0,
+        "training_n": 250,
+        "training_pct": 16.0
+      },
+      "Northeast": {
+        "rd_n": 1926,
+        "rd_pct": 52.6,
+        "training_n": 724,
+        "training_pct": 46.4
+      },
+      "South": {
+        "rd_n": 348,
+        "rd_pct": 9.5,
+        "training_n": 270,
+        "training_pct": 17.3
+      },
+      "Unknown": {
+        "rd_n": 11,
+        "rd_pct": 0.3,
+        "training_n": 13,
+        "training_pct": 0.8
+      },
+      "West": {
+        "rd_n": 645,
+        "rd_pct": 17.6,
+        "training_n": 302,
+        "training_pct": 19.4
+      }
+    },
+    "org_state_region_pvalue": 0.0,
+    "terminated_binary": {
+      "rd_n_terminated": 594,
+      "rd_pct_terminated": 16.2,
+      "training_n_terminated": 469,
+      "training_pct_terminated": 30.1,
+      "p_value_chisq": 0.0
+    },
+    "table1_generated": true
+  },
+  "table1_note": "Table 1: Characteristics of NIH grants by funding category (Research Training vs. R&D)",
+  "primary_analysis": {
+    "n_obs": 5219,
+    "converged": true,
+    "log_likelihood": -1860.3129,
+    "pseudo_r2_mcfadden": 0.2948,
+    "aic": 3740.6259,
+    "bic": 3806.2265,
+    "primary_estimate": {
+      "variable": "is_training_grant",
+      "label": "Training vs. R&D",
+      "OR": 1.1095,
+      "OR_CI_lower": 0.902,
+      "OR_CI_upper": 1.3647,
+      "p_value": 0.325268,
+      "coef": 0.103895
+    },
+    "all_estimates": {
+      "Intercept": {
+        "OR": 24.6039,
+        "CI_lower": 9.3621,
+        "CI_upper": 64.6595,
+        "p_value": 0.0,
+        "coef": 3.202905
+      },
+      "C(org_type_grouped,_Treatment('University-Medical'))_T_University-Other": {
+        "OR": 1.2191,
+        "CI_lower": 0.9989,
+        "CI_upper": 1.4878,
+        "p_value": 0.051266,
+        "coef": 0.198106
+      },
+      "C(org_type_grouped,_Treatment('University-Medical'))_T_Hospital-NonProfit": {
+        "OR": 10.5154,
+        "CI_lower": 7.6873,
+        "CI_upper": 14.384,
+        "p_value": 0.0,
+        "coef": 2.35284
+      },
+      "C(org_type_grouped,_Treatment('University-Medical'))_T_Other": {
+        "OR": 0.7251,
+        "CI_lower": 0.1604,
+        "CI_upper": 3.2784,
+        "p_value": 0.676285,
+        "coef": -0.321423
+      },
+      "C(org_state_region,_Treatment('Northeast'))_T_Midwest": {
+        "OR": 2.5403,
+        "CI_lower": 2.0526,
+        "CI_upper": 3.1439,
+        "p_value": 0.0,
+        "coef": 0.932295
+      },
+      "C(org_state_region,_Treatment('Northeast'))_T_South": {
+        "OR": 25.2298,
+        "CI_lower": 19.9622,
+        "CI_upper": 31.8875,
+        "p_value": 0.0,
+        "coef": 3.228028
+      },
+      "C(org_state_region,_Treatment('Northeast'))_T_West": {
+        "OR": 0.8614,
+        "CI_lower": 0.6669,
+        "CI_upper": 1.1128,
+        "p_value": 0.253547,
+        "coef": -0.149149
+      },
+      "C(org_state_region,_Treatment('Northeast'))_T_Unknown": {
+        "OR": 106.3482,
+        "CI_lower": 21.1607,
+        "CI_upper": 534.4793,
+        "p_value": 0.0,
+        "coef": 4.666718
+      },
+      "is_training_grant": {
+        "OR": 1.1095,
+        "CI_lower": 0.902,
+        "CI_upper": 1.3647,
+        "p_value": 0.325268,
+        "coef": 0.103895
+      },
+      "log_total_award": {
+        "OR": 0.6641,
+        "CI_lower": 0.6208,
+        "CI_upper": 0.7105,
+        "p_value": 0.0,
+        "coef": -0.409267
+      }
+    },
+    "hosmer_lemeshow": {
+      "statistic": 32.3873,
+      "df": 8,
+      "p_value": 0.0001,
+      "note": "Values computed using model.predict() for probabilities"
+    },
+    "formula": "terminated_binary ~ is_training_grant + C(org_type_grouped, Treatment('University-Medical')) + log_total_award + C(org_state_region, Treatment('Northeast'))",
+    "predicted_prob_range": {
+      "min": 0.0091,
+      "max": 0.9988,
+      "mean": 0.2037
+    },
+    "separation_check": {
+      "min_predicted_prob": 0.009118,
+      "max_predicted_prob": 0.99881,
+      "all_probs_in_0_1": false,
+      "standard_errors_available": true,
+      "convergence": true
+    }
+  },
+  "sensitivity_analyses": {
+    "SA1_subgroup_by_org_type": {
+      "University-Medical": {
+        "n": 3787,
+        "n_terminated": 643,
+        "OR": 1.2229,
+        "CI_lower": 0.9386,
+        "CI_upper": 1.5934,
+        "p_value": 0.136081
+      },
+      "University-Other": {
+        "n": 1163,
+        "n_terminated": 268,
+        "OR": 1.1676,
+        "CI_lower": 0.7742,
+        "CI_upper": 1.7608,
+        "p_value": 0.459751
+      },
+      "Hospital-NonProfit": {
+        "n": 248,
+        "n_terminated": 140,
+        "OR": 0.7778,
+        "CI_lower": NaN,
+        "CI_upper": NaN,
+        "p_value": NaN
+      },
+      "Other": {
+        "skipped": true,
+        "reason": "insufficient events"
+      }
+    },
+    "SA2_no_region_adjustment": {
+      "n_obs": 5219,
+      "OR": 1.2359,
+      "CI_lower": 1.0343,
+      "CI_upper": 1.477,
+      "p_value": 0.019775,
+      "formula": "terminated_binary ~ is_training_grant + C(org_type_grouped, Treatment('University-Medical')) + log_total_award"
+    },
+    "SA3_state_fixed_effects": {
+      "n_obs": 5219,
+      "OR": 1.0897,
+      "CI_lower": 0.8722,
+      "CI_upper": 1.3614,
+      "p_value": 0.449733,
+      "formula": "terminated_binary ~ is_training_grant + C(org_type_grouped, Treatment('University-Medical')) + log_total_award + C(org_state_fe, Treatment('NY'))"
+    }
+  },
+  "analysis_method": "Logistic regression (statsmodels Logit)",
+  "analysis_date": "2026-03-24",
+  "analytic_sample": {
+    "total_n": 5219,
+    "excluded_n": 200,
+    "exclusion_reasons": [
+      "Status='Frozen Funding': 20",
+      "Status='Possibly Unfrozen Funding': 103",
+      "Non-primary funding categories (Small Business/Other/Construction): 70",
+      "Missing total_award: 6",
+      "NaN after log transform: 1"
+    ],
+    "exposure_groups": {
+      "Research Training and Career Development": {
+        "n": 1558,
+        "terminated_n": 469,
+        "termination_rate_pct": 30.1
+      },
+      "Research and Development": {
+        "n": 3661,
+        "terminated_n": 594,
+        "termination_rate_pct": 16.2
+      }
+    }
+  }
+}

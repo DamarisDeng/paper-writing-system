@@ -1,0 +1,32 @@
+,,Grouped by is_training_grant,Grouped by is_training_grant,Grouped by is_training_grant,Grouped by is_training_grant,Grouped by is_training_grant,Grouped by is_training_grant
+,,Missing,Overall,R&D,"SMD (R&D,Training)",Training,P-Value
+n,,,5220,3661,,1559,
+"Total Award (USD millions), mean (SD)",,0,2.9 (12.6),3.7 (14.9),-0.242,1.1 (2.1),<0.001
+"Institution Type, n (%)",Hospital-NonProfit,,248 (4.8),193 (5.3),0.206,55 (3.5),<0.001
+"Institution Type, n (%)",Other,,22 (0.4),18 (0.5),,4 (0.3),
+"Institution Type, n (%)",University-Medical,,3787 (72.5),2724 (74.4),,1063 (68.2),
+"Institution Type, n (%)",University-Other,,1163 (22.3),726 (19.8),,437 (28.0),
+"State (Top 10), n (%)",CA,,757 (14.5),536 (14.6),0.366,221 (14.2),<0.001
+"State (Top 10), n (%)",FL,,75 (1.4),48 (1.3),,27 (1.7),
+"State (Top 10), n (%)",IL,,738 (14.1),577 (15.8),,161 (10.3),
+"State (Top 10), n (%)",MA,,763 (14.6),505 (13.8),,258 (16.5),
+"State (Top 10), n (%)",MD,,74 (1.4),43 (1.2),,31 (2.0),
+"State (Top 10), n (%)",NC,,89 (1.7),58 (1.6),,31 (2.0),
+"State (Top 10), n (%)",NY,,1404 (26.9),1068 (29.2),,336 (21.6),
+"State (Top 10), n (%)",Other,,814 (15.6),460 (12.6),,354 (22.7),
+"State (Top 10), n (%)",PA,,130 (2.5),89 (2.4),,41 (2.6),
+"State (Top 10), n (%)",RI,,264 (5.1),209 (5.7),,55 (3.5),
+"State (Top 10), n (%)",TX,,112 (2.1),68 (1.9),,44 (2.8),
+"Activity Code Group, n (%)",F (Fellowship),,547 (10.5),0 (0.0),3.628,547 (35.1),<0.001
+"Activity Code Group, n (%)",K (Career Dev),,404 (7.7),0 (0.0),,404 (25.9),
+"Activity Code Group, n (%)",Other,,446 (8.5),414 (11.3),,32 (2.1),
+"Activity Code Group, n (%)",Other R (Research),,1160 (22.2),901 (24.6),,259 (16.6),
+"Activity Code Group, n (%)",R01 (Research),,2346 (44.9),2346 (64.1),,0 (0.0),
+"Activity Code Group, n (%)",T (Training Inst.),,317 (6.1),0 (0.0),,317 (20.3),
+"US Census Region, n (%)",Midwest,,981 (18.8),731 (20.0),0.264,250 (16.0),<0.001
+"US Census Region, n (%)",Northeast,,2650 (50.8),1926 (52.6),,724 (46.4),
+"US Census Region, n (%)",South,,618 (11.8),348 (9.5),,270 (17.3),
+"US Census Region, n (%)",Unknown,,24 (0.5),11 (0.3),,13 (0.8),
+"US Census Region, n (%)",West,,947 (18.1),645 (17.6),,302 (19.4),
+"Terminated (outcome), n (%)",0,,4157 (79.6),3067 (83.8),0.333,1090 (69.9),<0.001
+"Terminated (outcome), n (%)",1,,1063 (20.4),594 (16.2),,469 (30.1),

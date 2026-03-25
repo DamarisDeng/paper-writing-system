@@ -1,0 +1,23 @@
+{
+  "stage_name": "write_paper",
+  "stage_number": "8",
+  "current_step": "step_4_validate",
+  "all_steps": [
+    "step_1_load_inputs",
+    "step_2_copy_assets",
+    "step_3_draft_paper",
+    "step_4_validate"
+  ],
+  "completed_steps": [
+    "step_1_load_inputs",
+    "step_2_copy_assets",
+    "step_3_draft_paper",
+    "step_4_validate"
+  ],
+  "started_at": "2026-03-24T13:02:52Z",
+  "last_updated": "2026-03-24T13:02:52Z",
+  "outputs": [],
+  "status": "completed",
+  "notes": "",
+  "completed_at": "2026-03-24T13:02:52Z"
+}

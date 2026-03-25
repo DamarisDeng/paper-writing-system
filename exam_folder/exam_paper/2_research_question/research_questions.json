@@ -1,0 +1,374 @@
+{
+  "candidate_questions": [
+    {
+      "candidate_id": "CQ1",
+      "status": "feasible",
+      "question": "Among 5,298 NIH grants with a definitive action outcome from the 2025 federal funding actions (N=1,116 terminated, N=4,182 reinstated or unfrozen), are research training and career development grants (`funding_category` = 'Research Training and Career Development') associated with a higher odds of permanent grant termination (`status` = '❌ Terminated') compared to research and development grants, after adjusting for institutional type (`org_type`), total award amount (`total_award`), and state (`org_state`)?",
+      "population": "5,298 NIH grants with a definitive outcome (terminated or reinstated/unfrozen) from the 2025 federal funding actions dataset. Excludes 20 still-frozen grants and 103 'Possibly Unfrozen' grants.",
+      "exposure_or_intervention": "Grant funding category (`funding_category`): Research Training and Career Development vs. Research and Development (reference). Small Business and Other Transactions included as secondary strata.",
+      "comparator": "Research and Development grants (N=3,677; termination rate 16.2%)",
+      "outcome": "Permanent grant termination: binary indicator derived from `status` == '❌ Terminated' (1) vs. reinstatement or unfreezing (0)",
+      "study_design": "Cross-sectional analysis with multivariable logistic regression; outcome is definitive grant status at time of data capture",
+      "rationale": "Research training grants (F-fellowships, T32 training grants, career development K-awards) represent the pipeline for future investigators. A 29.9% termination rate for training grants vs. 16.2% for R&D grants suggests disproportionate harm to early-career researchers, with major implications for scientific workforce development. All required variables are available with very low missingness.",
+      "preliminary_scores": {
+        "data_feasibility": 0.92,
+        "significance": 0.90,
+        "novelty": 0.80,
+        "rigor": 0.85,
+        "composite": 0.874
+      },
+      "secondary_questions": [
+        {
+          "question": "Does the association between funding_category and termination vary by institutional type (org_type), specifically comparing schools of medicine vs. schools of arts and sciences?",
+          "variables_involved": ["funding_category", "org_type", "status"],
+          "analysis_type": "Effect modification / interaction analysis in logistic regression",
+          "rationale": "Schools of Arts & Sciences had a 25.5% termination rate vs. 16.8% for Schools of Medicine, suggesting differential targeting by institution type that may interact with funding category."
+        },
+        {
+          "question": "Among training grants, are federal fellowships (activity_code F31, F32, F30) associated with higher termination rates than institutional training grants (T32)?",
+          "variables_involved": ["activity_code", "funding_category", "status"],
+          "analysis_type": "Subgroup chi-square test and logistic regression within training category",
+          "rationale": "Individual fellowships versus institutional training grants may face different administrative termination pathways."
+        },
+        {
+          "question": "What is the total estimated funding loss (sum of total_estimated_remaining) from terminated training grants compared to R&D grants?",
+          "variables_involved": ["funding_category", "total_estimated_remaining", "status"],
+          "analysis_type": "Descriptive — sum and proportion of total funding at risk by category",
+          "rationale": "Quantifying total dollar impact contextualizes the scale of disruption to scientific training."
+        }
+      ],
+      "variable_roles": {
+        "outcome_variables": ["terminated_binary"],
+        "exposure_variables": ["is_training_grant"],
+        "covariates": ["org_type", "total_award", "org_state", "activity_code"],
+        "stratification_variables": ["dept_type", "org_city"],
+        "excluded_variables": {
+          "status": "categorical source for derived outcome terminated_binary",
+          "funding_category": "categorical source for derived exposure is_training_grant",
+          "org_name": "institutional name — too granular, collinear with org_type",
+          "core_award_number": "identifier — grant ID for linking only",
+          "full_award_number": "identifier — award ID for linking only",
+          "appl_id": "identifier — application ID for linking only",
+          "hhs_web_reported": "reporting flag — collinear with cancellation_source",
+          "hhs_pdf_reported": "reporting flag — collinear with cancellation_source",
+          "self_reported": "reporting flag — collinear with cancellation_source",
+          "court_reported": "reporting flag — collinear with cancellation_source",
+          "source_reported": "reporting flag — collinear with cancellation_source",
+          "targeted_start_date": "47% missing — timing of freeze, not germane to termination vs. reinstatement",
+          "targeted_end_date": "47% missing — same as above",
+          "ever_frozen": "collinear with cancellation_source; 2,549 grants never frozen",
+          "frozen_date": "47% missing; timing variable, not primary predictor",
+          "unfrozen_date": "47% missing; post-outcome variable",
+          "file_c_outlays": "text field with monthly spending narrative — not directly analyzable",
+          "termination_date": "39% missing; post-outcome timing, not predictor",
+          "cancellation_source": "mediator on causal pathway (process of termination, not cause), potential collinearity",
+          "reinstatement_indicator": "post-outcome — describes mechanism after the outcome",
+          "reinstated_est_date": "post-outcome — 59.7% missing",
+          "reinstatement_case": "post-outcome — 80.5% missing; legal case that reversed outcome",
+          "last_payment_month": "47% missing; post-outcome financial timing",
+          "last_payment_date": "47% missing; post-outcome financial timing",
+          "project_title": "text — analyzable via NLP but not primary covariate",
+          "foa": "identifier for funding opportunity announcement — too granular",
+          "foa_title": "text — title of funding announcement",
+          "abstract_text": "text — not analyzable in primary model",
+          "phr_text": "text — public health relevance statement, not analyzable",
+          "terms": "text — research terms/keywords",
+          "total_estimated_outlays": "collinear with total_award and total_estimated_remaining",
+          "total_estimated_remaining": "collinear with total_award — use total_award as primary financial control",
+          "spending_categories": "text — high cardinality JSON-like field",
+          "categories_predicted": "binary flag for predicted spending category — metadata",
+          "notes": "categorical — sparse free-text notes",
+          "org_traits": "categorical — institutional traits, sparse",
+          "pct_ugrad_pellgrant": "numeric — undergraduate Pell grant percent, not grant-level predictor",
+          "pct_ugrad_fedloan": "numeric — undergraduate loan percent, not grant-level predictor",
+          "prog_office_code": "categorical administrative code — collinear with program_office",
+          "program_office": "categorical — NIH program office; too granular (many categories)",
+          "nih_activity": "categorical — collinear with activity_code",
+          "court_restoration_url": "text — URL metadata",
+          "usaspending_url": "text — URL metadata",
+          "taggs_url": "text — URL metadata",
+          "reporter_url": "text — URL metadata",
+          "record_sha1": "identifier — data integrity hash",
+          "us_rep": "categorical — congressional representative; not primary predictor",
+          "us_rep_phone": "categorical — phone number, metadata",
+          "org_congdist": "categorical — congressional district; collinear with org_state",
+          "flagged_words": "categorical — grant title keywords flagged by algorithm; potential mediator, not cause",
+          "study_section": "categorical — NIH review panel; secondary variable",
+          "org_type_grouped": "derived from org_type — not used in CQ1 (org_type used directly as covariate)",
+          "log_total_award": "derived from total_award — total_award used directly as covariate in CQ1",
+          "org_state_region": "derived from org_state — org_state used directly as covariate in CQ1"
+        },
+        "derived_variables": [
+          {
+            "name": "terminated_binary",
+            "derivation": "1 if status == '❌ Terminated', 0 if status in ['🔄 Possibly Reinstated', '🚰 Unfrozen Funding', '💧 Possibly Unfrozen Funding']",
+            "source_columns": ["status"]
+          },
+          {
+            "name": "is_training_grant",
+            "derivation": "1 if funding_category == 'Research Training and Career Development', 0 if funding_category == 'Research and Development'",
+            "source_columns": ["funding_category"]
+          },
+          {
+            "name": "log_total_award",
+            "derivation": "log(total_award + 1) to normalize skewed distribution",
+            "source_columns": ["total_award"]
+          },
+          {
+            "name": "org_state_region",
+            "derivation": "US Census Bureau region (Northeast, Midwest, South, West) mapped from org_state",
+            "source_columns": ["org_state"]
+          }
+        ]
+      },
+      "feasibility_assessment": {
+        "strengths": [
+          "Complete national dataset: 5,419 NIH grants with definitive status outcomes, no sampling — near-census of 2025 funding actions",
+          "All primary variables (funding_category, org_type, total_award, org_state) have <1% missingness",
+          "Clear binary outcome with substantial variation (termination rate ranges from 10.2% to 73.3% across subgroups)",
+          "Large sample allows multivariable adjustment with adequate power for logistic regression (N=1,116 events)",
+          "Extremely policy-relevant: disproportionate impact on early-career researchers is a priority concern for scientific workforce",
+          "Natural comparison group within the same administrative shock: terminated vs. reinstated grants from identical policy context"
+        ],
+        "limitations": [
+          "Cross-sectional snapshot: cannot determine whether funding_category caused termination or if both reflect unmeasured grant characteristics (e.g., DEI content, geographic concentration of PIs)",
+          "Dataset contains only affected grants — non-terminated NIH grants are not included, limiting generalizability to the full NIH portfolio",
+          "Reinstatement status may be unstable at time of snapshot; 'Possibly Reinstated' grants may still be terminated",
+          "Unmeasured confounders: grant topic area (flagged DEI content), PI demographics, political affiliation of institution — these may explain the funding_category-termination association",
+          "Ecological inference risk: org_state is used as an area-level covariate, not a true confounder at grant level",
+          "Status categories use emoji strings requiring normalization; possible data entry inconsistencies"
+        ],
+        "required_assumptions": [
+          "The 'Possibly Reinstated' and 'Unfrozen Funding' statuses are appropriately treated as non-termination outcomes at the time of data capture",
+          "The 20 'Frozen Funding' grants excluded from analysis are missing at random with respect to funding_category",
+          "The NIH Grant Witness dataset captures a complete or representative set of affected grants (no systematic under-reporting by category)",
+          "The logistic regression assumption of no perfect multicollinearity among predictors holds after excluding collinear flags",
+          "Missing values in total_award (9 records) and total_estimated_remaining (20 records) are missing at random"
+        ]
+      }
+    },
+    {
+      "candidate_id": "CQ2",
+      "status": "feasible",
+      "question": "Among 5,298 NIH grants with a definitive action outcome from the 2025 federal funding actions, is institutional type (`org_type`) independently associated with permanent grant termination (`status` = '❌ Terminated') after adjusting for `funding_category`, `total_award`, and `org_state`? Specifically, do grants from independent hospitals and non-university non-profits face higher odds of termination compared to schools of medicine?",
+      "population": "5,298 NIH grants with definitive action outcome (terminated or reinstated/unfrozen) from the 2025 federal funding actions",
+      "exposure_or_intervention": "Institutional type (`org_type`): Independent Hospitals (N=115) and Other Domestic Non-Profits (N=90) vs. Schools of Medicine (reference, N=3,038)",
+      "comparator": "Schools of Medicine (reference group; termination rate 16.8%)",
+      "outcome": "Permanent grant termination derived from `status` == '❌ Terminated'",
+      "study_design": "Cross-sectional analysis with multivariable logistic regression",
+      "rationale": "Independent Hospitals (61.7% termination) and Other Non-Profits (52.2% termination) face dramatically higher termination rates than Schools of Medicine (16.8%), suggesting potential systematic targeting or differential access to reinstatement pathways. Understanding this disparity is critical for equity-focused policy responses.",
+      "preliminary_scores": {
+        "data_feasibility": 0.85,
+        "significance": 0.85,
+        "novelty": 0.75,
+        "rigor": 0.80,
+        "composite": 0.815
+      },
+      "secondary_questions": [
+        {
+          "question": "Among independent hospitals and non-profit institutions, are specific states (org_state) associated with higher termination rates, suggesting geographic targeting?",
+          "variables_involved": ["org_type", "org_state", "status"],
+          "analysis_type": "Stratified analysis by org_type with org_state as second-level grouping",
+          "rationale": "Geographic clustering of terminations within non-university settings may reveal political or administrative patterns."
+        }
+      ],
+      "variable_roles": {
+        "outcome_variables": ["terminated_binary"],
+        "exposure_variables": ["org_type_grouped"],
+        "covariates": ["funding_category", "total_award", "org_state", "activity_code"],
+        "stratification_variables": ["dept_type"],
+        "excluded_variables": {
+          "status": "categorical source for derived outcome terminated_binary",
+          "org_type": "source for derived exposure org_type_grouped",
+          "org_name": "institutional name — too granular",
+          "core_award_number": "identifier",
+          "full_award_number": "identifier",
+          "appl_id": "identifier",
+          "hhs_web_reported": "reporting flag — collinear",
+          "hhs_pdf_reported": "reporting flag — collinear",
+          "self_reported": "reporting flag — collinear",
+          "court_reported": "reporting flag — collinear",
+          "source_reported": "reporting flag — collinear",
+          "targeted_start_date": "47% missing",
+          "targeted_end_date": "47% missing",
+          "ever_frozen": "collinear with process variables",
+          "frozen_date": "47% missing",
+          "unfrozen_date": "47% missing",
+          "file_c_outlays": "unstructured text",
+          "termination_date": "post-outcome timing",
+          "cancellation_source": "mediator",
+          "reinstatement_indicator": "post-outcome",
+          "reinstated_est_date": "post-outcome",
+          "reinstatement_case": "post-outcome, 80.5% missing",
+          "last_payment_month": "post-outcome, 47% missing",
+          "last_payment_date": "post-outcome, 47% missing",
+          "project_title": "text",
+          "foa": "too granular",
+          "foa_title": "text",
+          "abstract_text": "text",
+          "phr_text": "text",
+          "terms": "text",
+          "total_estimated_outlays": "collinear with total_award",
+          "total_estimated_remaining": "collinear with total_award",
+          "spending_categories": "text",
+          "categories_predicted": "metadata",
+          "notes": "sparse",
+          "org_traits": "sparse",
+          "pct_ugrad_pellgrant": "not grant-level predictor",
+          "pct_ugrad_fedloan": "not grant-level predictor",
+          "prog_office_code": "collinear with program_office",
+          "program_office": "too granular",
+          "nih_activity": "collinear with activity_code",
+          "court_restoration_url": "metadata",
+          "usaspending_url": "metadata",
+          "taggs_url": "metadata",
+          "reporter_url": "metadata",
+          "record_sha1": "identifier",
+          "us_rep": "not primary predictor",
+          "us_rep_phone": "metadata",
+          "org_congdist": "collinear with org_state",
+          "flagged_words": "mediator",
+          "study_section": "secondary variable",
+          "org_city": "collinear with org_state",
+          "is_training_grant": "derived from funding_category — not used in CQ2",
+          "log_total_award": "derived from total_award — total_award used directly as covariate in CQ2",
+          "org_state_region": "derived from org_state — org_state used directly as covariate in CQ2"
+        },
+        "derived_variables": [
+          {
+            "name": "terminated_binary",
+            "derivation": "1 if status == '❌ Terminated', 0 otherwise (excluding frozen/possibly unfrozen)",
+            "source_columns": ["status"]
+          },
+          {
+            "name": "org_type_grouped",
+            "derivation": "Grouped org_type: University-Medical (Schools of Medicine, Public Health, Dentistry, Nursing, Veterinary), University-Other (Arts & Sciences, Engineering, Graduate, University-Wide), Hospital/Non-Profit (Independent Hospitals, Other Non-Profits, Research Institutes), Other",
+            "source_columns": ["org_type"]
+          },
+          {
+            "name": "log_total_award",
+            "derivation": "log(total_award + 1) to normalize skewed distribution",
+            "source_columns": ["total_award"]
+          }
+        ]
+      },
+      "feasibility_assessment": {
+        "strengths": [
+          "Clear exposure groups with large N differential allowing statistical comparison",
+          "Primary exposure (org_type) has 0% missingness",
+          "Dramatic variation in termination rates across org_type (10% to 62%) suggests real effect",
+          "Policy relevance: independent hospitals and non-profits may lack advocacy infrastructure compared to major research universities"
+        ],
+        "limitations": [
+          "Independent Hospitals (N=115) and Other Non-Profits (N=90) have smaller sample sizes for subgroup analyses",
+          "Many org_type categories have N<50, requiring grouping that may obscure heterogeneity",
+          "Unmeasured confounder: grant topic area (DEI, diversity, global health) may explain apparent org_type effect",
+          "Selection bias: the dataset only captures targeted grants, not the full NIH portfolio, so we cannot compute true incidence rates",
+          "The 'SCHOOLS OF MEDICINE' reference group is very large (N=3,038) with substantial heterogeneity in institution size and focus"
+        ],
+        "required_assumptions": [
+          "The binary outcome (terminated vs. reinstated/unfrozen) appropriately classifies grant fate",
+          "Org_type categories are accurately assigned and not differentially misclassified by outcome",
+          "Small cell sizes for rare org_type categories do not lead to unstable logistic regression estimates (addressed by grouping)"
+        ]
+      }
+    },
+    {
+      "candidate_id": "CQ3",
+      "status": "infeasible",
+      "infeasibility_reason": "no_control_group",
+      "question": "Among all NIH-funded grants in 2025, do grants containing DEI-related keywords in their title or abstract (`flagged_words`) face higher rates of termination compared to grants without such keywords?",
+      "population": "All active NIH grants in 2025",
+      "exposure_or_intervention": "Presence of DEI-related or politically sensitive keywords in `flagged_words`",
+      "comparator": "Grants without flagged keywords",
+      "outcome": "Grant termination",
+      "study_design": "Would require comparison to the full NIH portfolio (non-terminated grants), which is not available in this dataset",
+      "rationale": "Infeasible: This dataset contains only affected/terminated grants. The denominator (all NIH grants) is not available in the provided data. Without a comparison group of non-targeted grants, we cannot calculate relative risk or odds ratios. The `flagged_words` variable reflects a selection mechanism, not a predictor within the dataset.",
+      "secondary_questions": [
+        {
+          "question": "If the full NIH portfolio were available, what fraction of grants with DEI-flagged terms were terminated?",
+          "variables_involved": ["flagged_words"],
+          "analysis_type": "Descriptive — requires external NIH ExPORTER data not in current dataset",
+          "rationale": "Counterfactual question illustrating why this candidate is infeasible without comparison group."
+        }
+      ],
+      "variable_roles": {
+        "outcome_variables": ["terminated_binary"],
+        "exposure_variables": ["flagged_words"],
+        "covariates": ["org_type", "funding_category", "total_award", "org_state"],
+        "stratification_variables": ["activity_code", "dept_type"],
+        "excluded_variables": {
+          "status": "source for derived outcome terminated_binary",
+          "core_award_number": "identifier",
+          "full_award_number": "identifier",
+          "hhs_web_reported": "reporting flag",
+          "hhs_pdf_reported": "reporting flag",
+          "self_reported": "reporting flag",
+          "court_reported": "reporting flag",
+          "source_reported": "reporting flag",
+          "targeted_start_date": "47% missing",
+          "targeted_end_date": "47% missing",
+          "ever_frozen": "process variable",
+          "frozen_date": "47% missing",
+          "unfrozen_date": "47% missing",
+          "file_c_outlays": "unstructured text",
+          "termination_date": "post-outcome",
+          "cancellation_source": "mediator",
+          "reinstatement_indicator": "post-outcome",
+          "reinstated_est_date": "post-outcome",
+          "reinstatement_case": "post-outcome",
+          "last_payment_month": "post-outcome",
+          "last_payment_date": "post-outcome",
+          "project_title": "text",
+          "foa": "identifier",
+          "foa_title": "text",
+          "abstract_text": "text",
+          "phr_text": "text",
+          "terms": "text",
+          "total_estimated_outlays": "collinear",
+          "total_estimated_remaining": "collinear",
+          "spending_categories": "text",
+          "categories_predicted": "metadata",
+          "notes": "sparse",
+          "org_traits": "sparse",
+          "pct_ugrad_pellgrant": "not grant-level predictor",
+          "pct_ugrad_fedloan": "not grant-level predictor",
+          "appl_id": "identifier",
+          "prog_office_code": "collinear with program_office",
+          "nih_activity": "collinear with activity_code",
+          "court_restoration_url": "metadata",
+          "usaspending_url": "metadata",
+          "taggs_url": "metadata",
+          "reporter_url": "metadata",
+          "record_sha1": "identifier",
+          "us_rep": "not primary predictor",
+          "us_rep_phone": "metadata",
+          "org_congdist": "collinear with org_state",
+          "study_section": "secondary",
+          "org_name": "too granular",
+          "org_city": "collinear with org_state",
+          "program_office": "too granular",
+          "is_training_grant": "derived from funding_category — not used in CQ3 (infeasible)",
+          "org_type_grouped": "derived from org_type — not used in CQ3 (infeasible)",
+          "log_total_award": "derived from total_award — not used in CQ3 (infeasible)",
+          "org_state_region": "derived from org_state — not used in CQ3 (infeasible)"
+        }
+      },
+      "feasibility_assessment": {
+        "strengths": [
+          "Flagged_words variable available with <5% missingness"
+        ],
+        "limitations": [
+          "No control group of non-terminated grants in this dataset — cannot compute termination rates",
+          "flagged_words was used to identify grants for termination, making it a selection criterion rather than an independent predictor within the targeted set",
+          "Would require linkage to NIH ExPORTER full portfolio data not available in provided files"
+        ],
+        "required_assumptions": [
+          "Would require the full NIH grant portfolio as a denominator, which is not in provided data",
+          "flagged_words assignment methodology must be independent of termination decision — not guaranteed given political context"
+        ]
+      }
+    }
+  ],
+  "data_acquisition_requirements": []
+}

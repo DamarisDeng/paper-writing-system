@@ -1,0 +1,30 @@
+{
+  "stage_name": "score_and_rank",
+  "stage_number": "3",
+  "current_step": "step_6_validate",
+  "all_steps": [
+    "step_1_load_inputs",
+    "step_2_literature_search",
+    "step_3_compute_scores",
+    "step_4_apply_feedback",
+    "step_5_select_and_save",
+    "step_6_validate"
+  ],
+  "completed_steps": [
+    "step_1_load_inputs",
+    "step_2_literature_search",
+    "step_3_compute_scores",
+    "step_4_apply_feedback",
+    "step_5_select_and_save",
+    "step_6_validate"
+  ],
+  "started_at": "2026-03-24T12:24:13Z",
+  "last_updated": "2026-03-24T12:27:20Z",
+  "outputs": [
+    "2_scoring/ranked_questions.json",
+    "2_scoring/scoring_details.json"
+  ],
+  "status": "completed",
+  "notes": "Filtered to 2 feasible candidates (CQ1, CQ2); CQ3 infeasible",
+  "completed_at": "2026-03-24T12:27:20Z"
+}

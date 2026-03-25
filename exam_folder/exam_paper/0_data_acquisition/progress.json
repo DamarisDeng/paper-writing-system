@@ -1,0 +1,25 @@
+{
+  "stage_name": "acquire_data_stage0",
+  "stage_number": "0",
+  "current_step": "step_5_document",
+  "all_steps": [
+    "step_1_read_manifest",
+    "step_2_check_existing",
+    "step_3_download",
+    "step_4_verify",
+    "step_5_document"
+  ],
+  "completed_steps": [
+    "step_1_read_manifest",
+    "step_2_check_existing",
+    "step_3_download",
+    "step_4_verify",
+    "step_5_document"
+  ],
+  "started_at": "2026-03-24T12:10:01Z",
+  "last_updated": "2026-03-24T12:10:01Z",
+  "outputs": [],
+  "status": "completed",
+  "notes": "No bulk downloads needed; primary data already on disk",
+  "completed_at": "2026-03-24T12:10:01Z"
+}

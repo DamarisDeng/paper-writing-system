@@ -2,9 +2,7 @@
 *.DS_Store
 test*
 
-exam_folder/
 experiments/
-exam_paper/
 
 # LaTeX output files in sample/tex
 sample/tex/template.bbl
