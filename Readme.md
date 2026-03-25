@@ -12,9 +12,11 @@ Before running this pipeline, ensure you have the following installed:
 |-------------|--------------|
 | **Node.js / npm** | [Download from nodejs.org](https://nodejs.org/) or use `brew install node` (macOS) |
 | **Claude Code** | [Install via npm](https://claude.ai/claude-code): `npm install -g @anthropic-ai/claude-code` |
-| **Python 3.x** | [Download from python.org](https://www.python.org/downloads/) or use `brew install python3` (macOS) |
+| **Python 3.12** | [Download from python.org](https://www.python.org/downloads/) or use `brew install python3` (macOS) |
 | **Python packages** | `pip install pandas statsmodels scipy scikit-learn matplotlib openpyxl` |
 | **LaTeX** | [Download MiKTeX](https://miktex.org/download) or [MacTeX](https://www.tug.org/mactex/) (macOS) |
+| **ppt-creator skill** | Installed automatically by Claude Code; or install manually: `/skill-creator:skill-clone ppt-creator` |
+| **Marp CLI** *(optional)* | For exporting slides to PDF/PPTX: `npm install -g @marp-team/marp-cli` |
 
 ## Quick Start
 
@@ -358,6 +360,8 @@ repo/
 
 ## Requirements
 
-- Python 3.x with pandas, statsmodels, scipy, scikit-learn
+- Python 3.12 with pandas, statsmodels, scipy, scikit-learn, matplotlib, openpyxl
 - LaTeX distribution (pdflatex, bibtex)
 - Claude Code with Opus 4.6 model access
+- ppt-creator skill (for generating presentation slides after paper completion)
+- Marp CLI (optional, for exporting slides to PDF/PPTX)
