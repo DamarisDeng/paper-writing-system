@@ -186,6 +186,30 @@ complete_stage(output_folder, "compile_and_review",
                expected_outputs=["paper.pdf", "6_paper/paper.pdf"])  # PDF at root and in stage folder
 ```
 
+4. **Print completion message with next steps**:
+   ```
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ✅ Paper Complete!
+
+   Your PDF is ready at: <output_folder>/paper.pdf
+
+   🎯 Want presentation slides?
+
+   To create a slide deck from this paper, say:
+   "Make a presentation for <output_folder>/paper.pdf"
+
+   Or use the skill directly:
+   /ppt-creator:ppt-creator "Create a slide deck for <output_folder>/paper.pdf"
+
+   Output includes:
+   • slides.md — Presentation deck (Marp format)
+   • notes.md — Speaker notes
+   • refs.md — References & key stats
+
+   Export: marp slides.md --pdf
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ```
+
 ### Step 6: Handle Edge Cases
 
 **BibTeX not available**: If `bibtex` is not installed, use `\begin{thebibliography}` with manually formatted entries as fallback:

@@ -413,6 +413,35 @@ Stage 9 → paper.pdf (compiles paper.tex)
 
    This lists each stage's status, output files, and any degraded/failed stages.
 
+4. **Suggest next steps** — After the summary, print the following message:
+
+   ```
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   📄 Pipeline Complete!
+
+   Your paper is ready at: <output_folder>/paper.pdf
+
+   🎯 Next Step: Generate Presentation Slides
+
+   To create a slide deck for this paper, use the ppt-creator skill:
+
+   /ppt-creator:ppt-creator "Create a slide deck for <output_folder>/paper.pdf"
+
+   Or use the simpler form:
+   "Make a presentation for the paper at <output_folder>/paper.pdf"
+
+   The skill will generate:
+   • slides.md — Marp-compatible deck (converts to PDF/PPTX)
+   • notes.md — Speaker notes (45-60 sec per slide)
+   • refs.md — References and key statistics
+   • figures/ — Copied from the paper
+
+   Export to PDF: marp slides.md --pdf
+   Export to PPTX: marp slides.md --pptx
+   Or use VS Code with the Marp extension for preview.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ```
+
 ## Output Contract
 
 **`<output_folder>/pipeline_log.json`** — Execution log:
