@@ -261,21 +261,29 @@ Each stage can be run independently via Claude Code slash command (e.g., `/load-
 
 ### Stage 8: Write Paper (high)
 
-**Input**: All upstream outputs + LaTeX template
+**Run**: `/write-paper <output_folder>`
 
-**What it does**:
-- Drafts complete JAMA Network Open paper in LaTeX
-- Structured abstract (7 subsections)
-- Key Points box
-- Introduction, Methods, Results, Discussion, Limitations, Conclusions
-- Supplement with additional tables/figures
-- Integrates all citations, figures, and tables
+**Input**: `ranked_questions.json`, `analysis_results.json`, `manifest.json`, `references.bib`, `profile.json`, `template.tex`, `decision_log.json` (optional)
+
+**Logic**:
+1. Load all upstream outputs (research questions, analysis results, figure manifest, references, data profile, decision log)
+2. Copy assets to `6_paper/` — figures (`.png`, `.pdf`), tables (`.tex`), and `references.bib`
+3. Generate LaTeX paper skeleton from template with boilerplate pre-filled (preamble, colors, styles, metadata, section structure)
+4. Draft complete paper content — structured abstract (7 subsections), Key Points box, Introduction (3–5 paragraphs), Methods (Data, Outcomes, Exposure, Covariates, Statistical Analysis), Results (sample description, primary analysis, sensitivity analyses), Discussion (4–6 paragraphs with Limitations subsection), Conclusions
+5. Integrate figures (`\includegraphics`), tables (`\input`), and citations (`\cite`) with paths validated against copied assets
+6. Add Supplement (eAppendix, eTables, eFigures) with detailed model specifications
+7. Validate completeness — balanced LaTeX braces, all 7 abstract subsections present, Key Points filled, no placeholder text, citation keys match `references.bib`, figure/table paths resolve, statistical values match `analysis_results.json`
+
+**Progress Tracking**: 4 checkpoints (`step_1_load_inputs` → `step_2_copy_assets` → `step_3_draft_paper` → `step_4_validate`)
+
+**Helper Script**: `workflow/skills/write-paper/write_paper.py` provides `load_all_inputs()`, `copy_assets()`, `generate_paper_skeleton()`, `validate_paper_tex()`, and `format_stat()` utilities
 
 **Outputs**:
 - `6_paper/paper.tex` — Complete LaTeX source
 - `6_paper/references.bib` — Bibliography copy
-- `6_paper/figures/` — Figure copies
-- `6_paper/tables/` — Table copies
+- `6_paper/figures/` — Figure copies (`.png` and `.pdf`)
+- `6_paper/tables/` — Table copies (`.tex`)
+- `6_paper/progress.json` — Progress state for resume
 
 ---
 

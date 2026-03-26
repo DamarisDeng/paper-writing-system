@@ -46,10 +46,16 @@ This skill uses `progress_utils.py` for stage-level progress tracking. Progress 
 
 You are a medical writer experienced in drafting JAMA Network Open research articles. Write a complete, publication-ready manuscript integrating statistical results, figures, tables, and references.
 
-**Initialize progress tracker at start:**
+**Initialize progress tracker and load helper module at start:**
 ```python
-import sys; sys.path.insert(0, "workflow/scripts")
+import sys
+sys.path.insert(0, "workflow/scripts")
+sys.path.insert(0, "workflow/skills/write-paper")
 from progress_utils import create_stage_tracker
+from write_paper import (
+    load_all_inputs, copy_assets, generate_paper_skeleton,
+    validate_paper_tex, format_stat, format_descriptive, format_count_pct
+)
 
 tracker = create_stage_tracker(output_folder, "write_paper",
     ["step_1_load_inputs", "step_2_copy_assets", "step_3_draft_paper", "step_4_validate"])
@@ -57,25 +63,47 @@ tracker = create_stage_tracker(output_folder, "write_paper",
 
 ### Step 1: Load All Inputs
 
-Read these files:
+Use the helper function to load all upstream outputs:
 
+```python
+inputs = load_all_inputs(output_folder)
+if not inputs["ready"]:
+    raise RuntimeError(f"Missing required inputs: {inputs['missing_required']}")
+```
+
+This loads:
 1. **`<output_folder>/2_scoring/ranked_questions.json`** — Research questions, variable roles, study design.
 1b. **`<output_folder>/decision_log.json`** (if exists) — Question selection audit trail. Use to describe the question selection process in the Methods section (e.g., number of candidates considered, scoring approach, any feedback cycles).
 2. **`<output_folder>/3_analysis/analysis_results.json`** — All statistical results.
 3. **`<output_folder>/4_figures/manifest.json`** — List of figures and tables with titles and file paths.
 4. **`<output_folder>/5_references/references.bib`** — Bibliography entries.
-5. **`sample/tex/template.tex`** — The JAMA Network Open LaTeX template.
+5. **`workflow/templates/template.tex`** — The JAMA Network Open LaTeX template.
 6. **`<output_folder>/1_data_profile/profile.json`** — Dataset context for data description.
 
 ### Step 2: Copy Assets
 
+Use the helper function:
+
+```python
+copied = copy_assets(output_folder)
+```
+
+This handles:
 1. Copy `references.bib` to `<output_folder>/6_paper/references.bib`.
 2. Copy all figure files (`.png` and `.pdf`) from `<output_folder>/4_figures/figures/` to `<output_folder>/6_paper/figures/`.
 3. Copy all table `.tex` files from `<output_folder>/4_figures/tables/` to `<output_folder>/6_paper/tables/`.
 
 ### Step 3: Draft the Paper
 
-Using the template structure from `sample/tex/template.tex`, write `<output_folder>/6_paper/paper.tex` with these sections:
+**Option A — Generate skeleton first, then fill in content:**
+```python
+skeleton = generate_paper_skeleton(output_folder, "workflow/templates/template.tex", inputs)
+```
+This creates `paper.tex` with the full LaTeX preamble, section structure, and `%%FILL:` markers where you must write content. Then edit the file to replace all `%%FILL:` markers with actual paper content.
+
+**Option B — Write paper.tex from scratch using the template.**
+
+Either way, the final `<output_folder>/6_paper/paper.tex` must contain these sections:
 
 #### 3.1 Preamble and Metadata
 
@@ -441,16 +469,25 @@ For tables, input the pre-generated `.tex` file:
 
 ### Step 6: Validate
 
-Before saving, verify:
+Use the helper function for automated validation:
+
+```python
+validation = validate_paper_tex(output_folder)
+if not validation["passed"]:
+    print(f"Errors: {validation['errors']}")
+    # Fix errors and re-validate
+```
+
+The validator checks:
 
 - [ ] `paper.tex` is valid LaTeX (balanced braces, environments, commands)
+- [ ] File is >5 KB (not a stub)
 - [ ] All `\cite{}` keys match entries in `references.bib`
 - [ ] All `\includegraphics{}` paths point to files that exist in `6_paper/figures/`
 - [ ] All `\input{}` paths point to files that exist in `6_paper/tables/`
 - [ ] Abstract contains all 7 required subsections
 - [ ] Key Points box has Question, Findings, and Meaning
-- [ ] Statistical results in text match `analysis_results.json` values exactly
-- [ ] No placeholder text remains (search for "TODO", "XXX", "PLACEHOLDER")
+- [ ] No placeholder text remains (search for "%%FILL:", "TODO", "XXX", "PLACEHOLDER")
 - [ ] `references.bib` is copied to `<output_folder>/6_paper/`
 - [ ] No Unicode math symbols (check with grep commands above)
 - [ ] **Supplement section is populated** (eAppendix 1 contains actual model equations, not placeholder text)
@@ -520,6 +557,23 @@ If compilation fails, check the `.log` file for specific error messages and fix 
 1. Verify files exist in `6_paper/figures/` or `6_paper/tables/`
 2. Check file paths in `\includegraphics{}` and `\input{}` are relative to `6_paper/`
 3. For tables, ensure the `.tex` file is valid LaTeX table code
+
+**Additionally, manually verify:**
+- [ ] Statistical results in text match `analysis_results.json` values exactly
+- [ ] JAMA writing style (past tense, third person, no leading zeros on P values)
+
+**Format statistics using the helper:**
+```python
+# JAMA-style formatting
+stat_text = format_stat(-23.4, -35.2, -11.5, "<0.001")
+# → "-23.4 (95\\% CI, -35.2 to -11.5; P < .001)"
+
+desc_text = format_descriptive(41.6, 24.9)
+# → "41.6 (SD, 24.9)"
+
+count_text = format_count_pct(16, 30.8)
+# → "16 (30.8\\%)"
+```
 
 **Progress checkpoint - Mark stage complete:**
 ```python
