@@ -2,7 +2,7 @@
 
 An end-to-end automated research workflow that generates a publication-ready JAMA Network Open-style paper from any public health dataset. Triggered by a single prompt, Claude Code executes all stages autonomously with zero human intervention.
 
-Tutorial of building a research automation pipeline can be found [here](https://damarisdeng.github.io/projects/research-workflow-automation/).
+Tutorial of building a research automation pipeline can be found [here](https://damarisdeng.github.io/blog/2026-03-24-research-workflow-tutorial/). A video version of the tutorial can be found [here](https://youtu.be/4lOvvX4AVuE).
 
 ## Prerequisites
 
